@@ -1,48 +1,88 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8" /><title>시제품 관리</title>
+  <meta charset="UTF-8" /><title>보안 관리 시스템</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f4f4f9; }
-    .card { background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    #edit-box { margin-top: 20px; padding: 20px; border: 2px solid #2e7d32; border-radius: 15px; background: #e8f5e9; }
-    input, textarea { width: 100%; margin: 10px 0; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-    button { width: 100%; padding: 12px; background: #2e7d32; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; }
+    body { font-family: sans-serif; padding: 20px; background: #f4f4f9; color: #333; }
+    .card { background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none; }
+    .auth-card { background: #fff; padding: 25px; border-radius: 15px; border: 2px solid #333; }
+    input { width: 100%; margin: 10px 0; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+    button { width: 100%; padding: 12px; background: #333; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    #status-msg { margin: 15px 0; font-weight: bold; color: #d32f2f; }
   </style>
 </head>
 <body>
-  <div class="card"><h2 id="title">로딩 중...</h2><div id="items-list" style="white-space: pre-wrap;">...</div></div>
-  <div id="edit-box">
-    <p>🛠️ <strong>관리자 모드:</strong> 즉시 수정 가능</p>
-    <input type="text" id="new-name" placeholder="이름 수정">
-    <textarea id="new-items" rows="4" placeholder="물품 수정 (쉼표로 구분)"></textarea>
-    <button id="update-btn">정보 업데이트 (저장)</button>
+  <div id="login-section" class="auth-card">
+    <h2>🔒 보안 접속</h2>
+    <p>이 서랍은 비공개 상태입니다.<br>등록된 이메일로 인증 후 확인하세요.</p>
+    <input type="email" id="email-input" placeholder="네이버 이메일 입력">
+    <button id="login-btn">인증 메일 받기</button>
   </div>
+
+  <div id="main-card" class="card">
+    <h2 id="title">로딩 중...</h2>
+    <p id="items-list" style="background:#f9f9f9; padding:15px; border-radius:10px;"></p>
+    <div style="border-top: 1px solid #eee; margin-top:20px; padding-top:10px;">
+      <p>🛠️ <strong>관리자 모드</strong></p>
+      <input type="text" id="new-name" placeholder="이름 수정">
+      <textarea id="new-items" rows="4" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; margin-bottom:10px;"></textarea>
+      <button id="update-btn" style="background:#2e7d32;">정보 저장하기</button>
+    </div>
+  </div>
+
+  <div id="status-msg"></div>
+
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"
-    // 중요: 아래 키를 사용자님의 진짜 키로 꼭 바꾸세요!
-    const supabase = createClient("https://tqhtggusphhcsygiitrv.supabase.co", "https://tqhtggusphhcsygiitrv.supabase.co/auth/v1/verify?token=b14991b6f659e4f4b4189d17d9ae9993f690c7985fd81e25fe403626&type=magiclink&redirect_to=https://qr-test-sage.vercel.app/")
-    let tagId = new URLSearchParams(window.location.search).get("tag") || "MAIN0001";
+    
+    // 아래 두 줄은 사용자님의 정보를 그대로 유지하세요!
+    const supabaseUrl = "https://tqhtggusphhcsygiitrv.supabase.co"
+    const supabaseKey = "1e7ea749-124a-4ad0-a7f8-02034ba45ec0"
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    const tagId = new URLSearchParams(window.location.search).get("tag") || "MAIN0001";
+
+    // 로그인 버튼 클릭
+    document.getElementById("login-btn").onclick = async () => {
+      const email = document.getElementById("email-input").value;
+      const { error } = await supabase.auth.signInWithOtp({ 
+        email, options: { emailRedirectTo: window.location.href } 
+      });
+      alert(error ? "오류가 발생했습니다." : "인증 메일을 보냈습니다. 메일함의 링크를 클릭하세요!");
+    };
+
+    async function init() {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: tag } = await supabase.from("tags").select("*").eq("id", tagId).single();
+
+      if (!user) {
+        document.getElementById("login-section").style.display = "block";
+        return;
+      }
+
+      // 보안 핵심 로직: 로그인한 ID와 주인 ID가 일치하는지 확인
+      if (tag && user.id === tag.owner_id) {
+        document.getElementById("login-section").style.display = "none";
+        document.getElementById("main-card").style.display = "block";
+        document.getElementById("title").innerText = tag.display_name;
+        document.getElementById("items-list").innerText = tag.items || "등록된 물품이 없습니다.";
+        document.getElementById("new-name").value = tag.display_name;
+        document.getElementById("new-items").value = tag.items || "";
+      } else {
+        document.getElementById("login-section").style.display = "none";
+        document.getElementById("status-msg").innerText = "🛑 접근 권한이 없습니다. 등록된 가족만 열람 가능합니다.";
+      }
+    }
 
     document.getElementById("update-btn").onclick = async () => {
       const { error } = await supabase.from("tags").update({ 
         display_name: document.getElementById("new-name").value,
         items: document.getElementById("new-items").value 
       }).eq("id", tagId);
-      if (error) alert("실패: " + error.message);
-      else { alert("저장 성공!"); location.reload(); }
+      if (!error) { alert("성공적으로 저장되었습니다."); location.reload(); }
     };
 
-    async function init() {
-      const { data: tag } = await supabase.from("tags").select("*").eq("id", tagId).single();
-      if (tag) {
-        document.getElementById("title").innerText = tag.display_name;
-        document.getElementById("items-list").innerText = tag.items || "물품 없음";
-        document.getElementById("new-name").value = tag.display_name;
-        document.getElementById("new-items").value = tag.items || "";
-      }
-    }
     init();
   </script>
 </body>
