@@ -2,8 +2,7 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"
 
 const supabaseUrl = "https://tqhtggusphhcsygiitrv.supabase.co"
-const supabaseKey = "sb_publishable_D9nhmN5ZlyApSrHHasyQ3w_O7Kdmssq
-"
+const supabaseKey = "sb_publishable_D9nhmN5ZlyApSrHHasyQ3w_O7Kdmssq"
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 const params = new URLSearchParams(window.location.search)
@@ -11,9 +10,12 @@ const tagId = params.get("tag")
 
 const titleEl = document.getElementById("title")
 
-if (!tagId) {
-  titleEl.innerText = "태그 없음"
-} else {
+async function load() {
+  if (!tagId) {
+    titleEl.innerText = "태그 없음"
+    return
+  }
+
   try {
     const { data, error } = await supabase
       .from("tags")
@@ -21,8 +23,8 @@ if (!tagId) {
       .eq("id", tagId)
 
     if (error) {
-      titleEl.innerText = "조회 에러"
-      console.log(error)
+      console.error(error)
+      titleEl.innerText = "DB 에러"
       return
     }
 
@@ -32,9 +34,12 @@ if (!tagId) {
     }
 
     titleEl.innerText = data[0].display_name
-  } catch (e) {
-    titleEl.innerText = "실행 오류"
-    console.log(e)
+
+  } catch (err) {
+    console.error(err)
+    titleEl.innerText = "스크립트 오류"
   }
 }
+
+load()
 </script>
