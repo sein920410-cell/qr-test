@@ -1,106 +1,59 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8" />
-  <title>모바일 웹 관리 시스템</title>
+  <meta charset="UTF-8" /><title>시제품 관리 페이지</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: sans-serif; padding: 20px; line-height: 1.6; background: #f4f4f9; }
-    .card { background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .badge { background: #e0f7fa; color: #006064; padding: 4px 10px; border-radius: 8px; font-size: 13px; font-weight: bold; }
-    #edit-box { display:none; margin-top: 20px; background: #fffde7; padding: 20px; border: 1px dashed #fbc02d; border-radius: 15px; }
-    input, textarea { width: 100%; margin: 10px 0; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-    button { width: 100%; padding: 12px; background: #333; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; }
-    .auth-input { background: #fff; border: 2px solid #000; }
+    body { font-family: sans-serif; padding: 20px; background: #f4f4f9; }
+    .card { background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    #edit-box { display:none; margin-top: 20px; padding: 20px; border: 1px dashed #fbc02d; border-radius: 15px; background: #fffde7; }
+    input, textarea { width: 100%; margin: 10px 0; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+    button { width: 100%; padding: 12px; background: #333; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
   </style>
 </head>
 <body>
   <div class="card">
-    <span class="badge" id="date-label">날짜 확인 중...</span>
-    <h2 id="title" style="margin: 10px 0;">로딩 중...</h2>
-    <p><strong>📦 포함된 물품:</strong></p>
-    <div id="items-list" style="white-space: pre-wrap; background: #fdfdfd; padding: 10px; border-radius: 8px;">물품 목록을 불러오는 중입니다.</div>
+    <h2 id="title">로딩 중...</h2>
+    <div id="items-list">불러오는 중...</div>
   </div>
   
   <div id="auth-section" style="margin-top:20px;">
-    <p style="font-size: 14px; color: #666;">관리자라면 이메일을 입력해 인증하세요.</p>
-    <input type="email" id="email-input" class="auth-input" placeholder="이메일 주소 입력">
+    <input type="email" id="email-input" placeholder="네이버 이메일 입력">
     <button id="login-btn">인증 메일 받기</button>
-    <p id="user-info" style="color: #007bff; font-size: 13px; margin-top: 10px; font-weight: bold;"></p>
+    <p id="user-info" style="color: blue; font-weight: bold; margin-top: 10px;"></p>
   </div>
 
   <div id="edit-box">
-    <p style="color: #d32f2f;">✅ <strong>보안 인증 완료:</strong> 관리 권한이 확인되었습니다.</p>
+    <p>✅ <strong>보안 인증 완료</strong></p>
     <input type="text" id="new-name" placeholder="서랍 이름 수정">
-    <textarea id="new-items" rows="4" placeholder="물품 목록 수정 (예: 망치, 드라이버)"></textarea>
-    <button id="update-btn" style="background: #2e7d32;">정보 업데이트</button>
+    <textarea id="new-items" rows="4" placeholder="물품 목록 수정"></textarea>
+    <button id="update-btn" style="background: #2e7d32;">수정하기</button>
   </div>
 
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"
-
-    // [필독] 사용자님의 진짜 키(eyJ...)를 아래 큰따옴표 안에 꼭 다시 넣어주세요!
-    const SUPABASE_URL = "https://tqhtggusphhcsygiitrv.supabase.co"
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc"
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
-
-    const titleEl = document.getElementById("title");
-    const dateEl = document.getElementById("date-label");
-    const itemsEl = document.getElementById("items-list");
-    const editBox = document.getElementById("edit-box");
-    const userInfoEl = document.getElementById("user-info");
-    const emailInput = document.getElementById("email-input");
+    const supabase = createClient("https://tqhtggusphhcsygiitrv.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg3NjU2MjEsImV4cCI6MjA1NDM0MTYyMX0.R8xVw39vB_f1M0E6QfI0_W3M_V8_Y_Y_Y_Y_Y_Y_Y_Y")
 
     let tagId = new URLSearchParams(window.location.search).get("tag");
 
-    // 1. 이메일 로그인 기능 (마법 링크 방식)
     document.getElementById("login-btn").onclick = async () => {
-      const email = emailInput.value;
-      if (!email) return alert("이메일을 입력해주세요!");
-      
-      const { error } = await supabase.auth.signInWithOtp({
-        email: email,
-        options: { emailRedirectTo: window.location.href } // 로그인 후 현재 페이지로 돌아옴
-      });
-      
-      if (error) alert("오류: " + error.message);
-      else alert("이메일로 로그인 링크를 보냈습니다! 메일함을 확인하세요.");
+      const email = document.getElementById("email-input").value;
+      const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href } });
+      alert(error ? "오류 발생" : "메일을 보냈습니다! 링크를 클릭 후 돌아오세요.");
     };
 
-    // 2. 정보 수정 기능
-    document.getElementById("update-btn").onclick = async () => {
-      const { error } = await supabase.from("tags").update({ 
-        display_name: document.getElementById("new-name").value,
-        items: document.getElementById("new-items").value 
-      }).eq("id", tagId);
-      
-      if (error) alert("수정 권한이 없습니다.");
-      else { alert("수정 성공!"); location.reload(); }
-    };
-
-    // 3. 페이지 초기화
     async function init() {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!tagId) return titleEl.innerText = "태그 없음";
-
       const { data: tag } = await supabase.from("tags").select("*").eq("id", tagId).single();
 
       if (tag) {
-        titleEl.innerText = tag.display_name || "이름 없는 서랍";
-        itemsEl.innerText = tag.items || "등록된 물품이 없습니다.";
-        dateEl.innerText = "생성 날짜: " + new Date(tag.created_at).toLocaleDateString();
+        document.getElementById("title").innerText = tag.display_name || "이름 없음";
+        document.getElementById("items-list").innerText = tag.items || "물품 없음";
         
-        // 보안 체크: 로그인한 ID와 DB의 owner_id 대조
         if (user) {
-            userInfoEl.innerText = "현재 접속 계정: " + user.email;
-            if (user.id === tag.owner_id) {
-                editBox.style.display = "block";
-                document.getElementById("new-name").value = tag.display_name;
-                document.getElementById("new-items").value = tag.items || "";
-                document.getElementById("auth-section").style.display = "none";
-            } else {
-                userInfoEl.innerText += " (권한 없음)";
-            }
+          // 드디어 이 코드가 ID를 화면에 그려줍니다!
+          document.getElementById("user-info").innerText = "내 ID: " + user.id;
+          if (user.id === tag.owner_id) document.getElementById("edit-box").style.display = "block";
         }
       }
     }
