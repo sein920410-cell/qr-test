@@ -1,36 +1,40 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8" />
-  <title>QR 정리 시스템</title>
-</head>
-<body>
-
-<h2 id="title">로딩중...</h2>
-
 <script type="module">
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"
 
 const supabaseUrl = "https://tqhtggusphhcsygiitrv.supabase.co"
-const supabaseKey = "sb_publishable_D9nhmN5ZlyApSrHHasyQ3w_O7Kdmssq"
-
+const supabaseKey = "sb_publishable_D9nhmN5ZlyApSrHHasyQ3w_O7Kdmssq
+"
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 const params = new URLSearchParams(window.location.search)
 const tagId = params.get("tag")
 
+const titleEl = document.getElementById("title")
+
 if (!tagId) {
-  document.getElementById("title").innerText = "태그 없음"
+  titleEl.innerText = "태그 없음"
 } else {
+  try {
+    const { data, error } = await supabase
+      .from("tags")
+      .select("display_name")
+      .eq("id", tagId)
 
-  const { data, error } = await supabase
-  .from("tags")
-  .select("display_name")
-  .eq("id", tagId)
-  .single()
+    if (error) {
+      titleEl.innerText = "조회 에러"
+      console.log(error)
+      return
+    }
 
-if (error || !data) {
-  document.getElementById("title").innerText = "없는 QR"
-} else {
-  document.getElementById("title").innerText = data.display_name
+    if (!data || data.length === 0) {
+      titleEl.innerText = "없는 QR"
+      return
+    }
+
+    titleEl.innerText = data[0].display_name
+  } catch (e) {
+    titleEl.innerText = "실행 오류"
+    console.log(e)
+  }
 }
+</script>
