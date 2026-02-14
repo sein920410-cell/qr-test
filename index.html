@@ -3,52 +3,57 @@
 <head>
   <meta charset="UTF-8" />
   <title>QR 정리 시스템</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-
 <body>
-
-  <!-- 반드시 있어야 함 -->
   <h2 id="title">로딩중...</h2>
+  <p id="debug-info" style="color: gray; font-size: 12px;"></p>
 
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"
 
+    // 1. 내 정보로 연결 (그대로 유지)
     const supabaseUrl = "https://tqhtggusphhcsygiitrv.supabase.co"
     const supabaseKey = "sb_publishable_D9nhmN5ZlyApSrHHasYQ3w_O7Kdmsq"
     const supabase = createClient(supabaseUrl, supabaseKey)
 
     async function loadData() {
       const titleEl = document.getElementById("title")
+      const debugEl = document.getElementById("debug-info")
 
       const params = new URLSearchParams(window.location.search)
       const tagId = params.get("tag")
 
       if (!tagId) {
-        titleEl.innerText = "태그 없음"
+        titleEl.innerText = "태그 정보가 없습니다."
         return
       }
 
       try {
+        // .trim()을 넣어 혹시 모를 공백 제거
         const { data, error } = await supabase
           .from("tags")
-          .select("display_name")
-          .eq("id", tagId)
-          .single()
+          .select("*")
+          .eq("id", tagId.trim())
+          .maybeSingle() // single() 대신 maybeSingle() 사용 (에러 방지)
 
-        if (error || !data) {
-          titleEl.innerText = "없는 QR"
+        if (error) {
+          titleEl.innerText = "서버 연결 오류"
+          debugEl.innerText = "에러메시지: " + error.message
+        } else if (!data) {
+          titleEl.innerText = "등록되지 않은 QR"
+          debugEl.innerText = "조회한 ID: " + tagId
         } else {
-          titleEl.innerText = data.display_name
+          titleEl.innerText = data.display_name || "이름 없는 서랍"
+          debugEl.innerText = "조회 성공!"
         }
-
       } catch (err) {
-        titleEl.innerText = "에러 발생"
+        titleEl.innerText = "시스템 에러"
         console.error(err)
       }
     }
 
     loadData()
   </script>
-
 </body>
 </html>
