@@ -2,58 +2,83 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>QR 정리 시스템</title>
+  <title>모바일 웹 관리 시스템</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
+    .card { border: 1px solid #ddd; padding: 15px; border-radius: 10px; box-shadow: 2px 2px 5px #eee; }
+    .badge { background: #e0f7fa; color: #006064; padding: 2px 8px; border-radius: 5px; font-size: 12px; }
+    #edit-box { display:none; margin-top: 20px; background: #f9f9f9; padding: 15px; border-radius: 10px; }
+    input, textarea { width: 100%; margin: 10px 0; padding: 10px; box-sizing: border-box; }
+    button { width: 100%; padding: 10px; background: #000; color: #fff; border: none; border-radius: 5px; cursor: pointer; }
+  </style>
 </head>
 <body>
-  <h2 id="title">로딩중...</h2>
-  <p id="debug-info" style="color: gray; font-size: 12px;"></p>
+  <div class="card">
+    <span class="badge" id="date-label">날짜 로딩중...</span>
+    <h2 id="title">로딩중...</h2>
+    <p><strong>📦 포함된 물품:</strong></p>
+    <div id="items-list" style="white-space: pre-wrap;">목록이 비어 있습니다.</div>
+  </div>
+  
+  <div id="auth-section" style="margin-top:20px;">
+    <button id="login-btn">사용자 인증 (구글 로그인)</button>
+    <p id="user-info" style="color: blue; font-size: 12px;"></p>
+  </div>
+
+  <div id="edit-box">
+    <p>🛡️ <strong>보안 인증 완료:</strong> 관리 권한이 확인되었습니다.</p>
+    <input type="text" id="new-name" placeholder="서랍 이름 수정">
+    <textarea id="new-items" rows="4" placeholder="물품 목록 수정 (예: 망치, 드라이버)"></textarea>
+    <button id="update-btn">정보 수정하기</button>
+  </div>
 
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"
 
-    // 1. 내 정보로 연결 (그대로 유지)
-    const supabaseUrl = "https://tqhtggusphhcsygiitrv.supabase.co"
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc"
-    const supabase = createClient(supabaseUrl, supabaseKey)
+    // [중요] 성공했던 그 긴 키(eyJ...)를 다시 여기에 넣어주세요!
+    const SUPABASE_URL = "https://tqhtggusphhcsygiitrv.supabase.co"
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc"
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
-    async function loadData() {
-      const titleEl = document.getElementById("title")
-      const debugEl = document.getElementById("debug-info")
+    const titleEl = document.getElementById("title");
+    const dateEl = document.getElementById("date-label");
+    const itemsEl = document.getElementById("items-list");
+    const editBox = document.getElementById("edit-box");
+    const userInfoEl = document.getElementById("user-info");
 
-      const params = new URLSearchParams(window.location.search)
-      const tagId = params.get("tag")
+    let tagId = new URLSearchParams(window.location.search).get("tag");
 
-      if (!tagId) {
-        titleEl.innerText = "태그 정보가 없습니다."
-        return
-      }
+    document.getElementById("login-btn").onclick = () => supabase.auth.signInWithOAuth({ provider: 'google' });
 
-      try {
-        // .trim()을 넣어 혹시 모를 공백 제거
-        const { data, error } = await supabase
-          .from("tags")
-          .select("*")
-          .eq("id", tagId.trim())
-          .maybeSingle() // single() 대신 maybeSingle() 사용 (에러 방지)
+    async function updateData() {
+      const { error } = await supabase.from("tags").update({ 
+        display_name: document.getElementById("new-name").value,
+        items: document.getElementById("new-items").value 
+      }).eq("id", tagId);
+      if (error) alert("권한이 없습니다.");
+      else { alert("수정 완료!"); location.reload(); }
+    }
+    document.getElementById("update-btn").onclick = updateData;
 
-        if (error) {
-          titleEl.innerText = "서버 연결 오류"
-          debugEl.innerText = "에러메시지: " + error.message
-        } else if (!data) {
-          titleEl.innerText = "등록되지 않은 QR"
-          debugEl.innerText = "조회한 ID: " + tagId
-        } else {
-          titleEl.innerText = data.display_name || "이름 없는 서랍"
-          debugEl.innerText = "조회 성공!"
+    async function init() {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: tag } = await supabase.from("tags").select("*").eq("id", tagId).single();
+
+      if (tag) {
+        titleEl.innerText = tag.display_name || "이름 없는 서랍";
+        itemsEl.innerText = tag.items || "물품을 등록해 주세요.";
+        dateEl.innerText = "생성 날짜: " + new Date(tag.created_at).toLocaleDateString();
+        
+        if (user && user.id === tag.owner_id) {
+          userInfoEl.innerText = "관리자: " + user.email;
+          editBox.style.display = "block";
+          document.getElementById("new-name").value = tag.display_name;
+          document.getElementById("new-items").value = tag.items || "";
         }
-      } catch (err) {
-        titleEl.innerText = "시스템 에러"
-        console.error(err)
       }
     }
-
-    loadData()
+    init();
   </script>
 </body>
 </html>
