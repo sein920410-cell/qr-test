@@ -24,24 +24,13 @@ if (!tagId) {
 } else {
 
   const { data, error } = await supabase
-    .from("tags")
-    .select("*")
-    .eq("id", tagId)
-    .maybeSingle()
+  .from("tags")
+  .select("display_name")
+  .eq("id", tagId)
+  .single()
 
-  if (error) {
-    document.getElementById("title").innerText = "DB 에러"
-    console.log(error)
-  } 
-  else if (!data) {
-    document.getElementById("title").innerText = "없는 QR"
-  } 
-  else {
-    document.getElementById("title").innerText = data.display_name
-  }
+if (error || !data) {
+  document.getElementById("title").innerText = "없는 QR"
+} else {
+  document.getElementById("title").innerText = data.display_name
 }
-
-</script>
-
-</body>
-</html>
