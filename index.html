@@ -1,45 +1,54 @@
-<script type="module">
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>QR 정리 시스템</title>
+</head>
 
-const supabaseUrl = "https://tqhtggusphhcsygiitrv.supabase.co"
-const supabaseKey = "sb_publishable_D9nhmN5ZlyApSrHHasyQ3w_O7Kdmssq"
-const supabase = createClient(supabaseUrl, supabaseKey)
+<body>
 
-const params = new URLSearchParams(window.location.search)
-const tagId = params.get("tag")
+  <!-- 반드시 있어야 함 -->
+  <h2 id="title">로딩중...</h2>
 
-const titleEl = document.getElementById("title")
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"
 
-async function load() {
-  if (!tagId) {
-    titleEl.innerText = "태그 없음"
-    return
-  }
+    const supabaseUrl = "https://tqhtggusphhcsygiitrv.supabase.co"
+    const supabaseKey = "sb_publishable_D9nhmN5ZlyApSrHHasYQ3w_O7Kdmsq"
+    const supabase = createClient(supabaseUrl, supabaseKey)
 
-  try {
-    const { data, error } = await supabase
-      .from("tags")
-      .select("display_name")
-      .eq("id", tagId)
+    async function loadData() {
+      const titleEl = document.getElementById("title")
 
-    if (error) {
-      console.error(error)
-      titleEl.innerText = "DB 에러"
-      return
+      const params = new URLSearchParams(window.location.search)
+      const tagId = params.get("tag")
+
+      if (!tagId) {
+        titleEl.innerText = "태그 없음"
+        return
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("tags")
+          .select("display_name")
+          .eq("id", tagId)
+          .single()
+
+        if (error || !data) {
+          titleEl.innerText = "없는 QR"
+        } else {
+          titleEl.innerText = data.display_name
+        }
+
+      } catch (err) {
+        titleEl.innerText = "에러 발생"
+        console.error(err)
+      }
     }
 
-    if (!data || data.length === 0) {
-      titleEl.innerText = "없는 QR"
-      return
-    }
+    loadData()
+  </script>
 
-    titleEl.innerText = data[0].display_name
-
-  } catch (err) {
-    console.error(err)
-    titleEl.innerText = "스크립트 오류"
-  }
-}
-
-load()
-</script>
+</body>
+</html>
