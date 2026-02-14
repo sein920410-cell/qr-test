@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>QR 정리 시스템</title>
+</head>
+<body>
+
+<h2 id="title">로딩중...</h2>
+
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"
+
+  const supabaseUrl = "여기에_너의_SUPABASE_URL"
+  const supabaseKey = "여기에_너의_ANON_KEY"
+  const supabase = createClient(supabaseUrl, supabaseKey)
+
+  const params = new URLSearchParams(window.location.search)
+  const tagId = params.get("tag")
+
+  if (!tagId) {
+    document.getElementById("title").innerText = "태그 없음"
+  } else {
+    const { data } = await supabase
+      .from("tags")
+      .select("display_name")
+      .eq("id", tagId)
+      .single()
+
+    if (!data) {
+      document.getElementById("title").innerText = "없는 QR"
+    } else {
+      document.getElementById("title").innerText = data.display_name
+    }
+  }
+</script>
+
+</body>
+</html>
