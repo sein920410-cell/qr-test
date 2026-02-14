@@ -9,30 +9,38 @@
 <h2 id="title">로딩중...</h2>
 
 <script type="module">
-  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"
 
-  const supabaseUrl = "https://tqhtggusphhcsygiitrv.supabase.co"
-  const supabaseKey = "sb_publishable_D9nhmN5ZlyApSrHHasyQ3w_O7Kdmssq"
-  const supabase = createClient(supabaseUrl, supabaseKey)
+const supabaseUrl = "https://tqhtggusphhcsygiitrv.supabase.co"
+const supabaseKey = "sb_publishable_D9nhmN5ZlyApSrHHasyQ3w_O7Kdmssq"
 
-  const params = new URLSearchParams(window.location.search)
-  const tagId = params.get("tag")
+const supabase = createClient(supabaseUrl, supabaseKey)
 
-  if (!tagId) {
-    document.getElementById("title").innerText = "태그 없음"
-  } else {
-    const { data } = await supabase
-      .from("tags")
-      .select("display_name")
-      .eq("id", tagId)
-      .single()
+const params = new URLSearchParams(window.location.search)
+const tagId = params.get("tag")
 
-    if (!data) {
-      document.getElementById("title").innerText = "없는 QR"
-    } else {
-      document.getElementById("title").innerText = data.display_name
-    }
+if (!tagId) {
+  document.getElementById("title").innerText = "태그 없음"
+} else {
+
+  const { data, error } = await supabase
+    .from("tags")
+    .select("*")
+    .eq("id", tagId)
+    .maybeSingle()
+
+  if (error) {
+    document.getElementById("title").innerText = "DB 에러"
+    console.log(error)
+  } 
+  else if (!data) {
+    document.getElementById("title").innerText = "없는 QR"
+  } 
+  else {
+    document.getElementById("title").innerText = data.display_name
   }
+}
+
 </script>
 
 </body>
