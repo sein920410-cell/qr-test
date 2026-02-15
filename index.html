@@ -2,73 +2,67 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8" />
-    <title>찾았다! - AI 물품 관리 솔루션</title>
+    <title>찾았다! - 모바일 웹 시스템</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: 'Pretendard', sans-serif; padding: 20px; background: #f8f9fa; color: #333; line-height: 1.6; }
+        body { font-family: sans-serif; padding: 20px; background: #f8f9fa; color: #333; }
         .card { background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: none; margin-bottom: 20px; }
         #auth-section { background: #fff; padding: 30px; border-radius: 15px; border: 2px solid #333; text-align: center; }
-        input, textarea { width: 100%; margin: 10px 0; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        button { width: 100%; padding: 14px; background: #333; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #555; }
-        .item-card { padding: 15px; border-bottom: 1px solid #eee; display: flex; align-items: center; background: #fff; border-radius: 8px; margin-bottom: 5px; }
-        #search-input { border: 2px solid #333; margin-bottom: 20px; background: #fff; }
+        input { width: 100%; margin: 10px 0; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 14px; background: #333; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .item-card { padding: 15px; border-bottom: 1px solid #eee; display: flex; align-items: center; background: #fff; }
         .upload-area { background: #f0f4f8; padding: 15px; border-radius: 10px; border: 2px dashed #007bff; margin: 20px 0; }
-        .status-msg { font-size: 13px; color: #007bff; margin-top: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="auth-section">
         <h2>🔒 보안 접속</h2>
-        <p>등록된 관리자 이메일로 인증해야<br>물품을 찾거나 수정할 수 있습니다.</p>
-        <input type="email" id="email-input" placeholder="이메일 주소 입력">
-        <button id="login-btn">인증 메일 받기</button>
+        <p>테스트 계정으로 로그인하세요.</p>
+        <input type="email" id="email-input" placeholder="이메일 입력">
+        <input type="password" id="password-input" placeholder="비밀번호 입력 (테스트용)">
+        <button id="password-login-btn" style="margin-bottom:10px; background:#444;">비밀번호로 바로 접속</button>
+        <hr>
+        <button id="login-btn" style="background:#eee; color:#333;">인증 메일로 접속 (현재 제한됨)</button>
     </div>
 
     <div id="main-card" class="card">
-        <h2 id="drawer-name">데이터 로딩 중...</h2>
-        
+        <h2 id="drawer-name">로딩 중...</h2>
         <input type="text" id="search-input" placeholder="🔍 어떤 물건을 찾으시나요?">
         <div id="display-container"></div>
 
         <div class="upload-area">
-            <p style="margin-top:0;">🎥 <strong>서랍 안 촬영하기</strong></p>
+            <p>🎥 <strong>서랍 안 촬영하기</strong></p>
             <input type="file" id="video-input" accept="video/*" capture="environment">
             <button id="upload-btn" style="background:#007bff; margin-top:10px;">영상 전송하여 목록 만들기</button>
-            <p id="upload-status" class="status-msg"></p>
+            <p id="upload-status" style="font-size:12px; color:#007bff; margin-top:5px;"></p>
         </div>
 
         <div style="margin-top:25px; border-top:2px dashed #eee; padding-top:15px;">
             <p>🛠️ <strong>관리자 수정</strong></p>
             <input type="text" id="new-name" placeholder="서랍 이름 수정">
-            <textarea id="edit-items" rows="5" placeholder="물품 목록 (쉼표로 구분)"></textarea>
-            <button id="save-btn" style="background:#2e7d32;">목록 저장하기</button>
+            <textarea id="edit-items" rows="5" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;" placeholder="물품 목록"></textarea>
+            <button id="save-btn" style="background:#2e7d32; margin-top:10px;">목록 저장하기</button>
         </div>
     </div>
 
     <script type="module">
         import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"
-        
-        // Supabase 설정 [cite: 2026-02-15]
         const supabase = createClient("https://tqhtggusphhcsygiitrv.supabase.co", "sb_publishable_D9nhmN5ZlyApSrHHasyQ3w_O7Kdmssq")
         
-        // URL에서 태그 ID 추출 (예: ?tag=DRAWER001) [cite: 2026-02-15]
         const params = new URLSearchParams(window.location.search);
         const tagId = params.get("tag") || "MAIN0001";
 
-        // 초기화 로직
         async function init() {
             const { data: { user } } = await supabase.auth.getUser();
-            
             if (!user) {
                 document.getElementById("auth-section").style.display = "block";
                 return;
             }
 
-            // 태그 정보 불러오기 [cite: 2026-02-15]
-            const { data: tag, error } = await supabase.from("tags").select("*").eq("id", tagId).single();
+            const { data: tag } = await supabase.from("tags").select("*").eq("id", tagId).single();
 
+            // 보안 핵심: 주인 확인 로직 [cite: 2026-02-15]
             if (tag && user.id === tag.owner_id) {
                 document.getElementById("auth-section").style.display = "none";
                 document.getElementById("main-card").style.display = "block";
@@ -77,11 +71,12 @@
                 document.getElementById("edit-items").value = tag.items || "";
                 renderItems(tag.items || "");
             } else {
-                alert("접근 권한이 없거나 등록되지 않은 태그입니다.");
+                // 새로운 계정으로 로그인했을 때, 태그의 주인이 다르면 수정이 필요합니다.
+                alert("이 계정은 해당 태그(서랍)의 소유자가 아닙니다. Supabase 대시보드에서 owner_id를 수정하세요.");
+                document.getElementById("auth-section").style.display = "block";
             }
         }
 
-        // 물품 목록 렌더링
         function renderItems(itemsStr) {
             const container = document.getElementById("display-container");
             container.innerHTML = "";
@@ -94,57 +89,39 @@
             });
         }
 
-        // [기능 1] 로그인(Magic Link)
-        document.getElementById("login-btn").onclick = async () => {
+        // [추가] 비밀번호 로그인 버튼 [cite: 2026-02-15]
+        document.getElementById("password-login-btn").onclick = async () => {
             const email = document.getElementById("email-input").value;
-            const { error } = await supabase.auth.signInWithOtp({
-                email,
-                options: { emailRedirectTo: window.location.href }
-            });
-            if (error) alert("오류: " + error.message);
-            else alert("인증 메일을 보냈습니다. 메일함의 링크를 클릭하세요.");
+            const password = document.getElementById("password-input").value;
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            
+            if (error) alert("로그인 실패: " + error.message);
+            else location.reload();
         };
 
-        // [기능 2] 영상 업로드 (Storage 저장) [cite: 2026-02-15]
+        // 매직링크 로그인 (기존)
+        document.getElementById("login-btn").onclick = async () => {
+            const email = document.getElementById("email-input").value;
+            const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href } });
+            if (error) alert("오류: " + error.message);
+            else alert("인증 메일을 보냈습니다.");
+        };
+
+        // 영상 업로드 기능 [cite: 2026-02-15]
         document.getElementById("upload-btn").onclick = async () => {
             const fileInput = document.getElementById("video-input");
             const status = document.getElementById("upload-status");
-            if (!fileInput.files.length) return alert("영상을 먼저 촬영해 주세요.");
+            if (!fileInput.files.length) return alert("영상을 먼저 선택하세요.");
 
             const file = fileInput.files[0];
             const { data: { user } } = await supabase.auth.getUser();
             const filePath = `${user.id}/${tagId}_${Date.now()}.mp4`;
 
-            status.innerText = "🚀 영상을 전송 중입니다...";
+            status.innerText = "전송 중...";
             const { error } = await supabase.storage.from('user_uploads').upload(filePath, file);
 
-            if (error) {
-                alert("전송 실패: " + error.message);
-                status.innerText = "";
-            } else {
-                status.innerText = "✅ 전송 완료! AI 분석을 시작합니다.";
-                alert("영상이 저장되었습니다. 곧 목록이 업데이트됩니다.");
-            }
-        };
-
-        // [기능 3] 실시간 검색
-        document.getElementById("search-input").oninput = (e) => {
-            const word = e.target.value.toLowerCase();
-            document.querySelectorAll(".item-card").forEach(card => {
-                card.style.display = card.innerText.toLowerCase().includes(word) ? "flex" : "none";
-            });
-        };
-
-        // [기능 4] 목록 수동 저장
-        document.getElementById("save-btn").onclick = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            const { error } = await supabase.from("tags").update({ 
-                display_name: document.getElementById("new-name").value,
-                items: document.getElementById("edit-items").value 
-            }).eq("id", tagId).eq("owner_id", user.id);
-            
-            if (!error) { alert("저장되었습니다."); location.reload(); }
-            else alert("저장 실패: " + error.message);
+            if (error) alert("전송 실패: " + error.message);
+            else { status.innerText = "전송 완료!"; alert("영상이 성공적으로 전송되었습니다."); }
         };
 
         init();
