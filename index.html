@@ -6,29 +6,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body { font-family: sans-serif; padding: 20px; background: #f8f9fa; color: #333; }
-    .search-box { background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
-    input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-    .item-list { background: #fff; border-radius: 12px; padding: 10px; min-height: 200px; }
-    .item-card { padding: 15px; border-bottom: 1px solid #eee; display: flex; align-items: center; }
+    .card { background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none; }
+    #auth-section { background: #fff; padding: 25px; border-radius: 15px; border: 2px solid #333; }
+    input, textarea { width: 100%; margin: 10px 0; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+    button { width: 100%; padding: 12px; background: #333; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    .item-card { padding: 15px; border-bottom: 1px solid #eee; display: flex; align-items: center; background: #fff; }
     .item-card:last-child { border-bottom: none; }
-    .edit-section { margin-top: 30px; border-top: 1px dashed #ccc; padding-top: 20px; }
-    button { width: 100%; padding: 12px; background: #333; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    #search-input { border: 2px solid #333; margin-bottom: 20px; }
   </style>
 </head>
 <body>
 
-  <div class="search-box">
-    <h2 id="drawer-name">로딩 중...</h2>
-    <input type="text" id="search-input" placeholder="찾으시는 물건을 입력하세요">
+  <div id="auth-section">
+    <h2>🔒 보안 접속</h2>
+    <p>등록된 관리자 이메일로 인증해야<br>물품을 찾거나 수정할 수 있습니다.</p>
+    <input type="email" id="email-input" placeholder="이메일 입력">
+    <button id="login-btn">인증 메일 받기</button>
   </div>
 
-  <div class="item-list" id="display-container">
-    </div>
+  <div id="main-card" class="card">
+    <h2 id="drawer-name">데이터 로딩 중...</h2>
+    
+    <input type="text" id="search-input" placeholder="🔍 어떤 물건을 찾으시나요?">
+    
+    <div id="display-container" style="background:#f9f9f9; border-radius:10px; margin-bottom:20px;"></div>
 
-  <div class="edit-section">
-    <p>🛠️ <strong>관리자 수정</strong></p>
-    <textarea id="edit-items" rows="5" placeholder="물품 목록 (쉼표로 구분)"></textarea>
-    <button id="save-btn">목록 수정하기</button>
+    <div style="margin-top:25px; border-top:2px dashed #eee; padding-top:15px;">
+      <p>🛠️ <strong>관리자 수정</strong></p>
+      <input type="text" id="new-name" placeholder="서랍 이름 수정">
+      <textarea id="edit-items" rows="5" placeholder="물품 목록 (쉼표로 구분하여 입력)"></textarea>
+      <button id="save-btn" style="background:#2e7d32;">목록 저장하기</button>
+    </div>
   </div>
 
   <script type="module">
@@ -37,12 +45,36 @@
 
     const tagId = new URLSearchParams(window.location.search).get("tag") || "MAIN0001";
 
-    async function loadData() {
+    // 로그인 버튼 로직
+    document.getElementById("login-btn").onclick = async () => {
+      const email = document.getElementById("email-input").value;
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: window.location.href }
+      });
+      if (error) alert("오류: " + error.message);
+      else alert("인증 메일을 보냈습니다. 메일함의 링크를 클릭하세요.");
+    };
+
+    async function init() {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data: tag } = await supabase.from("tags").select("*").eq("id", tagId).single();
-      if (tag) {
+
+      if (!user) {
+        document.getElementById("auth-section").style.display = "block";
+        return;
+      }
+
+      // 주인 확인 로직 (보안 핵심)
+      if (tag && user.id === tag.owner_id) {
+        document.getElementById("auth-section").style.display = "none";
+        document.getElementById("main-card").style.display = "block";
         document.getElementById("drawer-name").innerText = tag.display_name;
+        document.getElementById("new-name").value = tag.display_name;
         document.getElementById("edit-items").value = tag.items || "";
         renderItems(tag.items || "");
+      } else {
+        alert("접근 권한이 없습니다.");
       }
     }
 
@@ -50,12 +82,6 @@
       const container = document.getElementById("display-container");
       container.innerHTML = "";
       const items = itemsStr.split(",").map(i => i.trim()).filter(i => i !== "");
-      
-      if (items.length === 0) {
-        container.innerHTML = "<p style='text-align:center; color:#999;'>등록된 물품이 없습니다.</p>";
-        return;
-      }
-
       items.forEach(item => {
         const div = document.createElement("div");
         div.className = "item-card";
@@ -64,7 +90,7 @@
       });
     }
 
-    // 실시간 검색 기능
+    // 실시간 검색 기능 (찾는 기능)
     document.getElementById("search-input").oninput = (e) => {
       const word = e.target.value.toLowerCase();
       document.querySelectorAll(".item-card").forEach(card => {
@@ -72,13 +98,19 @@
       });
     };
 
+    // 저장 로직
     document.getElementById("save-btn").onclick = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      const { error } = await supabase.from("tags").update({ items: document.getElementById("edit-items").value }).eq("id", tagId).eq("owner_id", user.id);
-      if (!error) { alert("수정되었습니다."); location.reload(); }
+      const { error } = await supabase.from("tags").update({ 
+        display_name: document.getElementById("new-name").value,
+        items: document.getElementById("edit-items").value 
+      }).eq("id", tagId).eq("owner_id", user.id);
+      
+      if (!error) { alert("성공적으로 저장되었습니다."); location.reload(); }
+      else alert("저장 실패: " + error.message);
     };
 
-    loadData();
+    init();
   </script>
 </body>
 </html>
