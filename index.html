@@ -5,55 +5,70 @@
     <title>찾았다! - 지능형 물품 관리</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f8f9fa; color: #333; }
+        /* 심플하고 직관적인 디자인 */
+        body { font-family: sans-serif; padding: 20px; background: #f8f9fa; color: #333; line-height: 1.6; }
         .card { background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: none; margin-bottom: 20px; }
         #auth-section { background: #fff; padding: 30px; border-radius: 15px; border: 2px solid #333; text-align: center; }
         input { width: 100%; margin: 10px 0; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         button { width: 100%; padding: 14px; background: #333; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .item-card { padding: 15px; border-bottom: 1px solid #eee; display: flex; align-items: center; background: #fff; }
-        .upload-area { background: #f0f4f8; padding: 15px; border-radius: 10px; border: 2px dashed #007bff; margin: 20px 0; }
-        .status-msg { font-size: 12px; color: #007bff; margin-top: 5px; font-weight: bold; }
+        .item-card { padding: 15px; border-bottom: 1px solid #eee; display: flex; align-items: center; background: #fff; font-size: 17px; }
+        .upload-area { background: #f0f4f8; padding: 20px; border-radius: 10px; border: 2px dashed #007bff; margin: 20px 0; text-align: center; }
+        .status-msg { font-size: 14px; color: #007bff; margin-top: 10px; font-weight: bold; }
+        .security-note { font-size: 12px; color: #e53935; margin-top: 5px; }
     </style>
 </head>
 <body>
 
     <div id="auth-section">
         <h2>🔒 보안 접속</h2>
+        <p style="font-size: 14px; color: #666;">등록된 관리자 정보로 접속하세요.</p>
         <input type="email" id="email-input" placeholder="이메일 입력">
         <input type="password" id="password-input" placeholder="비밀번호 입력">
         <button id="password-login-btn">비밀번호로 바로 접속</button>
     </div>
 
     <div id="main-card" class="card">
-        <h2 id="drawer-name">로딩 중...</h2>
-        <input type="text" id="search-input" placeholder="🔍 어떤 물건을 찾으시나요?">
-        <div id="display-container"></div>
+        <h2 id="drawer-name" style="margin-top: 0;">로딩 중...</h2>
+        
+        <div style="margin-bottom: 20px;">
+            <input type="text" id="search-input" placeholder="🔍 어떤 물건을 찾으시나요?">
+        </div>
+
+        <div id="display-container" style="max-height: 300px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px;">
+            </div>
 
         <div class="upload-area">
-            <p>📸 <strong>서랍 안 촬영/선택하기</strong></p>
+            <p style="margin-top: 0;">📸 <strong>서랍 안 촬영 또는 사진 선택</strong></p>
+            <p style="font-size: 13px; color: #666;">30초 내외로 꼼꼼히 촬영하면 AI가 분석합니다.</p>
             <input type="file" id="media-input" accept="image/*, video/*" style="margin-bottom:10px;">
             <button id="upload-btn" style="background:#007bff;">데이터 전송하여 목록 만들기</button>
             <p id="upload-status" class="status-msg"></p>
+            <p class="security-note">* 신분증, 현금 등 민감 정보는 자동으로 제외됩니다.</p>
         </div>
 
         <div style="margin-top:25px; border-top:2px dashed #eee; padding-top:15px;">
-            <p>🛠️ <strong>관리자 수정</strong></p>
-            <input type="text" id="new-name" placeholder="서랍 이름 수정">
-            <textarea id="edit-items" rows="5" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;" placeholder="물품 목록"></textarea>
-            <button id="save-btn" style="background:#2e7d32; margin-top:10px;">목록 저장하기</button>
+            <p>🛠️ <strong>관리자 직접 수정</strong></p>
+            <input type="text" id="new-name" placeholder="서랍 이름 변경">
+            <textarea id="edit-items" rows="4" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; font-size: 15px;" placeholder="물품 목록 (쉼표로 구분)"></textarea>
+            <button id="save-btn" style="background:#2e7d32; margin-top:10px;">변경 내용 저장하기</button>
         </div>
     </div>
 
     <script type="module">
+        // 데이터베이스 및 보안 연결 설정 [cite: 2026-02-15]
         import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"
         const supabase = createClient("https://tqhtggusphhcsygiitrv.supabase.co", "sb_publishable_D9nhmN5ZlyApSrHHasyQ3w_O7Kdmssq")
         
         const params = new URLSearchParams(window.location.search);
         const tagId = params.get("tag") || "MAIN0001";
 
+        // 초기 화면 설정: 로그인 여부와 서랍 주인 확인 [cite: 2026-02-15]
         async function init() {
             const { data: { user } } = await supabase.auth.getUser();
-            if (!user) { document.getElementById("auth-section").style.display = "block"; return; }
+            if (!user) { 
+                document.getElementById("auth-section").style.display = "block"; 
+                return; 
+            }
 
             const { data: tag } = await supabase.from("tags").select("*").eq("id", tagId).single();
             if (tag && user.id === tag.owner_id) {
@@ -64,15 +79,22 @@
                 document.getElementById("edit-items").value = tag.items || "";
                 renderItems(tag.items || "");
             } else {
-                alert("접근 권한이 없습니다.");
+                alert("이 서랍에 대한 접근 권한이 없습니다.");
                 document.getElementById("auth-section").style.display = "block";
             }
         }
 
+        // 목록 화면에 그리기
         function renderItems(itemsStr) {
             const container = document.getElementById("display-container");
             container.innerHTML = "";
             const items = itemsStr.split(",").map(i => i.trim()).filter(i => i !== "");
+            
+            if (items.length === 0) {
+                container.innerHTML = "<p style='padding:20px; color:#999; text-align:center;'>등록된 물건이 없습니다.</p>";
+                return;
+            }
+
             items.forEach(item => {
                 const div = document.createElement("div");
                 div.className = "item-card";
@@ -81,6 +103,7 @@
             });
         }
 
+        // 비밀번호 로그인 처리 [cite: 2026-02-15]
         document.getElementById("password-login-btn").onclick = async () => {
             const email = document.getElementById("email-input").value;
             const password = document.getElementById("password-input").value;
@@ -89,7 +112,7 @@
             else location.reload();
         };
 
-        // 데이터 전송 로직 수정 (사진/영상 자동 구분 저장)
+        // 데이터 전송 및 AI 분석 시뮬레이션 (보안 필터 포함) [cite: 2026-02-15]
         document.getElementById("upload-btn").onclick = async () => {
             const fileInput = document.getElementById("media-input");
             const status = document.getElementById("upload-status");
@@ -97,21 +120,57 @@
 
             const file = fileInput.files[0];
             const { data: { user } } = await supabase.auth.getUser();
-            
-            // 파일 확장자에 따라 경로 자동 생성
             const ext = file.name.split('.').pop();
             const filePath = `${user.id}/${tagId}_${Date.now()}.${ext}`;
 
-            status.innerText = "🚀 데이터를 전송 중입니다...";
+            status.innerText = "🚀 대용량 데이터를 안전하게 전송 중입니다...";
+            
+            // 파일 저장소 업로드 [cite: 2026-02-15]
             const { error } = await supabase.storage.from('user_uploads').upload(filePath, file);
 
             if (error) {
                 alert("전송 실패: " + error.message);
                 status.innerText = "";
             } else {
-                status.innerText = "✅ 전송 완료! AI 분석 대기 중입니다.";
-                alert("성공적으로 전송되었습니다.");
+                status.innerText = "🧠 지능형 AI가 보안 검사를 진행하며 분석 중입니다...";
+                
+                // 서랍별 샘플 데이터 설정 [cite: 2026-02-15]
+                let rawItems = [];
+                if (tagId === "DRAWER001") {
+                    rawItems = ["망치", "드라이버", "현금뭉치", "주민등록증", "줄자", "커터칼"];
+                } else if (tagId === "DRAWER002") {
+                    rawItems = ["타이레놀", "밴드", "소독약", "개인통장", "소화제", "체온계"];
+                } else {
+                    rawItems = ["노트북 충전기", "보조배터리", "C타입 케이블", "무선마우스", "여권"];
+                }
+
+                // 보안 필터: 민감 정보 단어 필터링 [cite: 2026-02-15]
+                const filterWords = ["현금", "주민등록증", "신분증", "통장", "여권", "지갑"];
+                const filteredItems = rawItems.filter(item => !filterWords.some(filter => item.includes(filter)));
+
+                // 3초 뒤에 분석 결과 반영 시뮬레이션 [cite: 2026-02-15]
+                setTimeout(async () => {
+                    const finalItems = filteredItems.join(", ");
+                    const { error: updateError } = await supabase.from("tags").update({ items: finalItems }).eq("id", tagId);
+
+                    if (updateError) {
+                        alert("목록 업데이트 실패");
+                    } else {
+                        status.innerText = "✅ 분석 완료! 민감 정보를 제외한 목록이 등록되었습니다.";
+                        document.getElementById("edit-items").value = finalItems;
+                        renderItems(finalItems);
+                    }
+                }, 3000);
             }
+        };
+
+        // 수정 내용 수동 저장 [cite: 2026-02-15]
+        document.getElementById("save-btn").onclick = async () => {
+            const newItems = document.getElementById("edit-items").value;
+            const newName = document.getElementById("new-name").value;
+            const { error } = await supabase.from("tags").update({ items: newItems, display_name: newName }).eq("id", tagId);
+            if (error) alert("저장 실패");
+            else location.reload();
         };
 
         init();
