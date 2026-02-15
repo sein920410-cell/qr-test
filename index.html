@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8" />
-    <title>찾았다! - 모바일 웹 시스템</title>
+    <title>찾았다! - 지능형 물품 관리</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { font-family: sans-serif; padding: 20px; background: #f8f9fa; color: #333; }
@@ -12,18 +12,16 @@
         button { width: 100%; padding: 14px; background: #333; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .item-card { padding: 15px; border-bottom: 1px solid #eee; display: flex; align-items: center; background: #fff; }
         .upload-area { background: #f0f4f8; padding: 15px; border-radius: 10px; border: 2px dashed #007bff; margin: 20px 0; }
+        .status-msg { font-size: 12px; color: #007bff; margin-top: 5px; font-weight: bold; }
     </style>
 </head>
-<body> 
+<body>
 
     <div id="auth-section">
         <h2>🔒 보안 접속</h2>
-        <p>테스트 계정으로 로그인하세요.</p>
         <input type="email" id="email-input" placeholder="이메일 입력">
-        <input type="password" id="password-input" placeholder="비밀번호 입력 (테스트용)">
-        <button id="password-login-btn" style="margin-bottom:10px; background:#444;">비밀번호로 바로 접속</button>
-        <hr>
-        <button id="login-btn" style="background:#eee; color:#333;">인증 메일로 접속 (현재 제한됨)</button>
+        <input type="password" id="password-input" placeholder="비밀번호 입력">
+        <button id="password-login-btn">비밀번호로 바로 접속</button>
     </div>
 
     <div id="main-card" class="card">
@@ -32,10 +30,10 @@
         <div id="display-container"></div>
 
         <div class="upload-area">
-            <p>🎥 <strong>서랍 안 촬영하기</strong></p>
-            <input type="file" id="video-input" accept="video/*" capture="environment">
-            <button id="upload-btn" style="background:#007bff; margin-top:10px;">영상 전송하여 목록 만들기</button>
-            <p id="upload-status" style="font-size:12px; color:#007bff; margin-top:5px;"></p>
+            <p>📸 <strong>서랍 안 촬영/선택하기</strong></p>
+            <input type="file" id="media-input" accept="image/*, video/*" style="margin-bottom:10px;">
+            <button id="upload-btn" style="background:#007bff;">데이터 전송하여 목록 만들기</button>
+            <p id="upload-status" class="status-msg"></p>
         </div>
 
         <div style="margin-top:25px; border-top:2px dashed #eee; padding-top:15px;">
@@ -55,14 +53,9 @@
 
         async function init() {
             const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                document.getElementById("auth-section").style.display = "block";
-                return;
-            }
+            if (!user) { document.getElementById("auth-section").style.display = "block"; return; }
 
             const { data: tag } = await supabase.from("tags").select("*").eq("id", tagId).single();
-
-            // 보안 핵심: 주인 확인 로직 [cite: 2026-02-15]
             if (tag && user.id === tag.owner_id) {
                 document.getElementById("auth-section").style.display = "none";
                 document.getElementById("main-card").style.display = "block";
@@ -71,8 +64,7 @@
                 document.getElementById("edit-items").value = tag.items || "";
                 renderItems(tag.items || "");
             } else {
-                // 새로운 계정으로 로그인했을 때, 태그의 주인이 다르면 수정이 필요합니다.
-                alert("이 계정은 해당 태그(서랍)의 소유자가 아닙니다. Supabase 대시보드에서 owner_id를 수정하세요.");
+                alert("접근 권한이 없습니다.");
                 document.getElementById("auth-section").style.display = "block";
             }
         }
@@ -89,39 +81,37 @@
             });
         }
 
-        // [추가] 비밀번호 로그인 버튼 [cite: 2026-02-15]
         document.getElementById("password-login-btn").onclick = async () => {
             const email = document.getElementById("email-input").value;
             const password = document.getElementById("password-input").value;
             const { error } = await supabase.auth.signInWithPassword({ email, password });
-            
             if (error) alert("로그인 실패: " + error.message);
             else location.reload();
         };
 
-        // 매직링크 로그인 (기존)
-        document.getElementById("login-btn").onclick = async () => {
-            const email = document.getElementById("email-input").value;
-            const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href } });
-            if (error) alert("오류: " + error.message);
-            else alert("인증 메일을 보냈습니다.");
-        };
-
-        // 영상 업로드 기능 [cite: 2026-02-15]
+        // 데이터 전송 로직 수정 (사진/영상 자동 구분 저장)
         document.getElementById("upload-btn").onclick = async () => {
-            const fileInput = document.getElementById("video-input");
+            const fileInput = document.getElementById("media-input");
             const status = document.getElementById("upload-status");
-            if (!fileInput.files.length) return alert("영상을 먼저 선택하세요.");
+            if (!fileInput.files.length) return alert("사진이나 영상을 선택하세요.");
 
             const file = fileInput.files[0];
             const { data: { user } } = await supabase.auth.getUser();
-            const filePath = `${user.id}/${tagId}_${Date.now()}.mp4`;
+            
+            // 파일 확장자에 따라 경로 자동 생성
+            const ext = file.name.split('.').pop();
+            const filePath = `${user.id}/${tagId}_${Date.now()}.${ext}`;
 
-            status.innerText = "전송 중...";
+            status.innerText = "🚀 데이터를 전송 중입니다...";
             const { error } = await supabase.storage.from('user_uploads').upload(filePath, file);
 
-            if (error) alert("전송 실패: " + error.message);
-            else { status.innerText = "전송 완료!"; alert("영상이 성공적으로 전송되었습니다."); }
+            if (error) {
+                alert("전송 실패: " + error.message);
+                status.innerText = "";
+            } else {
+                status.innerText = "✅ 전송 완료! AI 분석 대기 중입니다.";
+                alert("성공적으로 전송되었습니다.");
+            }
         };
 
         init();
