@@ -1,9 +1,10 @@
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
+  const { image } = req.body;
+  
   try {
-    const { image } = req.body;
-    // 주소를 v1beta에서 v1으로 변경했습니다.
-    const response = await fetch("https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=" + process.env.GEMINI_API_KEY, {
+    // 다시 v1beta로 주소를 바꿨습니다.
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + process.env.GEMINI_API_KEY, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -13,8 +14,13 @@ module.exports = async (req, res) => {
         ]}]
       })
     });
+
     const data = await response.json();
-    if (data.error) return res.status(500).json({ error: data.error.message });
+    
+    if (data.error) {
+      return res.status(500).json({ error: data.error.message });
+    }
+    
     const result = data.candidates[0].content.parts[0].text;
     res.status(200).json({ result });
   } catch (err) {
