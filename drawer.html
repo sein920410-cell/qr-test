@@ -1,23 +1,26 @@
-<div class="media-slider">
-    <video controls width="100%">
-        <source src="drawer_video.mp4" type="video/mp4">
-        내부 확인 영상
-    </video>
-    <img src="drawer_photo.jpg" alt="서랍 내부 사진" width="100%">
-</div>
+const supabaseUrl = 'https://tqhtggusphhcsygiitrv.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc';
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-<div class="inventory-section">
-    <h3>📦 보관 물품 목록 (상태 확인)</h3>
-    <ul id="checklist">
-        <li><input type="checkbox"> 베베앙 물티슈 (3개)</li>
-        <li><input type="checkbox"> 일리윤 여성청결제</li>
-        <li><input type="checkbox"> 려 트리트먼트</li>
-        <li><input type="checkbox"> 소화기 (1대)</li>
-    </ul>
-</div>
+async function loadDrawerData() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const drawerId = urlParams.get('id');
 
-<div class="admin-buttons">
-    <button onclick="editMode()" style="width: 100%; padding: 15px; background: #007bff; color: white;">
-        물품 정보 및 사진 수정하기
-    </button>
-</div>
+    const { data, error } = await supabase
+        .from('items')
+        .select('*')
+        .eq('drawer_no', drawerId);
+
+    if (data && data.length > 0) {
+        // 사진 및 영상 우선 노출
+        document.querySelector('video').src = data[0].video_url;
+        document.querySelector('img').src = data[0].image_url;
+
+        // 물품 체크리스트 생성
+        const list = document.getElementById('checklist');
+        list.innerHTML = data.map(item => `
+            <li><input type="checkbox"> ${item.product_name}</li>
+        `).join('');
+    }
+}
+loadDrawerData();
