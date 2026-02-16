@@ -1,107 +1,31 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <title>찾았다! - 서랍 관리</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: sans-serif; padding: 15px; background: #f4f7f6; color: #333; display: block !important; }
-        .card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
-        .drawer-badge { background: #1a1a1a; color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 12px; margin-bottom: 10px; display: inline-block; }
-        .main-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; border-bottom: 2px solid #1a1a1a; padding-bottom: 10px; }
-        .media-box { width: 100%; min-height: 200px; background: #eee; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 15px; border: 2px dashed #ccc; }
-        .media-box img, .media-box video { width: 100%; height: auto; display: block; }
-        textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 15px; min-height: 180px; margin-bottom: 10px; line-height: 1.6; }
-        button { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }
-        .btn-upload { background: #007bff; color: #fff; margin-bottom: 10px; }
-        .btn-save { background: #28a745; color: #fff; }
-        #status-msg { font-size: 14px; text-align: center; margin: 10px 0; font-weight: bold; color: #666; }
+        body { font-family: sans-serif; padding: 15px; background: #f4f7f6; }
+        .card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .drawer-badge { background: #1a1a1a; color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 12px; display: inline-block; }
+        textarea { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; min-height: 250px; margin-top: 15px; line-height: 1.6; box-sizing: border-box; }
     </style>
 </head>
 <body>
     <div class="card">
         <div class="drawer-badge"><span id="drawer-id-display">...</span>번 서랍</div>
-        <div class="main-title">내용물 등록/수정</div>
-        
-        <div class="media-box" id="media-preview">사진/영상이 여기에 표시됩니다.</div>
-        
-        <input type="file" id="file-input" accept="image/*" style="display: none;">
-        <button class="btn-upload" onclick="document.getElementById('file-input').click()">📷 사진 찍기 / 업로드</button>
-        
-        <div id="status-msg">사진을 선택해 주세요.</div>
-        
-        <textarea id="items-list" placeholder="분석 결과가 여기에 나타납니다."></textarea>
-        
-        <button class="btn-save" onclick="saveData()">💾 저장하기</button>
+        <textarea id="items-list" readonly></textarea>
     </div>
- 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-        const drawerId = urlParams.get('tag') || 'DRAWER001';
+        const drawerId = (urlParams.get('tag') || 'DRAWER001').toUpperCase();
         document.getElementById('drawer-id-display').innerText = drawerId;
 
-        // 사용자님이 요청하신 수량 및 칸별 구분 데이터
-        const mockDataStore = {
-            "DRAWER001": {
-                "text": "서랍1: 쫀디기 1개, 컵홀더 1개, 금박비닐 1개, 핫팩(발/손) 다수, 수중집어등 1개, 칼 1개, 나무꼬챙이 다수, 종이컵 1뭉치, 맥심 커피믹스 다수, 손전등 1개, 메쉬 파우치 1개, 흰색 케이스 1개, 지퍼백 다수, 숟가락 1개, 주황색 도구 1개, 비닐 롤 1개 보관 중", [cite: 2026-02-15, 2026-02-16]
-                "url": "" // 수파베이스에서 복사한 서랍1 영상 주소를 여기에 넣으세요
-            },
-            "DRAWER002": {
-                "text": "서랍2\n상단 칸: 베베앙 물티슈 3개, 검정 파우치 1개\n두 번째 칸: 일리윤 온가족 여성청결제 1개, 려 트리트먼트 1개, 만능 클리너 1개, 쿨링 스프레이 1개, NOW 영양제 1개, 빨간색 용기 1개, 기타 세정제 다수\n세 번째 칸: 베베앙 물티슈 2개, 흰색 메쉬 바구니 1개, 노란색 보관함 1개, 캐릭터 소품 1개\n하단 칸: 소화기 1대, 우산 다수, 밀대 걸레 1개 보관 중", [cite: 2026-02-15, 2026-02-16]
-                "url": "" // 수파베이스에서 복사한 서랍2 사진 주소를 여기에 넣으세요
-            }
+        const dataStore = {
+            "DRAWER001": "서랍1 목록:\n- 쫀디기 1개\n- 컵홀더 1개\n- 금박비닐 1개\n- 핫팩(발/손) 다수\n- 수중집어등 1개\n- 칼 1개\n- 나무꼬챙이 다수\n- 종이컵 1뭉치\n- 커피믹스 다수\n- 손전등 1개\n- 메쉬 파우치 1개\n- 흰색 케이스 1개\n- 지퍼백 다수\n- 숟가락 1개\n- 주황색 도구 1개\n- 비닐 롤 1개",
+            "DRAWER002": "서랍2 목록:\n[상단 칸]\n- 베베앙 물티슈 3개\n- 검정 파우치 1개\n\n[두 번째 칸]\n- 일리윤 온가족 여성청결제 1개\n- 려 트리트먼트 1개\n- 만능 클리너 1개\n- 쿨링 스프레이 1개\n- NOW 영양제 1개\n- 빨간색 용기 1개\n- 기타 세정제 다수\n\n[세 번째 칸]\n- 베베앙 물티슈 2개\n- 흰색 메쉬 바구니 1개\n- 노란색 보관함 1개\n- 캐릭터 소품 1개\n\n[하단 칸]\n- 소화기 1대\n- 우산 다수\n- 밀대 걸레 1개"
         };
-
-        const fileInput = document.getElementById('file-input');
-        const mediaPreview = document.getElementById('media-preview');
-        const itemsList = document.getElementById('items-list');
-        const statusMsg = document.getElementById('status-msg');
-
-        fileInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            // 미리보기 로직
-            const reader = new FileReader();
-            reader.onload = (e) => { mediaPreview.innerHTML = `<img src="${e.target.result}">`; };
-            reader.readAsDataURL(file);
-
-            statusMsg.innerText = "🔍 실시간 AI 분석 중...";
-            statusMsg.style.color = "#007bff";
-
-            try {
-                const response = await fetch('/api/analyze', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ image: 'dummy-data' }), // 시현용
-                    signal: AbortSignal.timeout(5000)
-                });
-                const data = await response.json();
-                if (!data.result) throw new Error();
-                itemsList.value = data.result;
-            } catch (err) {
-                // 실패 시 표준 모드 작동
-                statusMsg.innerText = "⏳ 표준 분석 데이터로 전환합니다..."; [cite: 2026-01-11]
-                setTimeout(() => {
-                    const data = mockDataStore[drawerId] || { text: "등록된 정보가 없습니다.", url: "" };
-                    itemsList.value = data.text;
-                    
-                    // 수파베이스 주소가 있으면 해당 영상/사진으로 교체
-                    if (data.url) {
-                        if (data.url.includes('.mp4')) {
-                            mediaPreview.innerHTML = `<video src="${data.url}" autoplay loop muted playsinline></video>`;
-                        } else {
-                            mediaPreview.innerHTML = `<img src="${data.url}">`;
-                        }
-                    }
-                    
-                    statusMsg.innerText = "✅ 표준 데이터 로드 완료!";
-                    statusMsg.style.color = "#28a745";
-                }, 1000);
-            }
-        });
-
-        function saveData() { alert("저장되었습니다!"); }
+        document.getElementById('items-list').value = dataStore[drawerId] || "등록된 정보가 없습니다.";
     </script>
 </body>
 </html>
