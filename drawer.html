@@ -1,26 +1,76 @@
-const supabaseUrl = 'https://tqhtggusphhcsygiitrv.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc';
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>서랍 상세 관리</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 0; }
+        .media-container { width: 100%; background: #000; text-align: center; }
+        video, img { width: 100%; max-height: 300px; object-fit: contain; display: block; }
+        .content { padding: 20px; }
+        .checklist { list-style: none; padding: 0; }
+        .checklist li { padding: 12px; border-bottom: 1px solid #eee; display: flex; align-items: center; }
+        .checklist input { margin-right: 15px; transform: scale(1.5); }
+        .footer-btn { position: fixed; bottom: 0; width: 100%; padding: 20px; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
+        .edit-btn { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="media-container">
+        <video id="drawerVideo" controls style="display:none;"></video>
+        <img id="drawerImage" src="" alt="서랍 내부" style="display:none;">
+    </div>
 
-async function loadDrawerData() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const drawerId = urlParams.get('id');
+    <div class="content">
+        <h3 id="drawerTitle">서랍 정보 로딩 중...</h3>
+        <ul id="checklist" class="checklist"></ul>
+    </div>
 
-    const { data, error } = await supabase
-        .from('items')
-        .select('*')
-        .eq('drawer_no', drawerId);
+    <div class="footer-btn">
+        <button class="edit-btn" onclick="alert('수정 페이지로 이동합니다.')">물품 정보 및 사진 수정하기</button>
+    </div>
 
-    if (data && data.length > 0) {
-        // 사진 및 영상 우선 노출
-        document.querySelector('video').src = data[0].video_url;
-        document.querySelector('img').src = data[0].image_url;
+    <script>
+        const supabaseUrl = 'https://tqhtggusphhcsygiitrv.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc';
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-        // 물품 체크리스트 생성
-        const list = document.getElementById('checklist');
-        list.innerHTML = data.map(item => `
-            <li><input type="checkbox"> ${item.product_name}</li>
-        `).join('');
-    }
-}
-loadDrawerData();
+        async function loadDrawer() {
+            const params = new URLSearchParams(window.location.search);
+            const drawerId = params.get('id');
+            if (!drawerId) return;
+
+            document.getElementById('drawerTitle').innerText = `${drawerId}번 서랍 보관 물품`;
+
+            const { data, error } = await supabaseClient
+                .from('items') [cite: 2026-02-15]
+                .select('*')
+                .eq('drawer_no', drawerId);
+
+            if (data && data.length > 0) {
+                // 영상/사진 표시 로직 [cite: 2026-02-15]
+                const video = document.getElementById('drawerVideo');
+                const img = document.getElementById('drawerImage');
+                
+                if (data[0].video_url) {
+                    video.src = data[0].video_url;
+                    video.style.display = 'block';
+                }
+                if (data[0].image_url) {
+                    img.src = data[0].image_url;
+                    img.style.display = 'block';
+                }
+
+                // 체크리스트 생성 [cite: 2026-01-11]
+                const list = document.getElementById('checklist');
+                list.innerHTML = data.map(item => `
+                    <li><input type="checkbox"> ${item.product_name}</li>
+                `).join('');
+            }
+        }
+        loadDrawer();
+    </script>
+</body>
+</html>
