@@ -1,41 +1,38 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <title>찾았다! - 메인 검색</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body { font-family: sans-serif; padding: 15px; background: #f4f7f6; }
-        .search-container { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
-        input#search-input { width: 100%; padding: 15px; border: 2px solid #007bff; border-radius: 8px; font-size: 16px; box-sizing: border-box; outline: none; }
-        .result-card { background: #fff; border-radius: 10px; margin-top: 10px; padding: 15px; border: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-        .btn-go { background: #1a1a1a; color: #fff; padding: 8px 12px; border-radius: 5px; text-decoration: none; font-size: 13px; }
-    </style>
-</head>
-<body>
-    <div class="search-container">
-        <h3 style="margin-top:0">🔍 무엇을 찾으시나요?</h3>
-        <input type="text" id="search-input" placeholder="예: 트리트, 물티슈..." oninput="handleSearch()">
-        <div id="results-list"></div>
-    </div>
-    <script>
-        const drawerDatabase = [
-            { id: "DRAWER001", name: "서랍 1번", items: ["쫀디기", "컵홀더", "금박비닐", "핫팩", "수중집어등", "칼", "나무꼬챙이", "종이컵", "커피믹스", "손전등"] },
-            { id: "DRAWER002", name: "서랍 2번", items: ["물티슈", "여성청결제", "트리트먼트", "클리너", "스프레이", "영양제", "소화기", "우산", "걸레"] }
-        ];
-        function handleSearch() {
-            const query = document.getElementById('search-input').value.trim();
-            const resultsContainer = document.getElementById('results-list');
-            resultsContainer.innerHTML = '';
-            if (!query) return;
-            const matched = drawerDatabase.filter(d => d.items.some(item => item.includes(query)));
-            matched.forEach(d => {
-                const div = document.createElement('div');
-                div.className = 'result-card';
-                div.innerHTML = `<div><strong>📦 ${d.name}</strong><p style="margin:5px 0 0; font-size:12px; color:#666">보관 중</p></div><a href="drawer.html?tag=${d.id}" class="btn-go">상세보기 ></a>`;
-                resultsContainer.appendChild(div);
-            });
-        }
-    </script>
-</body>
-</html>
+<div class="search-container">
+    <input type="text" id="searchInput" placeholder="무엇을 찾으시나요? (2자 이상)" onkeyup="handleSearch()">
+</div>
+
+<div id="resultList"></div>
+
+<script>
+// 샘플 데이터 (사용자님의 실제 보관 데이터 기반)
+const inventory = [
+    { name: "물티슈", location: "서랍 2번 [상단 첫번째]", link: "drawer2.html" },
+    { name: "물티슈", location: "서랍 2번 [3단 세번째]", link: "drawer2.html" },
+    { name: "트리트먼트", location: "서랍 2번 [2단]", link: "drawer2.html" },
+    { name: "우산", location: "서랍 2번 [하단]", link: "drawer2.html" },
+    { name: "쫀디기", location: "서랍 1번", link: "drawer1.html" }
+];
+
+function handleSearch() {
+    const query = document.getElementById('searchInput').value;
+    const resultList = document.getElementById('resultList');
+    resultList.innerHTML = '';
+
+    // 2자 이상일 때만 검색 실행 [cite: 2026-02-16]
+    if (query.length >= 2) {
+        const filtered = inventory.filter(item => item.name.includes(query));
+        
+        filtered.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'result-item';
+            // [물건명] → [위치] 형식으로 표시 [cite: 2026-02-16]
+            div.innerHTML = `
+                <span>📦 ${item.name} → <strong>${item.location}</strong></span>
+                <button onclick="location.href='${item.link}'">상세보기</button>
+            `;
+            resultList.appendChild(div);
+        });
+    }
+}
+</script>
