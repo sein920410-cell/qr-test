@@ -1,31 +1,23 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <title>찾았다! - 서랍 관리</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body { font-family: sans-serif; padding: 15px; background: #f4f7f6; }
-        .card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .drawer-badge { background: #1a1a1a; color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 12px; display: inline-block; }
-        textarea { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; min-height: 250px; margin-top: 15px; line-height: 1.6; box-sizing: border-box; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <div class="drawer-badge"><span id="drawer-id-display">...</span>번 서랍</div>
-        <textarea id="items-list" readonly></textarea>
-    </div>
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const drawerId = (urlParams.get('tag') || 'DRAWER001').toUpperCase();
-        document.getElementById('drawer-id-display').innerText = drawerId;
+<div class="media-slider">
+    <video controls width="100%">
+        <source src="drawer_video.mp4" type="video/mp4">
+        내부 확인 영상
+    </video>
+    <img src="drawer_photo.jpg" alt="서랍 내부 사진" width="100%">
+</div>
 
-        const dataStore = {
-            "DRAWER001": "서랍1 목록:\n- 쫀디기 1개\n- 컵홀더 1개\n- 금박비닐 1개\n- 핫팩(발/손) 다수\n- 수중집어등 1개\n- 칼 1개\n- 나무꼬챙이 다수\n- 종이컵 1뭉치\n- 커피믹스 다수\n- 손전등 1개\n- 메쉬 파우치 1개\n- 흰색 케이스 1개\n- 지퍼백 다수\n- 숟가락 1개\n- 주황색 도구 1개\n- 비닐 롤 1개",
-            "DRAWER002": "서랍2 목록:\n[상단 칸]\n- 베베앙 물티슈 3개\n- 검정 파우치 물티슈 1개\n\n[두 번째 칸]\n- 일리윤 온가족 여성청결제 1개\n- 려 트리트먼트 1개\n- 만능 클리너 1개\n- 쿨링 스프레이 1개\n- NOW 영양제 1개\n- 빨간색 용기 1개\n- 기타 세정제 다수\n\n[세 번째 칸]\n- 베베앙 물티슈 2개\n- 흰색 메쉬 바구니 1개\n- 노란색 보관함 1개\n- 캐릭터 소품 1개\n\n[하단 칸]\n- 소화기 1대\n- 우산 다수\n- 밀대 걸레 1개"
-        };
-        document.getElementById('items-list').value = dataStore[drawerId] || "등록된 정보가 없습니다.";
-    </script>
-</body>
-</html>
+<div class="inventory-section">
+    <h3>📦 보관 물품 목록 (상태 확인)</h3>
+    <ul id="checklist">
+        <li><input type="checkbox"> 베베앙 물티슈 (3개)</li>
+        <li><input type="checkbox"> 일리윤 여성청결제</li>
+        <li><input type="checkbox"> 려 트리트먼트</li>
+        <li><input type="checkbox"> 소화기 (1대)</li>
+    </ul>
+</div>
+
+<div class="admin-buttons">
+    <button onclick="editMode()" style="width: 100%; padding: 15px; background: #007bff; color: white;">
+        물품 정보 및 사진 수정하기
+    </button>
+</div>
