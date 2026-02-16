@@ -2,52 +2,76 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>찾았다! - 메인 지도</title>
+    <title>찾았다! - 메인 검색</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { font-family: sans-serif; padding: 15px; background: #f4f7f6; color: #333; }
-        .card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
-        .main-title { font-size: 22px; font-weight: bold; margin-bottom: 20px; color: #1a1a1a; }
-        input[type="text"] { width: 100%; padding: 15px; border: 2px solid #007bff; border-radius: 8px; box-sizing: border-box; font-size: 16px; margin-bottom: 20px; outline: none; }
-        .result-item { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .drawer-name { font-weight: bold; color: #007bff; margin-bottom: 4px; }
-        .item-list { font-size: 14px; color: #666; }
+        .search-container { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+        .search-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; }
+        input#search-input { width: 100%; padding: 15px; border: 2px solid #007bff; border-radius: 8px; font-size: 16px; box-sizing: border-box; outline: none; }
+        #results-list { margin-top: 15px; }
+        .result-card { background: #fff; border-radius: 10px; margin-bottom: 10px; padding: 15px; border: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .drawer-info strong { color: #007bff; font-size: 16px; }
+        .drawer-info p { margin: 5px 0 0; font-size: 13px; color: #666; }
+        .btn-go { background: #1a1a1a; color: #fff; padding: 8px 12px; border-radius: 5px; text-decoration: none; font-size: 13px; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <div class="main-title">🔍 무엇을 찾으시나요?</div>
-        <input type="text" id="search-input" placeholder="예: 망치, 양말, 줄자..." oninput="searchItems()">
-        <div id="search-results">
-            <p style="text-align:center; color:#999; margin-top: 20px;">검색어를 입력하면 위치를 찾아드립니다.</p>
+
+<div class="search-container">
+    <div class="search-title">🔍 무엇을 찾으시나요?</div>
+    <input type="text" id="search-input" placeholder="예: 트리트, 물티슈, 망치..." oninput="handleSearch()">
+    
+    <div id="results-list">
         </div>
-    </div>
+</div>
 
-    <script type="module">
-        import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"
-        const supabase = createClient("https://tqhtggusphhcsygiitrv.supabase.co", "sb_publishable_D9nhmN5ZlyApSrHHasyQ3w_O7Kdmssq")
+<script>
+    // 서랍별 물건 데이터베이스 (사용자님이 정리한 목록 반영)
+    const drawerDatabase = [
+        {
+            id: "DRAWER001",
+            name: "서랍 1번",
+            items: ["쫀디기", "컵홀더", "금박비닐", "핫팩", "수중집어등", "칼", "나무꼬챙이", "종이컵", "커피믹스", "손전등", "메쉬 파우치", "흰색 케이스", "지퍼백", "숟가락", "주황색 도구", "비닐 롤"] [cite: 2026-02-15, 2026-02-16]
+        },
+        {
+            id: "DRAWER002",
+            name: "서랍 2번",
+            items: ["베베앙 물티슈", "검정 파우치", "일리윤 여성청결제", "려 트리트먼트", "만능 클리너", "쿨링 스프레이", "NOW 영양제", "빨간색 용기", "세정제", "메쉬 바구니", "노란색 보관함", "캐릭터 소품", "소화기", "우산", "밀대 걸레"] [cite: 2026-02-15, 2026-02-16]
+        }
+    ];
 
-        window.searchItems = async () => {
-            const query = document.getElementById("search-input").value;
-            const resultsDiv = document.getElementById("search-results");
-            if (!query.trim()) { resultsDiv.innerHTML = ""; return; }
+    function handleSearch() {
+        const query = document.getElementById('search-input').value.trim();
+        const resultsContainer = document.getElementById('results-list');
+        resultsContainer.innerHTML = ''; // 기존 결과 초기화
 
-            const { data: results } = await supabase.from("tags").select("*").ilike("items", `%${query}%`);
+        if (query === '') return; // 아무것도 안 쳤으면 종료
 
-            if (results && results.length > 0) {
-                resultsDiv.innerHTML = results.map(res => `
-                    <div class="result-item" onclick="location.href='drawer.html?tag=${res.id}'">
-                        <div>
-                            <div class="drawer-name">📦 ${res.display_name || '서랍'}</div>
-                            <div class="item-list">${res.items}</div>
-                        </div>
-                        <span>〉</span>
-                    </div>
-                `).join("");
-            } else {
-                resultsDiv.innerHTML = "<p style='text-align:center; color:#999; margin-top: 40px;'>해당 물건을 찾을 수 없습니다.</p>";
-            }
-        };
-    </script>
+        // 검색 로직: 글자가 포함되어 있는지 확인 (부분 일치)
+        const matchedDrawers = drawerDatabase.filter(drawer => 
+            drawer.items.some(item => item.includes(query)) [cite: 2026-01-11]
+        );
+
+        if (matchedDrawers.length === 0) {
+            resultsContainer.innerHTML = '<p style="text-align:center; color:#999; margin-top:20px;">연관된 물건을 찾을 수 없습니다.</p>';
+            return;
+        }
+
+        matchedDrawers.forEach(drawer => {
+            const card = document.createElement('div');
+            card.className = 'result-card';
+            card.innerHTML = `
+                <div class="drawer-info">
+                    <strong>📦 ${drawer.name}</strong>
+                    <p>위치보관 중</p>
+                </div>
+                <a href="drawer.html?tag=${drawer.id}" class="btn-go">상세보기 ></a>
+            `;
+            resultsContainer.appendChild(card);
+        });
+    }
+</script>
+
 </body>
 </html>
