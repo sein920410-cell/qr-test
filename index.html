@@ -1,44 +1,27 @@
-<script>
-    // 1. 사용자님의 실제 데이터 (서버 연결 실패 시 백업용) [cite: 2026-02-15]
-    const backupData = [
-        { name: "쫀디기", loc: "서랍 1번", id: 1 },
-        { name: "핫팩", loc: "서랍 1번", id: 1 },
-        { name: "수중집어등", loc: "서랍 1번", id: 1 },
-        { name: "베베앙 물티슈", loc: "서랍 2번 [상단]", id: 2 },
-        { name: "여성청결제", loc: "서랍 2번 [2단]", id: 2 },
-        { name: "려 트리트먼트", loc: "서랍 2번 [2단]", id: 2 },
-        { name: "소화기", loc: "서랍 2번 [하단]", id: 2 },
-        { name: "우산", loc: "서랍 2번 [하단]", id: 2 }
-    ];
+// <script> 부분만 이 내용으로 싹 다 바꾸세요.
+const myInventory = [
+    { name: "쫀디기", loc: "서랍 1번", id: "1" },
+    { name: "핫팩", loc: "서랍 1번", id: "1" },
+    { name: "수중집어등", loc: "서랍 1번", id: "1" },
+    { name: "베베앙 물티슈", loc: "서랍 2번 [상단]", id: "2" },
+    { name: "여성청결제", loc: "서랍 2번 [2단]", id: "2" },
+    { name: "려 트리트먼트", loc: "서랍 2번 [2단]", id: "2" },
+    { name: "소화기", loc: "서랍 2번 [하단]", id: "2" }
+];
 
-    async function handleSearch() {
-        const query = document.getElementById('searchInput').value;
-        const resultList = document.getElementById('resultList');
-        resultList.innerHTML = '';
+function handleSearch() {
+    const val = document.getElementById('searchInput').value;
+    const list = document.getElementById('resultList');
+    list.innerHTML = '';
 
-        if (query.length < 2) return; // 2자 미만은 무시 [cite: 2026-02-16]
-
-        try {
-            // 수파베이스 시도 [cite: 2026-02-15]
-            const { data, error } = await supabase.from('items').select('*').ilike('product_name', `%${query}%`);
-            
-            if (error || !data || data.length === 0) throw new Error(); 
-
-            data.forEach(item => {
-                renderItem(item.product_name, `${item.drawer_no}번 서랍 [${item.position}]`, item.drawer_no);
-            });
-        } catch (e) {
-            // 서버 실패 시 백업 데이터에서 검색 (Standard Mode) [cite: 2026-02-16]
-            const filtered = backupData.filter(item => item.name.includes(query));
-            filtered.forEach(item => renderItem(item.name, item.loc, item.id));
-        }
+    if (val.length >= 2) { // 딱 2글자부터 반응 [cite: 2026-02-16]
+        const found = myInventory.filter(i => i.name.includes(val));
+        found.forEach(i => {
+            list.innerHTML += `
+                <div style="padding:10px; border-bottom:1px solid #ddd;">
+                    📦 ${i.name} → <strong>${i.loc}</strong> 
+                    <button onclick="location.href='drawer.html?id=${i.id}'">상세보기</button>
+                </div>`;
+        });
     }
-
-    function renderItem(name, loc, id) {
-        document.getElementById('resultList').innerHTML += `
-            <div class="result-item">
-                <span>📦 ${name} → <strong>${loc}</strong></span>
-                <button onclick="location.href='drawer.html?id=${id}'">상세보기</button>
-            </div>`;
-    }
-</script>
+}
