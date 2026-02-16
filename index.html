@@ -1,38 +1,34 @@
-<div class="search-container">
-    <input type="text" id="searchInput" placeholder="무엇을 찾으시나요? (2자 이상)" onkeyup="handleSearch()">
-</div>
+const supabaseUrl = 'https://tqhtggusphhcsygiitrv.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc';
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-<div id="resultList"></div>
+let inventory = [];
 
-<script>
-// 샘플 데이터 (사용자님의 실제 보관 데이터 기반)
-const inventory = [
-    { name: "물티슈", location: "서랍 2번 [상단 첫번째]", link: "drawer2.html" },
-    { name: "물티슈", location: "서랍 2번 [3단 세번째]", link: "drawer2.html" },
-    { name: "트리트먼트", location: "서랍 2번 [2단]", link: "drawer2.html" },
-    { name: "우산", location: "서랍 2번 [하단]", link: "drawer2.html" },
-    { name: "쫀디기", location: "서랍 1번", link: "drawer1.html" }
-];
+async function loadInventory() {
+    const { data, error } = await supabase.from('items').select('*');
+    if (error) return console.error("데이터 로드 실패:", error);
+    
+    inventory = data.map(item => ({
+        name: item.product_name,
+        location: `${item.drawer_no}번 서랍 [${item.position}]`, // 상세 위치 반영
+        link: `drawer.html?id=${item.drawer_no}`
+    }));
+}
 
 function handleSearch() {
     const query = document.getElementById('searchInput').value;
     const resultList = document.getElementById('resultList');
     resultList.innerHTML = '';
 
-    // 2자 이상일 때만 검색 실행 [cite: 2026-02-16]
-    if (query.length >= 2) {
+    if (query.length >= 2) { // 2자 이상 로직
         const filtered = inventory.filter(item => item.name.includes(query));
-        
         filtered.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'result-item';
-            // [물건명] → [위치] 형식으로 표시 [cite: 2026-02-16]
-            div.innerHTML = `
-                <span>📦 ${item.name} → <strong>${item.location}</strong></span>
-                <button onclick="location.href='${item.link}'">상세보기</button>
-            `;
-            resultList.appendChild(div);
+            resultList.innerHTML += `
+                <div class="result-item">
+                    <span>📦 ${item.name} → <strong>${item.location}</strong></span>
+                    <button onclick="location.href='${item.link}'">상세보기</button>
+                </div>`;
         });
     }
 }
-</script>
+loadInventory();
