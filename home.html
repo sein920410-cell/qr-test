@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>찾았다! - 메인 지도</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: sans-serif; padding: 15px; background: #f4f7f6; color: #333; }
+        .card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+        .main-title { font-size: 22px; font-weight: bold; margin-bottom: 20px; color: #1a1a1a; display: flex; align-items: center; }
+        input[type="text"] { width: 100%; padding: 15px; border: 2px solid #007bff; border-radius: 8px; box-sizing: border-box; font-size: 16px; margin-bottom: 20px; outline: none; }
+        .result-item { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.2s; }
+        .result-item:hover { background: #f0f7ff; }
+        .drawer-name { font-weight: bold; color: #007bff; margin-bottom: 4px; }
+        .item-list { font-size: 14px; color: #666; line-height: 1.4; }
+        .arrow { color: #ccc; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="main-title">🔍 무엇을 찾으시나요?</div>
+        <input type="text" id="search-input" placeholder="예: 망치, 양말, 줄자..." oninput="searchItems()">
+        
+        <div id="search-results">
+            <p style="text-align:center; color:#999; margin-top: 20px;">검색어를 입력하면 위치를 찾아드립니다.</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"
+        const supabase = createClient("https://tqhtggusphhcsygiitrv.supabase.co", "sb_publishable_D9nhmN5ZlyApSrHHasyQ3w_O7Kdmssq")
+
+        window.searchItems = async () => {
+            const query = document.getElementById("search-input").value;
+            const resultsDiv = document.getElementById("search-results");
+            
+            if (!query.trim()) { 
+                resultsDiv.innerHTML = '<p style="text-align:center; color:#999; margin-top: 20px;">검색어를 입력하면 위치를 찾아드립니다.</p>'; 
+                return; 
+            }
+
+            // 모든 서랍(tags)에서 검색어가 포함된 항목 찾기 (대소문자 무시)
+            const { data: results, error } = await supabase
+                .from("tags")
+                .select("*")
+                .ilike("items", `%${query}%`);
+
+            if (results && results.length > 0) {
+                resultsDiv.innerHTML = results.map(res => `
+                    <div class="result-item" onclick="location.href='index.html?tag=${res.id}'">
+                        <div>
+                            <div class="drawer-name">📦 ${res.display_name || '이름 없는 서랍'}</div>
+                            <div class="item-list">${res.items}</div>
+                        </div>
+                        <span class="arrow">〉</span>
+                    </div>
+                `).join("");
+            } else {
+                resultsDiv.innerHTML = "<p style='text-align:center; color:#999; margin-top: 40px;'>해당 물건을 찾을 수 없습니다.</p>";
+            }
+        };
+    </script>
+</body>
+</html>
