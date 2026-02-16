@@ -7,6 +7,8 @@
     <style>
         body { font-family: sans-serif; padding: 15px; background: #f4f7f6; color: #333; }
         .card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        /* 서랍 번호 강조 스타일 */
+        .drawer-badge { background: #1a1a1a; color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 12px; margin-bottom: 10px; display: inline-block; }
         .main-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; border-bottom: 2px solid #1a1a1a; padding-bottom: 10px; }
         .section-label { font-size: 14px; font-weight: bold; color: #007bff; margin-bottom: 8px; display: block; }
         .media-box { width: 100%; min-height: 200px; background: #eee; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 15px; }
@@ -20,11 +22,12 @@
 </head>
 <body>
     <div class="card">
-        <div class="main-title">서랍 내용물 등록</div>
+        <div class="drawer-badge"><span id="drawer-id-display">알 수 없음</span>번 서랍</div>
+        <div class="main-title">내용물 등록/수정</div>
         
         <span class="section-label">사진 찍기</span>
         <div class="media-box" id="image-preview">
-            <p style="color: #888;">사진을 업로드하면 분석이 시작됩니다.</p>
+            <p style="color: #888;">사진을 찍으면 물건을 분석합니다.</p>
         </div>
         
         <input type="file" id="file-input" accept="image/*" style="display: none;">
@@ -32,13 +35,18 @@
         
         <div id="status-msg"></div>
 
-        <span class="section-label" style="margin-top: 20px;">분석된 목록 (수정 가능)</span>
-        <textarea id="items-list" placeholder="사진을 분석하면 물건 목록이 여기에 나옵니다."></textarea>
+        <span class="section-label" style="margin-top: 20px;">서랍 속 물건 목록</span>
+        <textarea id="items-list" placeholder="분석 결과가 여기에 나타납니다."></textarea>
         
         <button class="btn-save" onclick="saveData()">💾 저장하기</button>
     </div>
 
     <script>
+        // 주소창에서 id=1 같은 숫자를 읽어오는 코드
+        const urlParams = new URLSearchParams(window.location.search);
+        const drawerId = urlParams.get('id') || '미지정';
+        document.getElementById('drawer-id-display').innerText = drawerId;
+
         const fileInput = document.getElementById('file-input');
         const imagePreview = document.getElementById('image-preview');
         const itemsList = document.getElementById('items-list');
@@ -48,22 +56,18 @@
             const file = e.target.files[0];
             if (!file) return;
 
-            // 미리보기
             const reader = new FileReader();
             reader.onload = (e) => {
                 imagePreview.innerHTML = `<img src="${e.target.result}">`;
             };
             reader.readAsDataURL(file);
 
-            // 분석 시작
-            statusMsg.innerText = "🔍 배달원이 물건을 분석하고 있어요...";
+            statusMsg.innerText = "🔍 사진 분석 중입니다...";
             
             try {
-                // 이미지를 글자로 변환
                 const base64Image = await toBase64(file);
                 const base64Data = base64Image.split(',')[1];
 
-                // 우리가 만든 배달원(api/analyze)에게 요청
                 const response = await fetch('/api/analyze', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -74,12 +78,11 @@
                 
                 if (data.result) {
                     itemsList.value = data.result;
-                    statusMsg.innerText = "✅ 분석 완료!";
+                    statusMsg.innerText = "✅ 분석을 완료했습니다.";
                 } else {
                     statusMsg.innerText = "❌ 분석에 실패했습니다.";
                 }
             } catch (error) {
-                console.error(error);
                 statusMsg.innerText = "❌ 연결 오류가 발생했습니다.";
             }
         });
@@ -94,7 +97,8 @@
         }
 
         function saveData() {
-            alert("저장 기능은 다음 단계에서 연결해 드릴게요!");
+            // 나중에 데이터베이스(Supabase)와 연결할 때 이 drawerId를 사용합니다.
+            alert(drawerId + "번 서랍 정보 저장을 준비 중입니다!");
         }
     </script>
 </body>
