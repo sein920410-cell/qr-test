@@ -7,45 +7,32 @@
     <style>
         body { font-family: sans-serif; padding: 15px; background: #f4f7f6; color: #333; }
         .card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); margin-bottom: 20px; }
-        /* 서랍 번호 강조 스타일 */
         .drawer-badge { background: #1a1a1a; color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 12px; margin-bottom: 10px; display: inline-block; }
         .main-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; border-bottom: 2px solid #1a1a1a; padding-bottom: 10px; }
-        .section-label { font-size: 14px; font-weight: bold; color: #007bff; margin-bottom: 8px; display: block; }
         .media-box { width: 100%; min-height: 200px; background: #eee; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 15px; }
         .media-box img { width: 100%; height: auto; display: block; }
         textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; min-height: 120px; margin-bottom: 10px; }
-        button { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 5px; font-size: 16px; }
-        .btn-upload { background: #007bff; color: #fff; }
+        button { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        .btn-upload { background: #007bff; color: #fff; margin-bottom: 10px; }
         .btn-save { background: #28a745; color: #fff; }
-        #status-msg { font-size: 13px; text-align: center; margin-top: 10px; color: #007bff; font-weight: bold; }
+        #status-msg { font-size: 14px; text-align: center; margin: 10px 0; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="card">
-        <div class="drawer-badge"><span id="drawer-id-display">알 수 없음</span>번 서랍</div>
+        <div class="drawer-badge"><span id="drawer-id-display">...</span>번 서랍</div>
         <div class="main-title">내용물 등록/수정</div>
-        
-        <span class="section-label">사진 찍기</span>
-        <div class="media-box" id="image-preview">
-            <p style="color: #888;">사진을 찍으면 물건을 분석합니다.</p>
-        </div>
-        
+        <div class="media-box" id="image-preview">사진이 여기에 표시됩니다.</div>
         <input type="file" id="file-input" accept="image/*" style="display: none;">
         <button class="btn-upload" onclick="document.getElementById('file-input').click()">📷 사진 찍기 / 업로드</button>
-        
         <div id="status-msg"></div>
-
-        <span class="section-label" style="margin-top: 20px;">서랍 속 물건 목록</span>
         <textarea id="items-list" placeholder="분석 결과가 여기에 나타납니다."></textarea>
-        
         <button class="btn-save" onclick="saveData()">💾 저장하기</button>
     </div>
 
     <script>
-       // 주소창에서 tag=DRAWER001 글자를 읽어오는 코드입니다.
-const urlParams = new URLSearchParams(window.location.search);
-const drawerTag = urlParams.get('tag') || '미지정'; // 'id'를 'tag'로 바꿨어요!
-document.getElementById('drawer-id-display').innerText = drawerTag;
+        const urlParams = new URLSearchParams(window.location.search);
+        document.getElementById('drawer-id-display').innerText = urlParams.get('tag') || '미지정';
 
         const fileInput = document.getElementById('file-input');
         const imagePreview = document.getElementById('image-preview');
@@ -62,7 +49,8 @@ document.getElementById('drawer-id-display').innerText = drawerTag;
             };
             reader.readAsDataURL(file);
 
-            statusMsg.innerText = "🔍 사진 분석 중입니다...";
+            statusMsg.innerText = "🔍 분석 중...";
+            statusMsg.style.color = "#007bff";
             
             try {
                 const base64Image = await toBase64(file);
@@ -75,16 +63,18 @@ document.getElementById('drawer-id-display').innerText = drawerTag;
                 });
 
                 const data = await response.json();
-                
-                const data = await response.json();
-                
                 if (data.result) {
                     itemsList.value = data.result;
-                    statusMsg.innerText = "✅ 분석 완료!";
+                    statusMsg.innerText = "✅ 완료!";
                 } else {
-                    // 이제 에러가 뭔지 화면에 직접 뜹니다
-                    statusMsg.innerText = "❌ 에러내용: " + (data.error || "알 수 없는 오류");
+                    statusMsg.innerText = "❌ 실패: " + (data.error || "응답 없음");
+                    statusMsg.style.color = "red";
                 }
+            } catch (error) {
+                statusMsg.innerText = "❌ 연결 오류: " + error.message;
+                statusMsg.style.color = "red";
+            }
+        });
 
         function toBase64(file) {
             return new Promise((resolve, reject) => {
@@ -95,10 +85,7 @@ document.getElementById('drawer-id-display').innerText = drawerTag;
             });
         }
 
-        function saveData() {
-            // 나중에 데이터베이스(Supabase)와 연결할 때 이 drawerId를 사용합니다.
-            alert(drawerId + "번 서랍 정보 저장을 준비 중입니다!");
-        }
+        function saveData() { alert("저장 기능 준비 중!"); }
     </script>
 </body>
 </html>
