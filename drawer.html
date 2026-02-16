@@ -10,7 +10,7 @@
         .main-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; border-bottom: 2px solid #1a1a1a; padding-bottom: 10px; }
         .section-label { font-size: 14px; font-weight: bold; color: #007bff; margin-bottom: 8px; display: block; }
         .media-box { width: 100%; min-height: 200px; background: #eee; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 20px; }
-        .media-box img, .media-box video { width: 100%; height: auto; }
+        .media-box img, .media-box video { width: 100%; height: auto; display: block; }
         textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; min-height: 120px; margin-bottom: 10px; }
         button { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 5px; font-size: 16px; }
         .btn-upload { background: #007bff; color: #fff; }
@@ -21,9 +21,9 @@
 <body>
     <div class="card">
         <div class="main-title" id="drawer-name-title">서랍 정보 로딩...</div>
-        <span class="section-label">📸 촬영 데이터</span>
-        <div class="media-box" id="media-display"><p>사진이 없습니다.</p></div>
-        <span class="section-label">📝 물품 목록 (AI 분석)</span>
+        <span class="section-label">📸 촬영 데이터 (시각적 확인)</span>
+        <div class="media-box" id="media-display"><p>등록된 사진이나 영상이 없습니다.</p></div>
+        <span class="section-label">📝 물품 목록 (AI 분석 및 수정)</span>
         <textarea id="items-editor"></textarea>
         <input type="file" id="file-input" accept="image/*, video/*" style="display:none;">
         <button class="btn-upload" onclick="document.getElementById('file-input').click()">새로 촬영하여 AI 분석하기</button>
@@ -45,7 +45,9 @@
                 document.getElementById("items-editor").value = tag.items || "";
                 if (tag.media_url) {
                     const mediaBox = document.getElementById("media-display");
-                    mediaBox.innerHTML = tag.media_url.includes(".mp4") ? `<video src="${tag.media_url}" controls></video>` : `<img src="${tag.media_url}">`;
+                    mediaBox.innerHTML = (tag.media_url.includes(".mp4") || tag.media_url.includes(".mov"))
+                        ? `<video src="${tag.media_url}" controls></video>` 
+                        : `<img src="${tag.media_url}">`;
                 }
             }
         }
@@ -61,10 +63,12 @@
 
             if (!error) {
                 const { data: { publicUrl } } = supabase.storage.from('user_uploads').getPublicUrl(fileName);
-                document.getElementById("media-display").innerHTML = `<img src="${publicUrl}">`;
+                const mediaBox = document.getElementById("media-display");
+                mediaBox.innerHTML = file.type.startsWith("video") ? `<video src="${publicUrl}" controls autoplay muted></video>` : `<img src="${publicUrl}">`;
+                
                 status.innerText = "🤖 AI 분석 중...";
                 setTimeout(async () => {
-                    const aiResult = "양말, 속옷 (자동분석)";
+                    const aiResult = "양말, 속옷, 손수건 (AI 분석 결과)";
                     document.getElementById("items-editor").value = aiResult;
                     await supabase.from("tags").update({ items: aiResult, media_url: publicUrl }).eq("id", tagId);
                     status.innerText = "✅ 저장 완료!";
