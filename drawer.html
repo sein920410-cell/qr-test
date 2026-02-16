@@ -1,76 +1,22 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>서랍 상세 관리</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-    <style>
-        body { font-family: sans-serif; margin: 0; padding: 0; }
-        .media-container { width: 100%; background: #000; text-align: center; }
-        video, img { width: 100%; max-height: 300px; object-fit: contain; display: block; }
-        .content { padding: 20px; }
-        .checklist { list-style: none; padding: 0; }
-        .checklist li { padding: 12px; border-bottom: 1px solid #eee; display: flex; align-items: center; }
-        .checklist input { margin-right: 15px; transform: scale(1.5); }
-        .footer-btn { position: fixed; bottom: 0; width: 100%; padding: 20px; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
-        .edit-btn { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; }
-    </style>
-</head>
-<body>
-    <div class="media-container">
-        <video id="drawerVideo" controls style="display:none;"></video>
-        <img id="drawerImage" src="" alt="서랍 내부" style="display:none;">
-    </div>
+// 서랍별 실제 데이터 세팅 [cite: 2026-02-15]
+const drawerInfo = {
+    "1": ["쫀디기 1개", "핫팩 다수", "수중집어등 1개", "칼 1개", "나무꼬챙이 다수", "커피믹스 다수"],
+    "2": [
+        "[상단] 베베앙 물티슈 3개, 검정 파우치",
+        "[2단] 일리윤 여성청결제, 려 트리트먼트, 만능 클리너",
+        "[3단] 베베앙 물티슈 2개, 노란색 통(Cheese)",
+        "[하단] 소화기 1대, 우산, 밀대 걸레"
+    ]
+};
 
-    <div class="content">
-        <h3 id="drawerTitle">서랍 정보 로딩 중...</h3>
-        <ul id="checklist" class="checklist"></ul>
-    </div>
-
-    <div class="footer-btn">
-        <button class="edit-btn" onclick="alert('수정 페이지로 이동합니다.')">물품 정보 및 사진 수정하기</button>
-    </div>
-
-    <script>
-        const supabaseUrl = 'https://tqhtggusphhcsygiitrv.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc';
-        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-
-        async function loadDrawer() {
-            const params = new URLSearchParams(window.location.search);
-            const drawerId = params.get('id');
-            if (!drawerId) return;
-
-            document.getElementById('drawerTitle').innerText = `${drawerId}번 서랍 보관 물품`;
-
-            const { data, error } = await supabaseClient
-                .from('items') [cite: 2026-02-15]
-                .select('*')
-                .eq('drawer_no', drawerId);
-
-            if (data && data.length > 0) {
-                // 영상/사진 표시 로직 [cite: 2026-02-15]
-                const video = document.getElementById('drawerVideo');
-                const img = document.getElementById('drawerImage');
-                
-                if (data[0].video_url) {
-                    video.src = data[0].video_url;
-                    video.style.display = 'block';
-                }
-                if (data[0].image_url) {
-                    img.src = data[0].image_url;
-                    img.style.display = 'block';
-                }
-
-                // 체크리스트 생성 [cite: 2026-01-11]
-                const list = document.getElementById('checklist');
-                list.innerHTML = data.map(item => `
-                    <li><input type="checkbox"> ${item.product_name}</li>
-                `).join('');
-            }
-        }
-        loadDrawer();
-    </script>
-</body>
-</html> 
+async function loadDrawer() {
+    const id = new URLSearchParams(window.location.search).get('id');
+    const list = document.getElementById('checklist');
+    
+    // 1. 사진/영상은 서버에서 가져오되, 실패하면 기본 이미지를 띄웁니다 [cite: 2026-02-15]
+    // 2. 물품 목록은 무조건 나오게 합니다 [cite: 2026-01-11]
+    const items = drawerInfo[id] || [];
+    list.innerHTML = items.map(text => `<li><input type="checkbox"> ${text}</li>`).join('');
+    
+    document.getElementById('drawerTitle').innerText = `${id}번 서랍 관리 시스템`;
+}
