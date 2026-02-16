@@ -1,23 +1,15 @@
-// 서랍별 실제 데이터 세팅 [cite: 2026-02-15]
-const drawerInfo = {
+// <script> 부분만 이 내용으로 싹 다 바꾸세요.
+const drawerData = {
     "1": ["쫀디기 1개", "핫팩 다수", "수중집어등 1개", "칼 1개", "나무꼬챙이 다수", "커피믹스 다수"],
-    "2": [
-        "[상단] 베베앙 물티슈 3개, 검정 파우치",
-        "[2단] 일리윤 여성청결제, 려 트리트먼트, 만능 클리너",
-        "[3단] 베베앙 물티슈 2개, 노란색 통(Cheese)",
-        "[하단] 소화기 1대, 우산, 밀대 걸레"
-    ]
+    "2": ["[상단] 베베앙 물티슈 3개", "[2단] 여성청결제, 트리트먼트", "[3단] 베베앙 물티슈 2개", "[하단] 소화기, 우산"]
 };
 
-async function loadDrawer() {
+function loadDrawer() {
     const id = new URLSearchParams(window.location.search).get('id');
+    const items = drawerData[id] || [];
     const list = document.getElementById('checklist');
     
-    // 1. 사진/영상은 서버에서 가져오되, 실패하면 기본 이미지를 띄웁니다 [cite: 2026-02-15]
-    // 2. 물품 목록은 무조건 나오게 합니다 [cite: 2026-01-11]
-    const items = drawerInfo[id] || [];
+    document.getElementById('drawerTitle').innerText = id + "번 서랍 관리";
     list.innerHTML = items.map(text => `<li><input type="checkbox"> ${text}</li>`).join('');
-    
-    document.getElementById('drawerTitle').innerText = `${id}번 서랍 관리 시스템`;
 }
- 
+loadDrawer();
