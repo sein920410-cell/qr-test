@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <title>찾았다! - 서랍 관리</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: sans-serif; padding: 15px; background: #f4f7f6; color: #333; }
+        .card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        .main-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; border-bottom: 2px solid #1a1a1a; padding-bottom: 10px; }
+        .section-label { font-size: 14px; font-weight: bold; color: #007bff; margin-bottom: 8px; display: block; }
+        .media-box { width: 100%; min-height: 200px; background: #eee; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #999; overflow: hidden; margin-bottom: 20px; border: 1px dashed #ccc; }
+        .media-box img, .media-box video { width: 100%; height: auto; display: block; }
+        textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; min-height: 120px; margin-bottom: 10px; }
+        button { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 5px; font-size: 16px; transition: opacity 0.2s; }
+        .btn-upload { background: #007bff; color: #fff; margin-bottom: 8px; }
+        .btn-save { background: #28a745; color: #fff; }
+        #status-msg { font-size: 13px; text-align: center; margin-top: 10px; color: #007bff; font-weight: bold; min-height: 1.2em; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="main-title" id="drawer-name-title">데이터 불러오는 중...</div>
+
+        <span class="section-label">📸 촬영 데이터 (시각적 확인)</span>
+        <div class="media-box" id="media-display">
+            <p id="no-media">등록된 사진이나 영상이 없습니다.</p>
+        </div>
+
+        <span class="section-label">📝 물품 목록 (AI 자동 생성)</span>
+        <textarea id="items-editor" placeholder="이곳에 물건 목록이 표시됩니다."></textarea>
+        
+        <input type="file" id="file-input" accept="image/*, video/*" style="display:none;">
+        <button class="btn-upload" onclick="document.getElementById('file-input').click()">새로 촬영하여 AI 분석하기</button>
+        <button class="btn-save" id="save-data-btn">현재 목록 저장하기</button>
+        
+        <p id="status-msg"></p>
+    </div>
+
+    <script type="module">
+        import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"
+        const supabase = createClient("https://tqhtggusphhcsygiitrv.supabase.co", "sb_publishable_D9nhmN5ZlyApSrHHasyQ3w_O7Kdmssq")
+        
+        const params = new URLSearchParams(window.location.search);
+        const tagId = params.get("tag") || "DRAWER001";
+
+        // 1. 초기 서랍 데이터 불러오기
+        async function initDrawer() {
+            const { data: tag, error } = await supabase.from("tags").select("*").eq("id", tagId).single();
+            if (tag) {
+                document.getElementById("drawer-name-title").innerText = "📦 " + (tag.display_name || "서랍");
+                document.getElementById("items-editor").value = tag.items || "";
+                
+                // 저장된 사진/영상 주소가 있다면 표시
+                if (tag.media_url) {
+                    const mediaBox = document.getElementById("media-display");
+                    if (tag.media_url.includes(".mp4") || tag.media_url.includes(".mov")) {
+                        mediaBox.innerHTML = `<video src="${tag.media_url}" controls></video>`;
+                    } else {
+                        mediaBox.innerHTML = `<img src="${tag.media_url}">`;
+                    }
+                }
+            }
+        }
+
+        // 2. 파일 업로드 및 AI 분석 시뮬레이션
+        document.getElementById("file-input").onchange = async (e) => {
+            const file = e.target.files[0];
+            const status = document.getElementById("status-msg");
+            if (!file) return;
+
+            status.innerText = "🚀 사진을 안전하게 저장소에 올리는 중...";
+
+            // 수파베이스 Storage('user_uploads')에 업로드
+            const fileName = `${tagId}/${Date.now()}_${file.name}`;
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('user_uploads')
+                .upload(fileName, file);
+
+            if (uploadError) {
+                alert("업로드 실패: " + uploadError.message);
+                return;
+            }
+
+            // 업로드된 파일의 공개 URL 가져오기
+            const { data: { publicUrl } } = supabase.storage.from('user_uploads').getPublicUrl(fileName);
+
+            // 화면 표시 및 DB 업데이트
+            const mediaBox = document.getElementById("media-display");
+            mediaBox.innerHTML = file.type.startsWith("video") 
+                ? `<video src="${publicUrl}" controls autoplay muted></video>` 
+                : `<img src="${publicUrl}">`;
+
+            status.innerText = "🤖 인공지능이 물건을 분석하고 있습니다...";
+
+            // AI 분석 시뮬레이션 (실제 Gemini API 연결 전 가짜 데이터)
+            setTimeout(async () => {
+                const aiResult = "양말, 속옷, 손수건 (AI 자동인식 결과)";
+                document.getElementById("items-editor").value = aiResult;
+                
+                // DB에 사진 주소와 목록 함께 저장
+                await supabase.from("tags").update({ 
+                    items: aiResult,
+                    media_url: publicUrl 
+                }).eq("id", tagId);
+
+                status.innerText = "✅ 모든 데이터가 최신으로 유지되었습니다.";
+            }, 3000);
+        };
+
+        // 3. 수동 목록 저장 (텍스트 수정 시)
+        document.getElementById("save-data-btn").onclick = async () => {
+            const newItems = document.getElementById("items-editor").value;
+            const { error } = await supabase.from("tags").update({ items: newItems }).eq("id", tagId);
+            if (!error) {
+                alert("목록이 성공적으로 저장되었습니다.");
+            } else {
+                alert("저장 실패: " + error.message);
+            }
+        };
+
+        initDrawer();
+    </script>
+</body>
+</html>
