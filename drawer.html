@@ -42,10 +42,10 @@
     </div>
 
     <script>
-        // 주소창에서 id=1 같은 숫자를 읽어오는 코드
-        const urlParams = new URLSearchParams(window.location.search);
-        const drawerId = urlParams.get('id') || '미지정';
-        document.getElementById('drawer-id-display').innerText = drawerId;
+       // 주소창에서 tag=DRAWER001 글자를 읽어오는 코드입니다.
+const urlParams = new URLSearchParams(window.location.search);
+const drawerTag = urlParams.get('tag') || '미지정'; // 'id'를 'tag'로 바꿨어요!
+document.getElementById('drawer-id-display').innerText = drawerTag;
 
         const fileInput = document.getElementById('file-input');
         const imagePreview = document.getElementById('image-preview');
