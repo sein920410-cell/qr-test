@@ -16,7 +16,7 @@
         .btn-upload { background: #007bff; color: #fff; margin-bottom: 10px; }
         .btn-save { background: #28a745; color: #fff; }
         #status-msg { font-size: 14px; text-align: center; margin: 10px 0; font-weight: bold; color: #666; }
-    </style>
+    </script>
 </head>
 <body>
     <div class="card">
@@ -40,10 +40,10 @@
         const drawerId = urlParams.get('tag') || 'DRAWER001';
         document.getElementById('drawer-id-display').innerText = drawerId;
 
-        // 사용자님이 요청하신 상품명 중심 데이터 (설명 생략)
+        // 상품명과 갯수가 포함된 표준 데이터
         const mockDataStore = {
-            "DRAWER001": "쫀디기 1개, 컵홀더 1개, 금박비닐 1개, 핫팩(발/손) 다수, 수중집어등 1개, 칼 1개, 나무꼬챙이 다수, 종이컵 1뭉치, 커피믹스 다수, 손전등 1개, 메쉬 파우치 1개, 흰색 케이스 1개, 지퍼백 다수, 숟가락 1개, 주황색 도구 1개, 비닐 롤 1개 보관 중", [cite: 2026-02-15, 2026-02-16]
-            "DRAWER002": "[상단] 베베앙 물티슈 3개, 검정색 파우치 물티슈 1개, 일리윤 온가족 여성청결제 1개, 려 트리트먼트 1개, 만능 클리너 1개, 쿨링 스프레이 1개, NOW 영양제 1개, 빨간색 용기, 기타 세정제\n[3단] 베베앙 물티슈 2개, 흰색 메쉬 바구니 1개, 노란색 원형 보관함 1개, 캐릭터 소모품 1개\n[하단] 소화기 1개, 우산 4개, 밀대 걸레, 스프레이 보관 중" [cite: 2026-02-15, 2026-02-16]
+            "DRAWER001": "쫀디기 1개, 컵홀더 1개, 금박비닐 1개, 핫팩(발/손) 다수, 수중집어등 1개, 칼 1개, 나무꼬챙이 다수, 종이컵 1뭉치, 맥심 커피믹스 다수, 손전등 1개, 메쉬 파우치 1개, 흰색 케이스 1개, 지퍼백 다수, 숟가락 1개, 주황색 도구 1개, 비닐 롤 1개 보관 중", [cite: 2026-02-15, 2026-02-16]
+            "DRAWER002": "[상단] 베베앙 물티슈 3개, 검정 파우치 물티슈 1개\n[2단] 일리윤 여성청결제 1개, 려 트리트먼트 1개, 만능 클리너 1개, 쿨링 스프레이 1개, NOW 영양제 1개, 빨간색 용기 1개, 기타 세정제 다수\n[3단] 베베앙 물티슈 2개, 흰색 메쉬 바구니 1개, 노란색 보관함 1개, 캐릭터 소품 1개\n[하단] 소화기 1대, 우산 4개, 밀대 걸레 1개, 보관 중" [cite: 2026-02-15, 2026-02-16]
         };
 
         const fileInput = document.getElementById('file-input');
@@ -66,9 +66,8 @@
                 const base64Image = await toBase64(file);
                 const base64Data = base64Image.split(',')[1];
 
-                // 5초 타임아웃 (발표장 네트워크 불안정 대비)
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000); [cite: 2026-01-11]
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
 
                 const response = await fetch('/api/analyze', {
                     method: 'POST',
@@ -89,7 +88,6 @@
                 }
 
             } catch (error) {
-                // 실패 시 미리 정의된 표준 데이터로 즉시 전환 (Fallback)
                 statusMsg.innerText = "⏳ 표준 분석 데이터로 전환합니다..."; [cite: 2026-01-11]
                 statusMsg.style.color = "#ff8c00";
 
