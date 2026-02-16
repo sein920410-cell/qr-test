@@ -1,27 +1,26 @@
-// <script> 부분만 이 내용으로 싹 다 바꾸세요.
-const myInventory = [
-    { name: "쫀디기", loc: "서랍 1번", id: "1" },
-    { name: "핫팩", loc: "서랍 1번", id: "1" },
-    { name: "수중집어등", loc: "서랍 1번", id: "1" },
-    { name: "베베앙 물티슈", loc: "서랍 2번 [상단]", id: "2" },
-    { name: "여성청결제", loc: "서랍 2번 [2단]", id: "2" },
-    { name: "려 트리트먼트", loc: "서랍 2번 [2단]", id: "2" },
-    { name: "소화기", loc: "서랍 2번 [하단]", id: "2" }
-];
+// index.html의 <script> 부분에 덮어쓰세요
+async function handleSearch() {
+    const query = document.getElementById('searchInput').value;
+    const resultList = document.getElementById('resultList');
+    resultList.innerHTML = '';
 
-function handleSearch() {
-    const val = document.getElementById('searchInput').value;
-    const list = document.getElementById('resultList');
-    list.innerHTML = '';
+    if (query.length >= 2) { // 2자 이상 [cite: 2026-02-16]
+        const { data, error } = await supabase
+            .from('tags') // 테이블 이름 'tags'로 수정 [cite: 2026-02-15]
+            .select('*')
+            .ilike('items', `%${query}%`); // items 컬럼에서 검색 [cite: 2026-02-15]
 
-    if (val.length >= 2) { // 딱 2글자부터 반응 [cite: 2026-02-16]
-        const found = myInventory.filter(i => i.name.includes(val));
-        found.forEach(i => {
-            list.innerHTML += `
-                <div style="padding:10px; border-bottom:1px solid #ddd;">
-                    📦 ${i.name} → <strong>${i.loc}</strong> 
-                    <button onclick="location.href='drawer.html?id=${i.id}'">상세보기</button>
-                </div>`;
-        });
+        if (data) {
+            data.forEach(tag => {
+                const div = document.createElement('div');
+                div.className = 'result-item';
+                // display_name을 서랍 위치로, items를 보관 물품으로 표시 [cite: 2026-02-16]
+                div.innerHTML = `
+                    <span>📦 ${query} → <strong>${tag.display_name}</strong></span>
+                    <button onclick="location.href='drawer.html?id=${tag.id}'">상세보기</button>
+                `;
+                resultList.appendChild(div);
+            });
+        }
     }
 }
