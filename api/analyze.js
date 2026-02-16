@@ -3,7 +3,7 @@ module.exports = async (req, res) => {
   const { image } = req.body;
   
   try {
-    // 다시 v1beta로 주소를 바꿨습니다.
+    // v1beta 경로를 사용하여 gemini-1.5-flash 모델을 호출합니다.
     const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + process.env.GEMINI_API_KEY, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -19,6 +19,10 @@ module.exports = async (req, res) => {
     
     if (data.error) {
       return res.status(500).json({ error: data.error.message });
+    }
+    
+    if (!data.candidates || !data.candidates[0]) {
+      return res.status(500).json({ error: "분석 결과가 없습니다." });
     }
     
     const result = data.candidates[0].content.parts[0].text;
