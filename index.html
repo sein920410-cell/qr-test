@@ -1,34 +1,53 @@
-const supabaseUrl = 'https://tqhtggusphhcsygiitrv.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc';
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>서랍 관리 시스템</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
+        .search-box { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .result-item { margin-top: 15px; padding: 15px; border: 1px solid #eee; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .result-item strong { color: #007bff; }
+        button { padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>🔍 무엇을 찾으시나요?</h2>
+    <input type="text" id="searchInput" class="search-box" placeholder="물건 이름을 2자 이상 입력하세요" onkeyup="handleSearch()">
+    <div id="resultList"></div>
 
-let inventory = [];
+    <script>
+        const supabaseUrl = 'https://tqhtggusphhcsygiitrv.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc';
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-async function loadInventory() {
-    const { data, error } = await supabase.from('items').select('*');
-    if (error) return console.error("데이터 로드 실패:", error);
-    
-    inventory = data.map(item => ({
-        name: item.product_name,
-        location: `${item.drawer_no}번 서랍 [${item.position}]`, // 상세 위치 반영
-        link: `drawer.html?id=${item.drawer_no}`
-    }));
-}
+        async function handleSearch() {
+            const query = document.getElementById('searchInput').value;
+            const resultList = document.getElementById('resultList');
+            resultList.innerHTML = '';
 
-function handleSearch() {
-    const query = document.getElementById('searchInput').value;
-    const resultList = document.getElementById('resultList');
-    resultList.innerHTML = '';
+            if (query.length >= 2) { [cite: 2026-02-16]
+                const { data, error } = await supabaseClient
+                    .from('items') [cite: 2026-02-15]
+                    .select('*')
+                    .ilike('product_name', `%${query}%`); [cite: 2026-02-16]
 
-    if (query.length >= 2) { // 2자 이상 로직
-        const filtered = inventory.filter(item => item.name.includes(query));
-        filtered.forEach(item => {
-            resultList.innerHTML += `
-                <div class="result-item">
-                    <span>📦 ${item.name} → <strong>${item.location}</strong></span>
-                    <button onclick="location.href='${item.link}'">상세보기</button>
-                </div>`;
-        });
-    }
-}
-loadInventory();
+                if (data) {
+                    data.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'result-item';
+                        // [물건명] → [서랍번호 + 상세위치] 형식 [cite: 2026-02-16]
+                        div.innerHTML = `
+                            <span>📦 ${item.product_name} → <strong>${item.drawer_no}번 서랍 ${item.position || ''}</strong></span>
+                            <button onclick="location.href='drawer.html?id=${item.drawer_no}'">상세보기</button>
+                        `;
+                        resultList.appendChild(div);
+                    });
+                }
+            }
+        }
+    </script>
+</body>
+</html>
