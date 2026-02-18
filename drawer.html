@@ -5,152 +5,132 @@
     <title>찾았다! - 지능형 관리 시스템</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        :root { --primary: #007bff; --success: #28a745; --bg: #f4f7f9; --card-bg: #ffffff; }
-        body { font-family: 'Pretendard', sans-serif; background: var(--bg); margin: 0; padding: 16px; color: #333; }
-        .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .drawer-label { background: #000; color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: bold; }
-        
-        /* 검색창 디자인 */
-        .search-box { width: 100%; padding: 12px; border: 2px solid var(--primary); border-radius: 12px; margin-bottom: 20px; box-sizing: border-box; font-size: 15px; }
-
-        /* 미디어 영역 */
-        .media-viewer { width: 100%; border-radius: 15px; overflow: hidden; background: #000; margin-bottom: 20px; position: relative; }
-        .media-viewer img, .media-viewer video { width: 100%; display: block; }
-
-        /* 카테고리 섹션 */
-        .category-group { background: var(--card-bg); border-radius: 15px; margin-bottom: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .category-header { padding: 15px; background: #fff; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-bottom: 1px solid #eee; }
-        .category-header h3 { margin: 0; font-size: 16px; color: #1a1a1a; }
-        .category-content { padding: 10px; display: none; } /* 접기/펼치기 기본 상태 */
-
-        /* 아이템 카드 */
-        .item-card { display: flex; align-items: center; gap: 12px; padding: 12px; background: #fafafa; border-radius: 10px; margin-bottom: 8px; border: 1px solid #f0f0f0; }
-        .item-card.highlight { border: 2px solid var(--primary); background: #f0f7ff; }
-        .thumbnail { width: 50px; height: 50px; background: #ddd; border-radius: 8px; flex-shrink: 0; object-fit: cover; }
-        .item-info { flex-grow: 1; }
-        .item-header { display: flex; justify-content: space-between; align-items: flex-start; }
-        .item-name { font-weight: bold; font-size: 14px; }
-        .badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; color: #fff; margin-left: 5px; }
-        .qty-badge { background: var(--primary); }
-        .conf-badge { background: #6c757d; }
-        .pos-info { font-size: 11px; color: #888; margin-top: 4px; }
-
-        /* 조작 버튼 */
-        .btn-edit { font-size: 12px; color: var(--primary); cursor: pointer; border: none; background: none; padding: 0; }
-        .add-button { width: 100%; padding: 15px; background: var(--success); color: #fff; border: none; border-radius: 12px; font-weight: bold; margin-top: 10px; cursor: pointer; }
+        :root { --primary: #007bff; --bg: #f4f7f9; --card: #ffffff; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 16px; color: #1e293b; }
+        .drawer-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .badge-id { background: #000; color: #fff; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .search-bar { width: 100%; padding: 14px; border: 2px solid var(--primary); border-radius: 12px; margin-bottom: 20px; box-sizing: border-box; font-size: 15px; outline: none; }
+        .media-wrap { width: 100%; border-radius: 16px; overflow: hidden; background: #000; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .media-wrap img, .media-wrap video { width: 100%; display: block; }
+        .cat-box { background: var(--card); border-radius: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow: hidden; }
+        .cat-btn { width: 100%; padding: 16px; background: #fff; border: none; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
+        .cat-btn h3 { margin: 0; font-size: 15px; font-weight: 800; }
+        .cat-list { padding: 10px; display: none; background: #fafafa; }
+        .item-card { display: flex; gap: 12px; padding: 12px; background: #fff; border-radius: 12px; margin-bottom: 8px; border: 1px solid #eee; align-items: center; }
+        .item-card.active { border-color: var(--primary); background: #f0f7ff; }
+        .thumb { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; background: #eee; }
+        .item-body { flex: 1; }
+        .item-top { display: flex; justify-content: space-between; align-items: center; }
+        .item-name { font-weight: 700; font-size: 14px; }
+        .qty { background: var(--primary); color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; }
+        .info-sub { font-size: 11px; color: #64748b; margin-top: 4px; display: flex; gap: 8px; align-items: center; }
+        .conf { color: #28a745; font-weight: 700; }
+        .btn-act { font-size: 11px; color: var(--primary); border: none; background: none; padding: 0; margin-top: 6px; cursor: pointer; font-weight: 600; }
+        .btn-add { width: 100%; padding: 16px; background: #28a745; color: #fff; border: none; border-radius: 14px; font-weight: 700; margin-top: 15px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div class="app-header">
-    <div class="drawer-label"><span id="drawer-id">...</span>번 서랍 리포트</div>
-    <div style="font-size: 12px; color: #666;">AI 신뢰도: 94.2%</div>
-</div>
-
-<input type="text" id="keyword-input" class="search-box" placeholder="검색 키워드를 입력하세요 (예: 물티슈)" oninput="renderItems()">
-
-<div class="media-viewer" id="media-preview">
+    <div class="drawer-info">
+        <div class="badge-id">ID: <span id="disp-id">...</span></div>
+        <div style="font-size: 11px; color: #94a3b8;">AI 분석 정확도: 94%</div>
     </div>
 
-<div id="category-container">
-    </div>
+    <input type="text" id="find-box" class="search-bar" placeholder="물건 이름을 검색하세요..." oninput="drawList()">
 
-<button class="add-button" onclick="alert('수동 추가 모드 실행')">➕ 물건 수동 추가하기</button>
+    <div class="media-wrap" id="media-box"></div>
 
-<script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const drawerId = (urlParams.get('tag') || 'DRAWER002').toUpperCase();
-    document.getElementById('drawer-id').innerText = drawerId;
+    <div id="list-wrap"></div>
 
-    // AI가 정밀 분석한 데이터셋 (이미지 내 위치 기반: Y좌표가 낮을수록 상단)
-    // [cite: 2026-02-15, 2026-02-16]
-    const rawData = [
-        { cat: "위생", name: "베베앙 물티슈 (대형)", qty: 3, conf: 98, pos: "상단-중앙", y: 10, thumb: "https://via.placeholder.com/50?text=WetWipes" },
-        { cat: "케어", name: "일리윤 온가족 여성청결제", qty: 1, conf: 95, pos: "중단-좌측", y: 30, thumb: "https://via.placeholder.com/50?text=Cleanser" },
-        { cat: "케어", name: "려(RYO) 트리트먼트", qty: 1, conf: 92, pos: "중단-중앙", y: 35, thumb: "https://via.placeholder.com/50?text=RYO" },
-        { cat: "케어", name: "NOW 푸드 영양제", qty: 1, conf: 88, pos: "중단-우측", y: 40, thumb: "https://via.placeholder.com/50?text=NOW" },
-        { cat: "위생", name: "베베앙 물티슈 (휴대)", qty: 2, conf: 97, pos: "하단-중앙", y: 70, thumb: "https://via.placeholder.com/50?text=WipesSmall" },
-        { cat: "생활", name: "다목적 쿨링 스프레이", qty: 1, conf: 85, pos: "중단-좌측", y: 45, thumb: "https://via.placeholder.com/50?text=Spray" },
-        { cat: "안전", name: "표준 소화기", qty: 1, conf: 99, pos: "최하단-우측", y: 95, thumb: "https://via.placeholder.com/50?text=FireEx" },
-        { cat: "청소", name: "밀대 걸레", qty: 1, conf: 91, pos: "최하단-좌측", y: 90, thumb: "https://via.placeholder.com/50?text=Mop" }
-    ];
+    <button class="btn-add" onclick="alert('수동 추가 모드')">➕ 새 물건 직접 추가</button>
 
-    // 미디어 설정 [cite: 2026-02-16]
-    const mediaUrls = {
-        "DRAWER001": "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer1.mp4.mp4",
-        "DRAWER002": "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer2.jpg.jpg"
-    };
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const id = (params.get('tag') || 'DRAWER002').toUpperCase();
+        document.getElementById('disp-id').innerText = id;
 
-    window.onload = () => {
-        const preview = document.getElementById('media-preview');
-        const url = mediaUrls[drawerId];
-        if (url.includes('.mp4')) {
-            preview.innerHTML = `<video src="${url}" autoplay loop muted playsinline></video>`;
-        } else {
-            preview.innerHTML = `<img src="${url}">`;
-        }
-        renderItems();
-    };
+        // 실제 수파베이스 경로 반영 [cite: 2026-02-16]
+        const medias = {
+            "DRAWER001": "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer1.mp4.mp4",
+            "DRAWER002": "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer2.jpg.jpg"
+        };
 
-    function renderItems() {
-        const keyword = document.getElementById('keyword-input').value.trim();
-        const container = document.getElementById('category-container');
-        container.innerHTML = '';
+        // 위치 기반 정렬 데이터 (y가 작을수록 상단) [cite: 2026-02-16]
+        const items = [
+            { cat: "위생", name: "베베앙 물티슈 (대형)", qty: 3, conf: 98, pos: "상단-중앙", y: 10, img: "https://via.placeholder.com/50?text=Wipes" },
+            { cat: "케어", name: "일리윤 여성청결제", qty: 1, conf: 95, pos: "중단-좌측", y: 30, img: "https://via.placeholder.com/50?text=Clean" },
+            { cat: "케어", name: "려(RYO) 트리트먼트", qty: 1, conf: 92, pos: "중단-중앙", y: 35, img: "https://via.placeholder.com/50?text=RYO" },
+            { cat: "케어", name: "NOW 영양제", qty: 1, conf: 88, pos: "중단-우측", y: 40, img: "https://via.placeholder.com/50?text=NOW" },
+            { cat: "케어", name: "다목적 쿨링 스프레이", qty: 1, conf: 85, pos: "중단-좌측", y: 45, img: "https://via.placeholder.com/50?text=Spray" },
+            { cat: "위생", name: "베베앙 물티슈 (휴대)", qty: 2, conf: 97, pos: "하단-중앙", y: 70, img: "https://via.placeholder.com/50?text=Small" },
+            { cat: "안전", name: "표준 소화기", qty: 1, conf: 99, pos: "최하단-우측", y: 95, img: "https://via.placeholder.com/50?text=Fire" },
+            { cat: "청소", name: "밀대 걸레", qty: 1, conf: 91, pos: "최하단-좌측", y: 90, img: "https://via.placeholder.com/50?text=Mop" }
+        ];
 
-        // 1. 위치 기반(Y좌표) 정렬 [상단 -> 하단]
-        let sortedData = [...rawData].sort((a, b) => a.y - b.y);
+        window.onload = () => {
+            const m = document.getElementById('media-box');
+            const url = medias[id];
+            if (url.includes('.mp4')) {
+                m.innerHTML = `<video src="${url}" autoplay loop muted playsinline></video>`;
+            } else {
+                m.innerHTML = `<img src="${url}">`;
+            }
+            drawList();
+        };
 
-        // 2. 키워드 우선순위 정렬 (키워드 포함 시 상단으로)
-        if (keyword) {
-            sortedData.sort((a, b) => {
-                const aMatch = a.name.includes(keyword) || a.cat.includes(keyword);
-                const bMatch = b.name.includes(keyword) || b.cat.includes(keyword);
-                return bMatch - aMatch;
+        function drawList() {
+            const word = document.getElementById('find-box').value.trim();
+            const wrap = document.getElementById('list-wrap');
+            wrap.innerHTML = '';
+
+            // 정렬: 상단물건 우선 -> 검색어 일치 우선 [cite: 2026-02-16]
+            let sorted = [...items].sort((a,b) => a.y - b.y);
+            if(word) {
+                sorted.sort((a,b) => b.name.includes(word) - a.name.includes(word));
+            }
+
+            const cats = [...new Set(sorted.map(i => i.cat))];
+            cats.forEach(c => {
+                const cItems = sorted.filter(i => i.cat === c);
+                const open = word && (c.includes(word) || cItems.some(i => i.name.includes(word)));
+                
+                const div = document.createElement('div');
+                div.className = 'cat-box';
+                div.innerHTML = `
+                    <button class="cat-btn" onclick="toggle(this)">
+                        <h3>${c} (${cItems.length})</h3>
+                        <span>${open ? '▲' : '▼'}</span>
+                    </button>
+                    <div class="cat-list" style="display: ${open ? 'block' : 'none'}">
+                        ${cItems.map(item => `
+                            <div class="item-card ${word && item.name.includes(word) ? 'active' : ''}">
+                                <img src="${item.img}" class="thumb">
+                                <div class="item-body">
+                                    <div class="item-top">
+                                        <span class="item-name">${item.name}</span>
+                                        <span class="qty">${item.qty} EA</span>
+                                    </div>
+                                    <div class="info-sub">
+                                        <span>위치: ${item.pos}</span>
+                                        <span class="conf">신뢰도 ${item.conf}%</span>
+                                    </div>
+                                    <button class="btn-act" onclick="alert('수정')">수정하기</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                wrap.appendChild(div);
             });
         }
 
-        // 3. 카테고리별 그룹화
-        const categories = [...new Set(sortedData.map(item => item.cat))];
-
-        categories.forEach(catName => {
-            const section = document.createElement('div');
-            section.className = 'category-group';
-            
-            const catItems = sortedData.filter(i => i.cat === catName);
-            const isMatch = keyword && catName.includes(keyword);
-
-            section.innerHTML = `
-                <div class="category-header" onclick="toggleCategory(this)">
-                    <h3>${catName} (${catItems.length})</h3>
-                    <span>${isMatch ? '⭐' : '▼'}</span>
-                </div>
-                <div class="category-content" style="display: ${keyword ? 'block' : 'none'}">
-                    ${catItems.map(item => `
-                        <div class="item-card ${keyword && item.name.includes(keyword) ? 'highlight' : ''}">
-                            <img src="${item.thumb}" class="thumbnail">
-                            <div class="item-info">
-                                <div class="item-header">
-                                    <span class="item-name">${item.name}</span>
-                                    <span class="badge qty-badge">${item.qty} EA</span>
-                                </div>
-                                <div class="pos-info">
-                                    위치: ${item.pos} | <span class="badge conf-badge">신뢰도 ${item.conf}%</span>
-                                </div>
-                                <button class="btn-edit" onclick="alert('${item.name} 수정 모드')">⚙️ 항목 수정</button>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-            container.appendChild(section);
-        });
-    }
-
-    function toggleCategory(header) {
-        const content = header.nextElementSibling;
-        content.style.display = content.style.display === 'block' ? 'none' : 'block';
-    }
-</script>
-
+        function toggle(btn) {
+            const list = btn.nextElementSibling;
+            const span = btn.querySelector('span');
+            const isOff = list.style.display === 'none';
+            list.style.display = isOff ? 'block' : 'none';
+            span.innerText = isOff ? '▲' : '▼';
+        }
+    </script>
 </body>
-</html> 
+</html>
