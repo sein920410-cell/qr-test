@@ -2,135 +2,132 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>찾았다! - 지능형 관리 시스템</title>
+    <title>찾았다! - 인텔리전트 인벤토리</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        :root { --primary: #007bff; --bg: #f4f7f9; --card: #ffffff; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 16px; color: #1e293b; }
-        .drawer-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .badge-id { background: #000; color: #fff; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-        .search-bar { width: 100%; padding: 14px; border: 2px solid var(--primary); border-radius: 12px; margin-bottom: 20px; box-sizing: border-box; font-size: 15px; outline: none; }
-        .media-wrap { width: 100%; border-radius: 16px; overflow: hidden; background: #000; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .media-wrap img, .media-wrap video { width: 100%; display: block; }
-        .cat-box { background: var(--card); border-radius: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow: hidden; }
-        .cat-btn { width: 100%; padding: 16px; background: #fff; border: none; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
-        .cat-btn h3 { margin: 0; font-size: 15px; font-weight: 800; }
-        .cat-list { padding: 10px; display: none; background: #fafafa; }
-        .item-card { display: flex; gap: 12px; padding: 12px; background: #fff; border-radius: 12px; margin-bottom: 8px; border: 1px solid #eee; align-items: center; }
-        .item-card.active { border-color: var(--primary); background: #f0f7ff; }
-        .thumb { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; background: #eee; }
-        .item-body { flex: 1; }
-        .item-top { display: flex; justify-content: space-between; align-items: center; }
-        .item-name { font-weight: 700; font-size: 14px; }
-        .qty { background: var(--primary); color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; }
-        .info-sub { font-size: 11px; color: #64748b; margin-top: 4px; display: flex; gap: 8px; align-items: center; }
-        .conf { color: #28a745; font-weight: 700; }
-        .btn-act { font-size: 11px; color: var(--primary); border: none; background: none; padding: 0; margin-top: 6px; cursor: pointer; font-weight: 600; }
-        .btn-add { width: 100%; padding: 16px; background: #28a745; color: #fff; border: none; border-radius: 14px; font-weight: 700; margin-top: 15px; cursor: pointer; }
+        :root { --primary: #007bff; --bg: #f4f7f9; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 12px; color: #1e293b; }
+        
+        /* 사진 크기 축소 및 고정 */
+        .media-mini { width: 100%; height: 180px; background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 12px; }
+        .media-mini img, .media-mini video { width: 100%; height: 100%; object-fit: contain; }
+
+        .search-container { position: sticky; top: 0; background: var(--bg); padding-bottom: 10px; z-index: 10; }
+        .search-input { width: 100%; padding: 12px; border: 2px solid var(--primary); border-radius: 10px; box-sizing: border-box; font-size: 14px; }
+
+        .cat-section { background: #fff; border-radius: 12px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
+        .cat-head { padding: 12px 15px; display: flex; justify-content: space-between; font-weight: bold; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+        .cat-body { display: none; padding: 8px; background: #fafafa; }
+
+        /* 아이템 카드 및 액박 방지 */
+        .item-row { display: flex; align-items: center; gap: 10px; padding: 10px; background: #fff; border-radius: 8px; margin-bottom: 6px; border: 1px solid #eee; }
+        .item-row.active { border-color: var(--primary); background: #f0f7ff; }
+        .item-icon { width: 40px; height: 40px; background: #e2e8f0; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+        .item-main { flex: 1; }
+        .item-name { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+        .item-info { font-size: 11px; color: #64748b; }
+        .qty-badge { background: var(--primary); color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+
+        .btn-edit { font-size: 11px; color: var(--primary); border: 1px solid var(--primary); background: #fff; padding: 4px 8px; border-radius: 4px; margin-top: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div class="drawer-info">
-        <div class="badge-id">ID: <span id="disp-id">...</span></div>
-        <div style="font-size: 11px; color: #94a3b8;">AI 분석 정확도: 94%</div>
+<div class="search-container">
+    <div style="display:flex; justify-content:space-between; margin-bottom:8px; align-items:center;">
+        <span style="font-size:12px; font-weight:bold; background:#000; color:#fff; padding:3px 8px; border-radius:4px;">ID: <span id="disp-id">...</span></span>
+        <span style="font-size:11px; color:#64748b;">AI 분석 98%</span>
     </div>
+    <input type="text" id="search-box" class="search-input" placeholder="검색어 입력 (예: 물티슈)" oninput="updateUI()">
+</div>
 
-    <input type="text" id="find-box" class="search-bar" placeholder="물건 이름을 검색하세요..." oninput="drawList()">
+<div class="media-mini" id="media-wrap"></div>
 
-    <div class="media-wrap" id="media-box"></div>
+<div id="list-wrap"></div>
 
-    <div id="list-wrap"></div>
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const id = (params.get('tag') || 'DRAWER002').toUpperCase();
+    document.getElementById('disp-id').innerText = id;
 
-    <button class="btn-add" onclick="alert('수동 추가 모드')">➕ 새 물건 직접 추가</button>
+    // 초기 데이터 설정 [cite: 2026-02-16]
+    let items = [
+        { cat: "위생", name: "베베앙 물티슈 (대형)", qty: 3, pos: "상단-중앙", icon: "🧼" },
+        { cat: "케어", name: "일리윤 여성청결제", qty: 1, pos: "중단-좌측", icon: "🧴" },
+        { cat: "케어", name: "려 트리트먼트", qty: 1, pos: "중단-중앙", icon: "💆" },
+        { cat: "생활", name: "NOW 영양제", qty: 1, pos: "중단-우측", icon: "💊" },
+        { cat: "위생", name: "베베앙 물티슈 (휴대)", qty: 2, pos: "하단-중앙", icon: "🧼" },
+        { cat: "안전", name: "표준 소화기", qty: 1, pos: "최하단-우측", icon: "🧯" },
+        { cat: "청소", name: "밀대 걸레", qty: 1, pos: "최하단-좌측", icon: "🧹" }
+    ];
 
-    <script>
-        const params = new URLSearchParams(window.location.search);
-        const id = (params.get('tag') || 'DRAWER002').toUpperCase();
-        document.getElementById('disp-id').innerText = id;
+    const medias = {
+        "DRAWER001": "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer1.mp4.mp4",
+        "DRAWER002": "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer2.jpg.jpg"
+    };
 
-        // 실제 수파베이스 경로 반영 [cite: 2026-02-16]
-        const medias = {
-            "DRAWER001": "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer1.mp4.mp4",
-            "DRAWER002": "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer2.jpg.jpg"
-        };
+    window.onload = () => {
+        const wrap = document.getElementById('media-wrap');
+        const url = medias[id];
+        if (url.includes('.mp4')) wrap.innerHTML = `<video src="${url}" autoplay loop muted playsinline></video>`;
+        else wrap.innerHTML = `<img src="${url}">`;
+        updateUI();
+    };
 
-        // 위치 기반 정렬 데이터 (y가 작을수록 상단) [cite: 2026-02-16]
-        const items = [
-            { cat: "위생", name: "베베앙 물티슈 (대형)", qty: 3, conf: 98, pos: "상단-중앙", y: 10, img: "https://via.placeholder.com/50?text=Wipes" },
-            { cat: "케어", name: "일리윤 여성청결제", qty: 1, conf: 95, pos: "중단-좌측", y: 30, img: "https://via.placeholder.com/50?text=Clean" },
-            { cat: "케어", name: "려(RYO) 트리트먼트", qty: 1, conf: 92, pos: "중단-중앙", y: 35, img: "https://via.placeholder.com/50?text=RYO" },
-            { cat: "케어", name: "NOW 영양제", qty: 1, conf: 88, pos: "중단-우측", y: 40, img: "https://via.placeholder.com/50?text=NOW" },
-            { cat: "케어", name: "다목적 쿨링 스프레이", qty: 1, conf: 85, pos: "중단-좌측", y: 45, img: "https://via.placeholder.com/50?text=Spray" },
-            { cat: "위생", name: "베베앙 물티슈 (휴대)", qty: 2, conf: 97, pos: "하단-중앙", y: 70, img: "https://via.placeholder.com/50?text=Small" },
-            { cat: "안전", name: "표준 소화기", qty: 1, conf: 99, pos: "최하단-우측", y: 95, img: "https://via.placeholder.com/50?text=Fire" },
-            { cat: "청소", name: "밀대 걸레", qty: 1, conf: 91, pos: "최하단-좌측", y: 90, img: "https://via.placeholder.com/50?text=Mop" }
-        ];
+    function updateUI() {
+        const word = document.getElementById('search-box').value.trim();
+        const wrap = document.getElementById('list-wrap');
+        wrap.innerHTML = '';
 
-        window.onload = () => {
-            const m = document.getElementById('media-box');
-            const url = medias[id];
-            if (url.includes('.mp4')) {
-                m.innerHTML = `<video src="${url}" autoplay loop muted playsinline></video>`;
-            } else {
-                m.innerHTML = `<img src="${url}">`;
-            }
-            drawList();
-        };
+        const cats = [...new Set(items.map(i => i.cat))];
+        cats.forEach(c => {
+            const catItems = items.filter(i => i.cat === c);
+            // 검색어 포함 시 카테고리 자동 열기 [cite: 2026-01-11]
+            const autoOpen = word && (c.includes(word) || catItems.some(i => i.name.includes(word)));
 
-        function drawList() {
-            const word = document.getElementById('find-box').value.trim();
-            const wrap = document.getElementById('list-wrap');
-            wrap.innerHTML = '';
-
-            // 정렬: 상단물건 우선 -> 검색어 일치 우선 [cite: 2026-02-16]
-            let sorted = [...items].sort((a,b) => a.y - b.y);
-            if(word) {
-                sorted.sort((a,b) => b.name.includes(word) - a.name.includes(word));
-            }
-
-            const cats = [...new Set(sorted.map(i => i.cat))];
-            cats.forEach(c => {
-                const cItems = sorted.filter(i => i.cat === c);
-                const open = word && (c.includes(word) || cItems.some(i => i.name.includes(word)));
-                
-                const div = document.createElement('div');
-                div.className = 'cat-box';
-                div.innerHTML = `
-                    <button class="cat-btn" onclick="toggle(this)">
-                        <h3>${c} (${cItems.length})</h3>
-                        <span>${open ? '▲' : '▼'}</span>
-                    </button>
-                    <div class="cat-list" style="display: ${open ? 'block' : 'none'}">
-                        ${cItems.map(item => `
-                            <div class="item-card ${word && item.name.includes(word) ? 'active' : ''}">
-                                <img src="${item.img}" class="thumb">
-                                <div class="item-body">
-                                    <div class="item-top">
-                                        <span class="item-name">${item.name}</span>
-                                        <span class="qty">${item.qty} EA</span>
-                                    </div>
-                                    <div class="info-sub">
-                                        <span>위치: ${item.pos}</span>
-                                        <span class="conf">신뢰도 ${item.conf}%</span>
-                                    </div>
-                                    <button class="btn-act" onclick="alert('수정')">수정하기</button>
+            const section = document.createElement('div');
+            section.className = 'cat-section';
+            section.innerHTML = `
+                <div class="cat-head" onclick="toggle(this)">
+                    <span>${c} (${catItems.length})</span>
+                    <span>${autoOpen ? '▲' : '▼'}</span>
+                </div>
+                <div class="cat-body" style="display: ${autoOpen ? 'block' : 'none'}">
+                    ${catItems.map((item, idx) => `
+                        <div class="item-row ${word && item.name.includes(word) ? 'active' : ''}">
+                            <div class="item-icon">${item.icon}</div>
+                            <div class="item-main">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span class="item-name">${item.name}</span>
+                                    <span class="qty-badge">${item.qty} EA</span>
                                 </div>
+                                <div class="item-info">위치: ${item.pos}</div>
+                                <button class="btn-edit" onclick="editItem('${item.name}')">수정하기</button>
                             </div>
-                        `).join('')}
-                    </div>
-                `;
-                wrap.appendChild(div);
-            });
-        }
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            wrap.appendChild(section);
+        });
+    }
 
-        function toggle(btn) {
-            const list = btn.nextElementSibling;
-            const span = btn.querySelector('span');
-            const isOff = list.style.display === 'none';
-            list.style.display = isOff ? 'block' : 'none';
-            span.innerText = isOff ? '▲' : '▼';
+    function toggle(head) {
+        const body = head.nextElementSibling;
+        const arrow = head.querySelectorAll('span')[1];
+        const isOff = body.style.display === 'none' || body.style.display === '';
+        body.style.display = isOff ? 'block' : 'none';
+        arrow.innerText = isOff ? '▲' : '▼';
+    }
+
+    function editItem(oldName) {
+        const newName = prompt("변경할 이름을 입력하세요:", oldName);
+        if (newName) {
+            items = items.map(i => i.name === oldName ? {...i, name: newName} : i);
+            updateUI();
         }
-    </script>
+    }
+</script>
+
 </body>
 </html>
