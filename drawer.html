@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>찾았다! - 모바일 웹 상세 정보</title>
+    <title>찾았다! - 상세 정보</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root { --primary: #007bff; --bg: #f8fafc; --card: #ffffff; --item-bg: #f0f7ff; }
@@ -10,32 +10,31 @@
         .container { max-width: 500px; margin: 0 auto; }
         .main-card { background: var(--card); border-radius: 24px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.05); }
         
-        /* 서랍 이름 배지 및 수정 버튼 */
+        /* 서랍 이름 배지 */
         .id-badge-container { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
         .id-badge { background: #0f172a; color: #fff; padding: 6px 14px; border-radius: 100px; font-size: 11px; font-weight: 700; display: inline-block; }
         .btn-rename-drawer { background: #e2e8f0; border: none; border-radius: 6px; padding: 4px 8px; font-size: 10px; cursor: pointer; color: #475569; font-weight: bold; }
 
-        /* 사진 및 영상 박스 [cite: 2026-01-11] */
         .media-box { width: 100%; height: 220px; aspect-ratio: 4 / 3; background: #f1f5f9; border-radius: 18px; overflow: hidden; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; cursor: zoom-in; }
         .media-box img, .media-box video { max-width: 100%; max-height: 100%; object-fit: contain; }
         
-        /* 검색창 (엔터 지원) [cite: 2026-01-11] */
         .search-input { width: 100%; padding: 12px; border: 2px solid var(--primary); border-radius: 10px; box-sizing: border-box; font-size: 14px; margin-bottom: 15px; outline: none; }
         
-        /* [요청] 카테고리 접기/펼치기 구조 [cite: 2026-02-15] */
+        /* [추가] 전체 접기/펼치기 버튼 스타일 */
+        .all-toggle-area { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 10px; padding: 0 5px; }
+        .btn-all-toggle { background: none; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 600; color: #64748b; cursor: pointer; }
+
+        /* 카테고리 접기/펼치기 구조 [cite: 2026-02-15] */
         .cat-group { background: var(--card); border-radius: 14px; margin-bottom: 8px; border: 1px solid #e2e8f0; overflow: hidden; }
         .cat-head { padding: 15px; display: flex; justify-content: space-between; font-weight: 800; font-size: 14px; cursor: pointer; background: #fff; align-items: center; }
         .cat-body { display: none; padding: 8px; background: #fafafa; border-top: 1px solid #f1f5f9; }
-        .arr { font-size: 12px; color: #64748b; }
         
-        /* 아이템 리스트 스타일 */
         .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: var(--item-bg); border-radius: 12px; border: 1px solid #e0f0ff; margin-bottom: 6px; }
         .item-row.highlight { border: 2px solid var(--primary); background: #eef7ff; }
         .item-name { font-size: 13px; font-weight: 700; color: #334155; }
         .qty { background: var(--primary); color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; }
         .btn-edit { font-size: 10px; color: var(--primary); background: #fff; border: 1px solid var(--primary); border-radius: 4px; padding: 2px 5px; cursor: pointer; margin-top: 4px; }
         
-        /* 봄(AI) 채팅창 [cite: 2026-02-16] */
         .chat-btn { position: fixed; bottom: 20px; right: 20px; background: #000; color: #fff; border: none; border-radius: 50px; padding: 15px 20px; font-weight: 800; font-size: 14px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 1000; }
         #chat-window { display: none; position: fixed; bottom: 85px; right: 20px; width: 320px; height: 400px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); flex-direction: column; overflow: hidden; z-index: 1001; border: 1px solid #eee; }
         .chat-header { background: #0f172a; color: white; padding: 15px; font-size: 14px; font-weight: 800; display: flex; justify-content: space-between; }
@@ -47,7 +46,6 @@
         .chat-input-area input { flex: 1; border: 1px solid #ddd; border-radius: 8px; padding: 8px; outline: none; }
         .chat-input-area button { background: var(--primary); color: white; border: none; border-radius: 8px; padding: 8px 12px; cursor: pointer; }
 
-        /* 모달 [cite: 2026-01-11] */
         .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; }
         .modal-content { max-width: 98%; max-height: 98%; object-fit: contain; }
     </style>
@@ -67,6 +65,11 @@
 
         <input type="text" id="find-box" class="search-input" placeholder="검색 후 엔터를 누르세요." onkeydown="if(event.key==='Enter') updateList()">
         
+        <div class="all-toggle-area">
+            <button class="btn-all-toggle" onclick="toggleAll(true)">모두 펼치기 ▲</button>
+            <button class="btn-all-toggle" onclick="toggleAll(false)">모두 접기 ▼</button>
+        </div>
+
         <div id="list-container"></div>
     </div>
 </div>
@@ -75,7 +78,7 @@
 
 <div id="chat-window">
     <div class="chat-header">
-        <span>봄 (AI 비서)</span>
+        <span>찾았다에게 질문하기</span>
         <span style="cursor:pointer" onclick="toggleChat()">✕</span>
     </div>
     <div class="chat-messages" id="chat-msgs">
@@ -114,7 +117,7 @@
                 { cat: "위생", n: "베베앙 물티슈 (대형)", q: "5 EA" },
                 { cat: "위생", n: "베베앙 물티슈 (휴대용)", q: "2 EA" },
                 { cat: "위생", n: "분홍색 파우치 (상단)", q: "2 EA" },
-                { cat: "위생", n: "검정색 파우치 물티슈", q: "1 EA" },
+                { cat: "위생", n: "검정색 파우치", q: "1 EA" },
                 { cat: "케어", n: "여성청결제 / 트리트먼트", q: "각 1 EA" },
                 { cat: "케어", n: "바디 로션 / 세정제", q: "각 1 EA" },
                 { cat: "생활", n: "NOW 영양제 / 클리너", q: "각 1 EA" },
@@ -123,7 +126,7 @@
                 { cat: "안전", n: "소방용 소화기", q: "1 EA" },
                 { cat: "청소", n: "우산 / 밀대 걸레", q: "다수" },
                 { cat: "청소", n: "청소기 헤드 부속품", q: "1 EA" },
-                { cat: "기타", n: "원숭이 및 소모품", q: "1 EA" }
+                { cat: "기타", n: "원숭이 인형", q: "1 EA" }
             ]
         }
     };
@@ -149,7 +152,6 @@
         }
     }
 
-    // 카테고리별 접기/펼치기 및 검색 기능 통합 [cite: 2026-02-15]
     function updateList() {
         const word = document.getElementById('find-box').value.trim();
         const container = document.getElementById('list-container');
@@ -158,7 +160,6 @@
         const cats = [...new Set(active.items.map(i => i.cat))];
         cats.forEach(c => {
             const list = active.items.filter(i => i.cat === c);
-            // 검색어가 포함된 경우 자동으로 펼침 [cite: 2026-01-11]
             const isMatch = word && (c.includes(word) || list.some(i => i.n.includes(word)));
 
             const div = document.createElement('div');
@@ -182,13 +183,21 @@
         });
     }
 
-    // 접기/펼치기 토글 로직 [cite: 2026-02-15]
+    // 개별 토글
     function toggle(h) {
         const b = h.nextElementSibling;
         const a = h.querySelector('.arr');
         const show = b.style.display === 'none' || b.style.display === '';
         b.style.display = show ? 'block' : 'none';
         a.innerText = show ? '▲' : '▼';
+    }
+
+    // [추가] 전체 펼치기/접기 함수
+    function toggleAll(show) {
+        const bodies = document.querySelectorAll('.cat-body');
+        const arrows = document.querySelectorAll('.arr');
+        bodies.forEach(b => b.style.display = show ? 'block' : 'none');
+        arrows.forEach(a => a.innerText = show ? '▲' : '▼');
     }
 
     function rename(btn, e) {
@@ -221,10 +230,9 @@
         i.value = '';
         m.scrollTop = m.scrollHeight;
 
-        // 봄(AI) 비서 시뮬레이션 [cite: 2026-02-16]
         setTimeout(() => {
-            let res = "해당 물건은 사진의 위쪽 칸에 있는 분홍색 파우치 근처에 있습니다. 더 자세히 찾아드릴까요?";
-            if(txt.includes("물티슈")) res = "물티슈는 왼쪽 상단 선반에 5개 쌓여 있는 걸 확인했습니다!";
+            let res = "사진 속 물건들은 카테고리별로 잘 정리되어 있습니다. 원하시는 물건의 위치를 짚어드릴까요?";
+            if(txt.includes("물티슈")) res = "물티슈는 '위생' 카테고리에 있으며, 사진상 왼쪽 상단에 위치해 있습니다.";
             m.innerHTML += `<div class="msg bot">${res}</div>`;
             m.scrollTop = m.scrollHeight;
         }, 600);
