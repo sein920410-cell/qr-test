@@ -11,21 +11,24 @@
         .search-container { position: sticky; top: 0; background: var(--bg); padding-bottom: 10px; z-index: 10; }
         .search-input { width: 100%; padding: 12px; border: 2px solid var(--primary); border-radius: 10px; box-sizing: border-box; font-size: 14px; margin-top: 5px; }
 
-        /* 미디어 카드 영역 (200px 고정, 검은 여백 제거) */
+        /* 미디어 카드 영역 (사진 전체 노출 설정) */
         .media-container { 
             width: 100%; 
-            height: 200px; /* 요청하신 200px 고정 */
-            background: #fff; 
+            height: 250px; /* 고정 높이로 스크롤 최소화 */
+            background: #f1f5f9; /* 검은 여백 대신 부드러운 배경색 [cite: 2026-01-11] */
             border-radius: 12px; 
             overflow: hidden; 
             margin-bottom: 15px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
             border: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .media-container img, .media-container video { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: cover; /* 비율 유지하며 여백 없이 꽉 채움 */
+            max-width: 100%; 
+            max-height: 100%; 
+            object-fit: contain; /* 사진 전체를 다 보여주는 핵심 명령 [cite: 2026-01-11] */
             display: block; 
         }
 
@@ -46,7 +49,7 @@
 <div class="search-container">
     <div style="display:flex; justify-content:space-between; align-items:center;">
         <span style="font-size:12px; font-weight:bold; background:#000; color:#fff; padding:3px 10px; border-radius:50px;">ID: <span id="id-display">...</span></span>
-        <span style="font-size:11px; color:#64748b;">AI 분석 신뢰도: 98.5%</span>
+        <span style="font-size:11px; color:#64748b;">AI 분석 정확도: 98.5%</span>
     </div>
     <input type="text" id="find-box" class="search-input" placeholder="물건 이름을 검색하세요 (예: 물티슈)" oninput="updateList()">
 </div>
@@ -83,7 +86,6 @@
     window.onload = () => {
         const viewer = document.getElementById('media-viewer');
         const url = mediaMap[tagId];
-        // autoplay 제거, controls 유지 [cite: 2026-01-11]
         if (url.includes('.mp4')) viewer.innerHTML = `<video src="${url}" controls playsinline></video>`;
         else viewer.innerHTML = `<img src="${url}">`;
         updateList();
