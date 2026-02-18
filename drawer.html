@@ -2,30 +2,36 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>찾았다! - 물품 상세 정보</title>
+    <title>찾았다! - 지능형 관리</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root { --primary: #007bff; --bg: #f8fafc; --card: #ffffff; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; color: #1e293b; }
         
-        /* 1) 검색 및 헤더 영역 (최소화) */
+        /* 1) 상단 고정 검색바 */
         .search-container { position: sticky; top: 0; background: var(--bg); padding-bottom: 10px; z-index: 10; }
         .search-input { width: 100%; padding: 12px; border: 2px solid var(--primary); border-radius: 10px; box-sizing: border-box; font-size: 14px; margin-top: 5px; }
 
-        /* 2) 미디어 카드 영역 (고정 높이 260px, 여백 제거) */
+        /* 2) 반응형 미디어 카드 영역 */
         .media-card { 
             width: 100%; 
-            height: 260px; /* 고정 높이 제한 */
+            height: 260px; /* PC 기본 높이 */
             background: #e2e8f0; 
             border-radius: 12px; 
             overflow: hidden; 
             margin-bottom: 15px; 
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
+        
+        /* 모바일 접속 시 (화면 너비 600px 이하) [cite: 2026-01-11] */
+        @media (max-width: 600px) {
+            .media-card { height: 210px; } /* 모바일 적정 높이 반영 */
+        }
+
         .media-card img, .media-card video { 
             width: 100%; 
             height: 100%; 
-            object-fit: cover; /* 비율 유지하며 꽉 채우기 */
+            object-fit: cover; 
             display: block; 
         }
 
@@ -48,9 +54,9 @@
 <div class="search-container">
     <div style="display:flex; justify-content:space-between; align-items:center;">
         <span style="font-size:12px; font-weight:bold; background:#000; color:#fff; padding:3px 10px; border-radius:50px;">ID: <span id="id-tag">...</span></span>
-        <span style="font-size:11px; color:#64748b;">AI 분석 신뢰도: 98.5%</span>
+        <span style="font-size:11px; color:#64748b;">AI 분석 정확도: 98.5%</span>
     </div>
-    <input type="text" id="find-input" class="search-input" placeholder="물건 이름을 검색하세요 (예: 물티슈)" oninput="refreshUI()">
+    <input type="text" id="find-input" class="search-input" placeholder="물건을 검색하면 카테고리가 자동으로 열립니다." oninput="refreshUI()">
 </div>
 
 <div class="media-card" id="media-content"></div>
@@ -85,7 +91,6 @@
     window.onload = () => {
         const viewer = document.getElementById('media-content');
         const url = sourceMap[tagId];
-        // autoplay 제거, controls 추가 [cite: 2026-01-11]
         if (url.includes('.mp4')) viewer.innerHTML = `<video src="${url}" controls playsinline></video>`;
         else viewer.innerHTML = `<img src="${url}">`;
         refreshUI();
