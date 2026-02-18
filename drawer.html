@@ -21,7 +21,7 @@
         
         .search-input { width: 100%; padding: 12px; border: 2px solid var(--primary); border-radius: 10px; box-sizing: border-box; font-size: 14px; margin-bottom: 15px; outline: none; }
         
-        /* [요청] 카테고리별 맨위 전체 접기/펼치기 구조 [cite: 2026-02-15] */
+        /* 전체 접기/펼치기 헤더 [cite: 2026-02-15] */
         .all-toggle-header { background: #f1f5f9; border-radius: 12px; margin-bottom: 10px; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid #e2e8f0; }
         .all-toggle-header span { font-size: 13px; font-weight: 800; color: #475569; }
 
@@ -31,7 +31,7 @@
         .cat-body { display: none; padding: 8px; background: #fafafa; border-top: 1px solid #f1f5f9; }
         .arr { font-size: 12px; color: #64748b; transition: transform 0.2s; }
         
-        /* 아이템 로우 */
+        /* 아이템 행 */
         .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: var(--item-bg); border-radius: 12px; border: 1px solid #e0f0ff; margin-bottom: 6px; }
         .item-row.highlight { border: 2px solid var(--primary); background: #eef7ff; }
         .item-name { font-size: 13px; font-weight: 700; color: #334155; }
@@ -122,7 +122,7 @@
                 { cat: "생활", n: "NOW 영양제 / 만능 클리너", q: "각 1 EA" }, { cat: "생활", n: "다목적 스프레이 / 우산", q: "다수" },
                 { cat: "생활", n: "흰색 보관 바구니 / 노란색 원형 바구니", q: "각 1 EA" }, { cat: "안전", n: "소방용 소화기", q: "1 EA" },
                 { cat: "청소", n: "밀대 걸레", q: "1 EA" }, 
-                { cat: "기타", n: "원숭이 및 소모품", q: "각 1 EA" }
+                { cat: "기타", n: "원숭이 및 소모품", q: "각 1 EA" }, // 콤마 추가 수정 [cite: 2026-01-11]
                 { cat: "추가", n: "", q: "EA" }
             ]
         }
@@ -178,7 +178,6 @@
         });
     }
 
-    // [전체 접기/펼치기 로직] [cite: 2026-02-15]
     function toggleAll() {
         isAllOpen = !isAllOpen;
         const bodies = document.querySelectorAll('.cat-body');
@@ -226,7 +225,7 @@
         const txt = i.value; i.value = ''; m.scrollTop = m.scrollHeight;
         setTimeout(() => {
             let res = "해당 물건은 사진의 상단 선반 근처에 있습니다. 더 자세히 찾아드릴까요?";
-            if(txt.includes("물티슈")) res = "물티슈는 위생 카테고리에 있으며, 왼쪽 제일 윗칸에 위치해 있습니다.";
+            if(txt.includes("물티슈")) res = "물티슈는 위생 카테고리에 있으며, 사진상 왼쪽 제일 윗칸에 위치해 있습니다.";
             m.innerHTML += `<div class="msg bot">${res}</div>`;
             m.scrollTop = m.scrollHeight;
         }, 600);
