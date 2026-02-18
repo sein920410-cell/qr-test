@@ -2,129 +2,141 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>찾았다! - 인텔리전트 인벤토리</title>
+    <title>찾았다! - 물품 상세 정보</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        :root { --primary: #007bff; --bg: #f4f7f9; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 12px; color: #1e293b; }
+        :root { --primary: #007bff; --bg: #f8fafc; --card: #ffffff; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; color: #1e293b; }
         
-        /* 사진 크기 확대 및 가독성 개선 */
-        .media-viewer { width: 100%; min-height: 250px; background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 12px; }
-        .media-viewer img, .media-viewer video { width: 100%; height: auto; display: block; }
-
+        /* 1) 검색 및 헤더 영역 (최소화) */
         .search-container { position: sticky; top: 0; background: var(--bg); padding-bottom: 10px; z-index: 10; }
-        .search-input { width: 100%; padding: 12px; border: 2px solid var(--primary); border-radius: 10px; box-sizing: border-box; font-size: 14px; }
+        .search-input { width: 100%; padding: 12px; border: 2px solid var(--primary); border-radius: 10px; box-sizing: border-box; font-size: 14px; margin-top: 5px; }
 
-        /* 제어 버튼 영역 */
-        .control-btns { display: flex; gap: 8px; margin-bottom: 12px; }
-        .btn-toggle { flex: 1; padding: 8px; font-size: 12px; font-weight: bold; border: 1px solid #ddd; border-radius: 6px; background: #fff; cursor: pointer; }
+        /* 2) 미디어 카드 영역 (고정 높이 260px, 여백 제거) */
+        .media-card { 
+            width: 100%; 
+            height: 260px; /* 고정 높이 제한 */
+            background: #e2e8f0; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            margin-bottom: 15px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .media-card img, .media-card video { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; /* 비율 유지하며 꽉 채우기 */
+            display: block; 
+        }
 
-        .cat-section { background: #fff; border-radius: 12px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
-        .cat-head { padding: 12px 15px; display: flex; justify-content: space-between; font-weight: bold; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-        .cat-body { display: none; padding: 8px; background: #fafafa; }
+        /* 3) 컨트롤 버튼 */
+        .control-panel { display: flex; gap: 8px; margin-bottom: 12px; }
+        .btn-action { flex: 1; padding: 10px; font-size: 12px; font-weight: bold; border: 1px solid #ddd; border-radius: 8px; background: #fff; cursor: pointer; }
 
-        .item-row { display: flex; align-items: center; gap: 10px; padding: 10px; background: #fff; border-radius: 8px; margin-bottom: 6px; border: 1px solid #eee; }
-        .item-row.active { border: 2px solid var(--primary); background: #f0f7ff; }
-        .item-icon { width: 40px; height: 40px; background: #e2e8f0; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
-        .item-main { flex: 1; }
-        .item-name { font-size: 13px; font-weight: 700; }
-        .qty-badge { background: var(--primary); color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        /* 4) 리스트 영역 */
+        .cat-group { background: var(--card); border-radius: 12px; margin-bottom: 8px; border: 1px solid #edf2f7; overflow: hidden; }
+        .cat-title { padding: 12px 15px; display: flex; justify-content: space-between; font-weight: 800; font-size: 14px; cursor: pointer; }
+        .cat-list { display: none; padding: 8px; background: #fdfdfd; }
+
+        .item-card { display: flex; align-items: center; gap: 10px; padding: 10px; background: #fff; border-radius: 8px; margin-bottom: 6px; border: 1px solid #f1f5f9; }
+        .item-card.match { border: 2px solid var(--primary); background: #f0f7ff; }
+        .item-icon { font-size: 18px; width: 36px; height: 36px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; border-radius: 6px; }
     </style>
 </head>
 <body>
 
 <div class="search-container">
-    <div style="display:flex; justify-content:space-between; margin-bottom:8px; align-items:center;">
-        <span style="font-size:12px; font-weight:bold; background:#000; color:#fff; padding:3px 8px; border-radius:4px;">ID: <span id="disp-id">...</span></span>
-        <span style="font-size:11px; color:#64748b;">AI 분석 98%</span>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:12px; font-weight:bold; background:#000; color:#fff; padding:3px 10px; border-radius:50px;">ID: <span id="id-tag">...</span></span>
+        <span style="font-size:11px; color:#64748b;">AI 분석 신뢰도: 98.5%</span>
     </div>
-    <input type="text" id="search-box" class="search-input" placeholder="검색어 입력 (예: 물티슈)" oninput="updateUI()">
+    <input type="text" id="find-input" class="search-input" placeholder="물건 이름을 검색하세요 (예: 물티슈)" oninput="refreshUI()">
 </div>
 
-<div class="media-viewer" id="media-wrap"></div>
+<div class="media-card" id="media-content"></div>
 
-<div class="control-btns">
-    <button class="btn-toggle" onclick="toggleAll(true)">📂 전체 펼치기</button>
-    <button class="btn-toggle" onclick="toggleAll(false)">📁 전체 접기</button>
+<div class="control-panel">
+    <button class="btn-action" onclick="expandAll(true)">📂 전체 목록 보기</button>
+    <button class="btn-action" onclick="expandAll(false)">📁 목록 접기</button>
 </div>
 
-<div id="list-wrap"></div>
+<div id="item-container"></div>
 
 <script>
     const params = new URLSearchParams(window.location.search);
-    const id = (params.get('tag') || 'DRAWER002').toUpperCase();
-    document.getElementById('disp-id').innerText = id;
+    const tagId = (params.get('tag') || 'DRAWER002').toUpperCase();
+    document.getElementById('id-tag').innerText = tagId;
 
-    const items = [
-        { cat: "위생", name: "베베앙 물티슈 (대형)", qty: 3, pos: "상단-중앙", icon: "🧼" },
-        { cat: "케어", name: "일리윤 여성청결제", qty: 1, pos: "중단-좌측", icon: "🧴" },
-        { cat: "케어", name: "려 트리트먼트", qty: 1, pos: "중단-중앙", icon: "💆" },
-        { cat: "생활", name: "NOW 영양제", qty: 1, pos: "중단-우측", icon: "💊" },
-        { cat: "위생", name: "베베앙 물티슈 (휴대)", qty: 2, pos: "하단-중앙", icon: "🧼" },
-        { cat: "안전", name: "표준 소화기", qty: 1, pos: "최하단-우측", icon: "🧯" },
-        { cat: "청소", name: "밀대 걸레", qty: 1, pos: "최하단-좌측", icon: "🧹" }
+    const dataSet = [
+        { category: "위생", name: "베베앙 물티슈 (대형)", qty: 3, icon: "🧼" },
+        { category: "케어", name: "일리윤 여성청결제", qty: 1, icon: "🧴" },
+        { category: "케어", name: "려 트리트먼트", qty: 1, icon: "💆" },
+        { category: "생활", name: "NOW 영양제", qty: 1, icon: "💊" },
+        { category: "위생", name: "베베앙 물티슈 (휴대)", qty: 2, icon: "🧼" },
+        { category: "안전", name: "표준 소화기", qty: 1, icon: "🧯" },
+        { category: "청소", name: "밀대 걸레", qty: 1, icon: "🧹" }
     ];
 
-    const medias = {
+    const sourceMap = {
         "DRAWER001": "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer1.mp4.mp4",
         "DRAWER002": "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer2.jpg.jpg"
     };
 
     window.onload = () => {
-        const wrap = document.getElementById('media-wrap');
-        const url = medias[id];
-        if (url.includes('.mp4')) wrap.innerHTML = `<video src="${url}" autoplay loop muted playsinline></video>`;
-        else wrap.innerHTML = `<img src="${url}">`;
-        updateUI();
+        const viewer = document.getElementById('media-content');
+        const url = sourceMap[tagId];
+        // autoplay 제거, controls 추가 [cite: 2026-01-11]
+        if (url.includes('.mp4')) viewer.innerHTML = `<video src="${url}" controls playsinline></video>`;
+        else viewer.innerHTML = `<img src="${url}">`;
+        refreshUI();
     };
 
-    function updateUI() {
-        const word = document.getElementById('search-box').value.trim();
-        const wrap = document.getElementById('list-wrap');
-        wrap.innerHTML = '';
+    function refreshUI() {
+        const query = document.getElementById('find-input').value.trim();
+        const container = document.getElementById('item-container');
+        container.innerHTML = '';
 
-        const cats = [...new Set(items.map(i => i.cat))];
+        const cats = [...new Set(dataSet.map(d => d.category))];
         cats.forEach(c => {
-            const catItems = items.filter(i => i.cat === c);
-            const isMatched = word && (c.includes(word) || catItems.some(i => i.name.includes(word)));
+            const list = dataSet.filter(d => d.category === c);
+            const isMatch = query && (c.includes(query) || list.some(d => d.name.includes(query)));
 
             const section = document.createElement('div');
-            section.className = 'cat-section';
+            section.className = 'cat-group';
             section.innerHTML = `
-                <div class="cat-head" onclick="toggle(this)">
-                    <span>${c} (${catItems.length})</span>
-                    <span class="arrow">${isMatched ? '▲' : '▼'}</span>
+                <div class="cat-title" onclick="toggleCat(this)">
+                    <span>${c} (${list.length})</span>
+                    <span class="indicator">${isMatch ? '▲' : '▼'}</span>
                 </div>
-                <div class="cat-body" style="display: ${isMatched ? 'block' : 'none'}">
-                    ${catItems.map(item => `
-                        <div class="item-row ${word && item.name.includes(word) ? 'active' : ''}">
+                <div class="cat-list" style="display: ${isMatch ? 'block' : 'none'}">
+                    ${list.map(item => `
+                        <div class="item-card ${query && item.name.includes(query) ? 'match' : ''}">
                             <div class="item-icon">${item.icon}</div>
-                            <div class="item-main">
+                            <div style="flex:1;">
                                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                                    <span class="item-name">${item.name}</span>
-                                    <span class="qty-badge">${item.qty} EA</span>
+                                    <span style="font-size:14px; font-weight:700;">${item.name}</span>
+                                    <span style="font-size:11px; background:var(--primary); color:#fff; padding:2px 6px; border-radius:4px;">${item.qty} EA</span>
                                 </div>
-                                <div style="font-size:11px; color:#64748b;">위치: ${item.pos}</div>
                             </div>
                         </div>
                     `).join('')}
                 </div>
             `;
-            wrap.appendChild(section);
+            container.appendChild(section);
         });
     }
 
-    function toggle(head) {
-        const body = head.nextElementSibling;
-        const arrow = head.querySelector('.arrow');
-        const isOff = body.style.display === 'none' || body.style.display === '';
-        body.style.display = isOff ? 'block' : 'none';
-        arrow.innerText = isOff ? '▲' : '▼';
+    function toggleCat(el) {
+        const list = el.nextElementSibling;
+        const ind = el.querySelector('.indicator');
+        const show = list.style.display === 'none' || list.style.display === '';
+        list.style.display = show ? 'block' : 'none';
+        ind.innerText = show ? '▲' : '▼';
     }
 
-    function toggleAll(open) {
-        document.querySelectorAll('.cat-body').forEach(b => b.style.display = open ? 'block' : 'none');
-        document.querySelectorAll('.arrow').forEach(a => a.innerText = open ? '▲' : '▼');
+    function expandAll(open) {
+        document.querySelectorAll('.cat-list').forEach(l => l.style.display = open ? 'block' : 'none');
+        document.querySelectorAll('.indicator').forEach(i => i.innerText = open ? '▲' : '▼');
     }
 </script>
 
