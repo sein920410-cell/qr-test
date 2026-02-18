@@ -15,13 +15,13 @@
 <body>
     <div class="search-container">
         <h3 style="margin-top:0">🔍 무엇을 찾으시나요?</h3>
-        <input type="text" id="search-input" placeholder="예: 트리트, 물티슈, 핫팩..." oninput="handleSearch()">
+        <input type="text" id="search-input" placeholder="예: 트리트, 물티슈..." oninput="handleSearch()">
         <div id="results-list"></div>
     </div>
     <script>
         const drawerDatabase = [
-            { id: "DRAWER001", name: "서랍 1번", items: ["쫀디기", "컵홀더", "금박비닐", "핫팩", "수중집어등", "칼", "나무꼬챙이", "종이컵", "커피믹스", "손전등", "메쉬 파우치", "흰색 케이스", "지퍼백", "숟가락", "주황색 도구", "비닐 롤"] },
-            { id: "DRAWER002", name: "서랍 2번", items: ["베베앙 물티슈", "검정 파우치", "일리윤 여성청결제", "려 트리트먼트", "만능 클리너", "쿨링 스프레이", "NOW 영양제", "빨간색 용기", "세정제", "메쉬 바구니", "노란색 보관함", "캐릭터 소품", "소화기", "우산", "걸레"] }
+            { id: "DRAWER001", name: "서랍 1번", items: ["쫀디기", "컵홀더", "금박비닐", "핫팩", "수중집어등", "칼", "나무꼬챙이", "종이컵", "커피믹스", "손전등"] },
+            { id: "DRAWER002", name: "서랍 2번", items: ["물티슈", "여성청결제", "트리트먼트", "클리너", "스프레이", "영양제", "소화기", "우산", "걸레"] }
         ];
         function handleSearch() {
             const query = document.getElementById('search-input').value.trim();
