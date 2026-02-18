@@ -2,124 +2,127 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>찾았다! - 인벤토리 리포트</title>
+    <title>찾았다! - 물품 상세 정보</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        :root { --primary: #007bff; --bg: #f8fafc; --card: #ffffff; --item-bg: #f0f7ff; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 16px; color: #1e293b; }
-        .app-container { max-width: 500px; margin: 0 auto; }
+        /* 사용자님이 좋아하신 image_acd19c.png 스타일 재현 */
+        body { font-family: sans-serif; background: #f8fafc; margin: 0; padding: 16px; color: #1e293b; }
+        .container { max-width: 500px; margin: 0 auto; background: #ffffff; border-radius: 24px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
         
-        /* 메인 카드 레이아웃 (image_acd19c.png 스타일) */
-        .main-card { background: var(--card); border-radius: 24px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.05); }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .badge-id { background: #0f172a; color: #fff; padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 700; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .id-badge { background: #0f172a; color: #fff; padding: 6px 14px; border-radius: 50px; font-size: 12px; font-weight: bold; }
 
-        /* 썸네일 스타일 미디어 영역 (240px 고정, 전체 노출) */
-        .media-thumb { 
-            width: 100%; height: 240px; background: #f1f5f9; border-radius: 20px; 
-            overflow: hidden; margin-bottom: 20px; position: relative; 
-            display: flex; align-items: center; justify-content: center;
-            cursor: zoom-in; border: 1px solid #edf2f7;
+        /* 사진 영역: 전체가 다 보이게 설정 */
+        .media-box { 
+            width: 100%; height: 220px; background: #f1f5f9; border-radius: 20px; 
+            margin-bottom: 20px; display: flex; align-items: center; justify-content: center;
+            overflow: hidden; cursor: pointer; border: 1px solid #eee;
         }
-        .media-thumb img, .media-thumb video { max-width: 100%; max-height: 100%; object-fit: contain; }
-        .label-overlay { position: absolute; bottom: 12px; right: 12px; background: rgba(0,0,0,0.6); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 700; }
+        .media-box img, .media-box video { max-width: 100%; max-height: 100%; object-fit: contain; }
 
-        /* 아이템 리스트 스타일 (하늘색 카드 UI) */
-        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: var(--item-bg); border-radius: 16px; border: 1px solid #e0f0ff; margin-bottom: 10px; }
-        .cat-name { font-size: 11px; color: var(--primary); font-weight: 700; margin-bottom: 2px; display: block; }
-        .item-name { font-size: 14px; font-weight: 700; color: #334155; }
-        .qty-badge { background: var(--primary); color: #fff; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; }
-        .btn-edit { font-size: 11px; color: var(--primary); background: none; border: 1px solid var(--primary); border-radius: 4px; padding: 2px 6px; cursor: pointer; margin-top: 4px; }
+        /* 하늘색 아이템 카드 스타일 */
+        .item-list { display: flex; flex-direction: column; gap: 10px; }
+        .item-card { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 15px; background: #f0f7ff; border-radius: 16px; border: 1px solid #e0f0ff; 
+        }
+        .item-info { flex: 1; }
+        .cat-text { font-size: 11px; color: #007bff; font-weight: bold; margin-bottom: 2px; display: block; }
+        .name-text { font-size: 14px; font-weight: bold; color: #334155; }
+        .qty-label { background: #007bff; color: #fff; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
+        
+        /* 수정 버튼 */
+        .edit-btn { background: none; border: 1px solid #007bff; color: #007bff; font-size: 10px; padding: 2px 6px; border-radius: 4px; cursor: pointer; margin-top: 5px; }
 
-        /* 전체 화면 모달 */
-        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; }
-        .modal-content { max-width: 98%; max-height: 98%; object-fit: contain; }
-        .close-btn { position: absolute; top: 30px; right: 30px; color: #fff; font-size: 40px; font-weight: bold; cursor: pointer; }
+        /* 전체화면 팝업 */
+        .full-screen { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.9); z-index: 9999; align-items: center; justify-content: center; 
+        }
+        .full-screen img, .full-screen video { max-width: 95%; max-height: 95%; }
+        .close-x { position: absolute; top: 20px; right: 20px; color: #fff; font-size: 30px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <div class="main-card">
-        <div class="header">
-            <div class="badge-id">ID: <span id="disp-id">...</span></div>
-            <div style="font-size: 11px; color: #94a3b8;">AI 분석 정확도: 98.5%</div>
-        </div>
-
-        <div class="media-thumb" onclick="openFull()">
-            <div id="media-content" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;"></div>
-            <div class="label-overlay">TAP TO ENLARGE</div>
-        </div>
-
-        <div style="font-size: 16px; font-weight: 800; margin-bottom: 16px;">📦 보관 물품 목록</div>
-        <div id="list-area"></div>
+<div class="container">
+    <div class="header">
+        <div class="id-badge">ID: <span id="view-id">...</span></div>
+        <div style="font-size: 11px; color: #94a3b8;">분석 완료</div>
     </div>
+
+    <div class="media-box" onclick="showFull()">
+        <div id="media-target" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;"></div>
+    </div>
+
+    <div style="font-size: 16px; font-weight: bold; margin-bottom: 15px;">📦 보관 물품 목록</div>
+    <div id="item-area" class="item-list"></div>
 </div>
 
-<div id="modal-screen" class="modal" onclick="closeFull()">
-    <span class="close-btn">&times;</span>
-    <div id="modal-target" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;"></div>
+<div id="full-modal" class="full-screen" onclick="hideFull()">
+    <span class="close-x">&times;</span>
+    <div id="modal-content" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;"></div>
 </div>
 
 <script>
-    const params = new URLSearchParams(window.location.search);
-    const id = (params.get('tag') || 'DRAWER002').toUpperCase();
-    document.getElementById('disp-id').innerText = id;
+    const urlData = new URLSearchParams(window.location.search);
+    const tag = (urlData.get('tag') || 'DRAWER002').toUpperCase();
+    document.getElementById('view-id').innerText = tag;
 
-    // 실시간 수정을 위해 데이터를 변수로 관리 [cite: 2026-01-11]
-    let itemsData = [
-        { cat: "위생", name: "베베앙 물티슈 (대형)", qty: "5 EA" },
-        { cat: "케어", name: "여성청결제/트리트먼트", qty: "각 1 EA" },
-        { cat: "생활", name: "NOW 영양제/클리너", qty: "각 1 EA" },
-        { cat: "안전", name: "소방용 소화기", qty: "1 EA" },
-        { cat: "청소", name: "우산/밀대 걸레", qty: "다수" }
+    // 수정 가능한 데이터 목록 [cite: 2026-02-15]
+    let myItems = [
+        { c: "위생", n: "베베앙 물티슈 (대형)", q: "5 EA" },
+        { c: "케어", n: "여성청결제/트리트먼트", q: "각 1 EA" },
+        { c: "생활", n: "NOW 영양제/클리너", q: "각 1 EA" },
+        { c: "안전", n: "소방용 소화기", q: "1 EA" },
+        { c: "청소", n: "우산/밀대 걸레", q: "다수" }
     ];
 
-    const mediaUrl = id === "DRAWER001" 
+    const myUrl = tag === "DRAWER001" 
         ? "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer1.mp4.mp4"
         : "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer2.jpg.jpg";
 
     window.onload = () => {
-        const target = document.getElementById('media-content');
-        if (mediaUrl.includes('.mp4')) target.innerHTML = `<video src="${mediaUrl}" autoplay loop muted playsinline></video>`;
-        else target.innerHTML = `<img src="${mediaUrl}">`;
-        renderList();
+        const box = document.getElementById('media-target');
+        if (myUrl.includes('.mp4')) box.innerHTML = `<video src="${myUrl}" autoplay loop muted playsinline></video>`;
+        else box.innerHTML = `<img src="${myUrl}">`;
+        showList();
     };
 
-    function renderList() {
-        const area = document.getElementById('list-area');
-        area.innerHTML = itemsData.map((item, idx) => `
-            <div class="item-row">
-                <div>
-                    <span class="cat-name">${item.cat}</span>
-                    <span class="item-name" id="name-${idx}">${item.name}</span><br>
-                    <button class="btn-edit" onclick="editName(${idx}, event)">수정하기</button>
+    function showList() {
+        const area = document.getElementById('item-area');
+        area.innerHTML = myItems.map((item, i) => `
+            <div class="item-card">
+                <div class="item-info">
+                    <span class="cat-text">${item.c}</span>
+                    <span class="name-text">${item.n}</span><br>
+                    <button class="edit-btn" onclick="rename(${i}, event)">이름 수정</button>
                 </div>
-                <span class="qty-badge">${item.qty}</span>
+                <span class="qty-label">${item.q}</span>
             </div>`).join('');
     }
 
-    // 진짜로 이름이 바뀌는 수정 기능 [cite: 2026-01-11]
-    function editName(idx, event) {
-        event.stopPropagation();
-        const newName = prompt("새로운 물건 이름을 입력하세요:", itemsData[idx].name);
-        if (newName && newName.trim() !== "") {
-            itemsData[idx].name = newName;
-            renderList();
+    // 이름 수정 기능 [cite: 2026-01-11]
+    function rename(i, e) {
+        e.stopPropagation();
+        const nextName = prompt("바꿀 이름을 입력하세요:", myItems[i].n);
+        if (nextName) {
+            myItems[i].n = nextName;
+            showList();
         }
     }
 
-    function openFull() {
-        const modal = document.getElementById('modal-screen');
-        const target = document.getElementById('modal-target');
+    function showFull() {
+        const modal = document.getElementById('full-modal');
+        const target = document.getElementById('modal-content');
         modal.style.display = "flex";
-        if (mediaUrl.includes('.mp4')) target.innerHTML = `<video src="${mediaUrl}" controls autoplay class="modal-content"></video>`;
-        else target.innerHTML = `<img src="${mediaUrl}" class="modal-content">`;
+        if (myUrl.includes('.mp4')) target.innerHTML = `<video src="${myUrl}" controls autoplay></video>`;
+        else target.innerHTML = `<img src="${myUrl}">`;
     }
 
-    function closeFull() {
-        document.getElementById('modal-screen').style.display = "none";
-        document.getElementById('modal-target').innerHTML = "";
+    function hideFull() {
+        document.getElementById('full-modal').style.display = "none";
+        document.getElementById('modal-content').innerHTML = "";
     }
 </script>
 </body>
