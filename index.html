@@ -2,57 +2,39 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <title>찾았다! - 메인 검색</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>물건 찾기</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
-        .search-container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .result-item { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-        .result-item:last-child { border-bottom: none; }
-        button { padding: 8px 12px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        body { font-family: sans-serif; padding: 15px; background: #f4f7f6; color: #333; }
+        .search-container { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+        input#search-input { width: 100%; padding: 15px; border: 2px solid #007bff; border-radius: 8px; font-size: 16px; box-sizing: border-box; outline: none; }
+        .result-card { background: #fff; border-radius: 10px; margin-top: 15px; padding: 15px; border: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .btn-go { background: #1a1a1a; color: #fff; padding: 10px 15px; border-radius: 5px; text-decoration: none; font-size: 14px; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="search-container">
-        <h2>어떤 물건을 찾으시나요?</h2>
-        <input type="text" id="searchInput" placeholder="물건 이름을 입력하세요 (2자 이상)" oninput="handleSearch()">
-        <div id="resultList"></div>
+        <h3 style="margin-top:0">🔍 무엇을 찾으시나요?</h3>
+        <input type="text" id="search-input" placeholder="예: 트리트, 물티슈, 핫팩..." oninput="handleSearch()">
+        <div id="results-list"></div>
     </div>
-
     <script>
-        // 사진에서 확인한 정보 (주소와 키) [cite: 2026-01-11]
-        const S_URL = 'https://tqhtggusphhcsygiitrv.supabase.co';
-        const S_KEY = 'sb_publishable_D9nhmN5ZlyApSrHHasyQ3w_07Kdmv2m3vE9vU1tBfV3pG';
-        const supabase = window.supabase.createClient(S_URL, S_KEY);
-
-        async function handleSearch() {
-            const query = document.getElementById('searchInput').value;
-            const resultList = document.getElementById('resultList');
-            resultList.innerHTML = '';
-
-            // 2자 이상 입력했을 때만 작동 [cite: 2026-02-16]
-            if (query.length >= 2) { 
-                const { data, error } = await supabase
-                    .from('tags') 
-                    .select('*')
-                    .ilike('items', `%${query}%`); // items 컬럼에서 검색 [cite: 2026-02-15]
-
-                if (data && data.length > 0) {
-                    data.forEach(tag => {
-                        const div = document.createElement('div');
-                        div.className = 'result-item';
-                        div.innerHTML = `
-                            <span>📦 <strong>${tag.display_name}</strong> 안에 '${query}'(이)가 있어요.</span>
-                            <button onclick="location.href='drawer.html?id=${tag.id}'">보기</button>
-                        `;
-                        resultList.appendChild(div);
-                    });
-                } else if (query.length >= 2) {
-                    resultList.innerHTML = '<p style="color:#999; text-align:center;">찾는 물건이 없어요.</p>';
-                }
-            } 
+        const drawerDatabase = [
+            { id: "DRAWER001", name: "서랍 1번", items: ["쫀디기", "컵홀더", "금박비닐", "핫팩", "수중집어등", "칼", "나무꼬챙이", "종이컵", "커피믹스", "손전등", "메쉬 파우치", "흰색 케이스", "지퍼백", "숟가락", "주황색 도구", "비닐 롤"] },
+            { id: "DRAWER002", name: "서랍 2번", items: ["베베앙 물티슈", "검정 파우치", "일리윤 여성청결제", "려 트리트먼트", "만능 클리너", "쿨링 스프레이", "NOW 영양제", "빨간색 용기", "세정제", "메쉬 바구니", "노란색 보관함", "캐릭터 소품", "소화기", "우산", "걸레"] }
+        ];
+        function handleSearch() {
+            const query = document.getElementById('search-input').value.trim();
+            const resultsContainer = document.getElementById('results-list');
+            resultsContainer.innerHTML = '';
+            if (!query) return;
+            const matched = drawerDatabase.filter(d => d.items.some(item => item.includes(query)));
+            matched.forEach(d => {
+                const div = document.createElement('div');
+                div.className = 'result-card';
+                div.innerHTML = `<div><strong>📦 ${d.name}</strong><p style="margin:5px 0 0; font-size:12px; color:#666">보관 중</p></div><a href="drawer.html?tag=${d.id}" class="btn-go">상세보기 ></a>`;
+                resultsContainer.appendChild(div);
+            });
         }
     </script>
 </body>
