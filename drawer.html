@@ -2,63 +2,57 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <title>찾았다! - 서랍 관리</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>서랍 확인</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #fafafa; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        h1 { font-size: 1.2rem; color: #333; margin-top: 0; }
-        ul { padding: 0; list-style: none; }
-        li { padding: 10px 0; border-bottom: 1px solid #eee; }
-        #media img { width: 100%; border-radius: 8px; margin-bottom: 15px; }
+        body { font-family: sans-serif; padding: 15px; background: #f4f7f6; color: #333; }
+        .card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .drawer-badge { background: #1a1a1a; color: #fff; padding: 5px 12px; border-radius: 20px; font-size: 13px; display: inline-block; margin-bottom: 15px; }
+        .media-box { width: 100%; min-height: 200px; background: #eee; border-radius: 8px; margin-bottom: 15px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .media-box img, .media-box video { width: 100%; height: auto; }
+        textarea { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; min-height: 250px; line-height: 1.6; box-sizing: border-box; }
+        #status-msg { font-size: 14px; text-align: center; margin: 10px 0; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="card">
-        <div id="media"></div>
-        <h1 id="title">정보를 불러오는 중...</h1>
-        <ul id="list"></ul>
+        <div class="drawer-badge"><span id="drawer-id-display">...</span>번 서랍</div>
+        <div class="media-box" id="media-preview">데이터 로딩 중...</div>
+        <div id="status-msg">사진을 업로드하여 분석을 시작하세요.</div>
+        <textarea id="items-list" readonly></textarea>
     </div>
-
     <script>
-        // 사진(image_6b761e.png, image_6b8ce6.png)에서 확인한 실제 정보입니다. [cite: 2026-01-11]
-        const S_URL = 'https://tqhtggusphhcsygiitrv.supabase.co';
-        const S_KEY = 'sb_publishable_D9nhmN5ZlyApSrHHasyQ3w_O7Kdmssq';
-        const supabase = window.supabase.createClient(S_URL, S_KEY);
+        const SUPABASE_URL = 'https://tqhtggusphhcsygiitrv.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // 주소창의 id 값을 가져옵니다. [cite: 2026-02-15]
-        const id = new URLSearchParams(window.location.search).get('id');
+        const urlParams = new URLSearchParams(window.location.search);
+        const drawerId = (urlParams.get('tag') || 'DRAWER001').toUpperCase();
+        document.getElementById('drawer-id-display').innerText = drawerId;
 
-        async function load() {
-            if (!id) { document.getElementById('title').innerText = "ID가 없습니다."; return; }
+        const dataStore = {
+            "DRAWER001": "서랍1 목록:\n- 쫀디기 1개\n- 컵홀더 1개\n- 금박비닐 1개\n- 핫팩 다수\n- 수중집어등 1개\n- 칼 1개\n- 나무꼬챙이 다수\n- 종이컵 1뭉치\n- 커피믹스 다수\n- 손전등 1개\n- 비닐 롤 1개",
+            "DRAWER002": "서랍2 목록:\n[상단] 물티슈 3개, 검정 파우치 1개\n[2단] 여성청결제 1개, 트리트먼트 1개, 클리너 1개, 스프레이 1개, 영양제 1개\n[3단] 물티슈 2개, 바구니 1개\n[하단] 소화기 1대, 우산 다수, 밀대 걸레 1개"
+        };
 
-            const { data, error } = await supabase
-                .from('tags')
-                .select('display_name, items, media_url')
-                .eq('id', id)
-                .single();
+        window.onload = () => {
+            document.getElementById('items-list').value = dataStore[drawerId] || "정보 없음";
+            loadSampleMedia();
+        };
 
-            if (error || !data) {
-                document.getElementById('title').innerText = "정보를 찾을 수 없습니다.";
-                return;
-            }
-
-            // 서랍 이름 (display_name) 출력 [cite: 2026-02-15]
-            document.getElementById('title').innerText = data.display_name || "이름 없음";
-
-            // 물건 목록 (items) 출력 [cite: 2026-02-15]
-            if (data.items) {
-                const itemList = data.items.split(',');
-                document.getElementById('list').innerHTML = itemList.map(i => `<li>${i.trim()}</li>`).join('');
-            }
-
-            // 사진 (media_url) 출력 [cite: 2026-02-15]
-            if (data.media_url) {
-                document.getElementById('media').innerHTML = `<img src="${data.media_url}">`;
+        async function loadSampleMedia() {
+            const fileName = drawerId === "DRAWER001" ? "drawer1.mp4" : "drawer2.jpg";
+            const { data } = _supabase.storage.from('user_uploads').getPublicUrl(fileName);
+            if (data.publicUrl) {
+                const preview = document.getElementById('media-preview');
+                if (fileName.endsWith('.mp4')) {
+                    preview.innerHTML = `<video src="${data.publicUrl}" autoplay loop muted playsinline></video>`;
+                } else {
+                    preview.innerHTML = `<img src="${data.publicUrl}">`;
+                }
             }
         }
-        load();
     </script>
 </body>
 </html>
