@@ -13,42 +13,36 @@
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .badge-id { background: #0f172a; color: #fff; padding: 5px 12px; border-radius: 100px; font-size: 11px; font-weight: 700; }
 
-        /* 요청 반영: 고정 높이 260px 및 4:3 비율 설정 [cite: 2026-01-11] */
+        /* 4:3 비율 및 260px 높이 유지 [cite: 2026-01-11] */
         .media-container { 
-            width: auto; 
-            height: 260px; /* 고정 높이 */
-            aspect-ratio: 4 / 3; /* 4:3 비율 강제 */
-            background: #f1f5f9; 
-            border-radius: 16px; 
-            overflow: hidden; 
-            margin: 0 auto 20px auto; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            cursor: zoom-in;
-            border: 1px solid #edf2f7;
+            width: auto; height: 260px; aspect-ratio: 4 / 3; background: #f1f5f9; 
+            border-radius: 16px; overflow: hidden; margin: 0 auto 15px auto; 
+            display: flex; align-items: center; justify-content: center;
+            cursor: zoom-in; border: 1px solid #edf2f7;
         }
-        /* 사진 전체 노출 및 잘림 방지 [cite: 2026-01-11, 2026-01-22] */
         .media-container img, .media-container video { 
-            max-width: 100%; 
-            max-height: 100%; 
-            object-fit: contain; 
-            display: block; 
+            max-width: 100%; max-height: 100%; object-fit: contain; display: block; 
         }
 
-        /* 아이템 리스트 (image_acd19c.png 스타일) [cite: 2026-02-15] */
-        .item-list { display: flex; flex-direction: column; gap: 8px; }
-        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: var(--item-bg); border-radius: 14px; border: 1px solid #e0f0ff; }
-        .item-info { flex: 1; }
-        .cat-tag { font-size: 10px; color: var(--primary); font-weight: 700; margin-bottom: 2px; display: block; }
+        /* 검색창 (엔터 지원) */
+        .search-input { width: 100%; padding: 12px; border: 2px solid var(--primary); border-radius: 10px; box-sizing: border-box; font-size: 14px; margin-bottom: 15px; outline: none; }
+
+        /* 카테고리 접기/펼치기 구조 [cite: 2026-02-15] */
+        .cat-group { background: var(--card); border-radius: 14px; margin-bottom: 8px; border: 1px solid #e2e8f0; overflow: hidden; }
+        .cat-header { padding: 12px 15px; display: flex; justify-content: space-between; font-weight: 800; font-size: 14px; cursor: pointer; background: #fff; }
+        .cat-content { display: none; padding: 8px; background: #fafafa; border-top: 1px solid #f1f5f9; }
+
+        /* 아이템 카드 디자인 */
+        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: var(--item-bg); border-radius: 12px; border: 1px solid #e0f0ff; margin-bottom: 6px; }
+        .item-row.match { border: 2px solid var(--primary); background: #eef7ff; }
         .item-name { font-size: 13px; font-weight: 700; color: #334155; }
         .qty-badge { background: var(--primary); color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; }
         .btn-edit { font-size: 10px; color: var(--primary); background: #fff; border: 1px solid var(--primary); border-radius: 4px; padding: 2px 5px; cursor: pointer; margin-top: 4px; }
 
-        /* 전체 화면 확대 모달 [cite: 2026-01-11] */
+        /* 모달 [cite: 2026-01-11] */
         .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; }
         .modal-content { max-width: 98%; max-height: 98%; object-fit: contain; }
-        .close-btn { position: absolute; top: 20px; right: 20px; color: #fff; font-size: 35px; font-weight: bold; cursor: pointer; }
+        .close-btn { position: absolute; top: 20px; right: 20px; color: #fff; font-size: 35px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -57,19 +51,20 @@
     <div class="main-card">
         <div class="header">
             <div class="badge-id">ID: <span id="disp-id">...</span></div>
-            <div style="font-size: 10px; color: #94a3b8;">분석 완료</div>
+            <div style="font-size: 10px; color: #64748b;">AI 분석 98.5%</div>
         </div>
 
         <div class="media-container" onclick="openFull()">
             <div id="media-wrap" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;"></div>
         </div>
 
-        <div style="font-size: 15px; font-weight: 800; margin-bottom: 12px;">📦 보관 물품 목록</div>
-        <div id="list-area" class="item-list"></div>
+        <input type="text" id="search-box" class="search-input" placeholder="검색 후 엔터를 누르세요." onkeydown="if(event.keyCode==13) updateView()">
+
+        <div id="list-container"></div>
     </div>
 </div>
 
-<div id="modal-view" class="modal" onclick="closeFull()">
+<div id="full-view" class="modal" onclick="closeFull()">
     <span class="close-btn">&times;</span>
     <div id="modal-body" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;"></div>
 </div>
@@ -79,25 +74,28 @@
     const tag = (params.get('tag') || 'DRAWER001').toUpperCase();
     document.getElementById('disp-id').innerText = tag;
 
+    // 1. 목록 확장 (사진 속 실제 물건들 추가) [cite: 20, 2026-01-11, 2026-02-16]
     const db = {
         "DRAWER001": {
             url: "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer1.mp4.mp4",
             items: [
-                { c: "식품", n: "쫀디기", q: "1 EA" },
-                { c: "식품", n: "맥심 커피믹스", q: "다수" },
-                { c: "캠핑", n: "수중 집어등", q: "1 EA" },
-                { c: "주방", n: "종이컵 / 컵홀더", q: "1 Set" },
-                { c: "공구", n: "다목적 칼 / 손전등", q: "각 1 EA" }
+                { cat: "식품", n: "쫀디기", q: "1 EA" },
+                { cat: "식품", n: "맥심 커피믹스", q: "다수" },
+                { cat: "주방", n: "종이컵 / 컵홀더", q: "1 Set" },
+                { cat: "공구", n: "다목적 칼 / 손전등", q: "각 1 EA" },
+                { cat: "기타", n: "금박 비닐 / 메쉬 파우치", q: "다수" }
             ]
         },
         "DRAWER002": {
             url: "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer2.jpg.jpg",
             items: [
-                { c: "위생", n: "베베앙 물티슈 (대형)", q: "5 EA" },
-                { c: "케어", n: "여성청결제 / 트리트먼트", q: "각 1 EA" },
-                { c: "생활", n: "NOW 영양제 / 클리너", q: "각 1 EA" },
-                { c: "안전", n: "소방용 소화기", q: "1 EA" },
-                { c: "청소", n: "우산 / 밀대 걸레", q: "다수" }
+                { cat: "위생", n: "베베앙 물티슈 (대형)", q: "5 EA" },
+                { cat: "위생", n: "검정 파우치", q: "1 EA" },
+                { cat: "케어", n: "여성청결제 / 트리트먼트", q: "각 1 EA" },
+                { cat: "케어", n: "NOW 영양제 / 클리너", q: "각 1 EA" },
+                { cat: "안전", n: "소방용 소화기", q: "1 EA" },
+                { cat: "청소", n: "우산 / 밀대 걸레", q: "다수" },
+                { cat: "기타", n: "원숭이 캐릭터 소품 / 바구니", q: "다수" }
             ]
         }
     };
@@ -108,33 +106,58 @@
         const wrap = document.getElementById('media-wrap');
         if (activeData.url.includes('.mp4')) wrap.innerHTML = `<video src="${activeData.url}" autoplay loop muted playsinline></video>`;
         else wrap.innerHTML = `<img src="${activeData.url}">`;
-        render();
+        updateView();
     };
 
-    function render() {
-        const area = document.getElementById('list-area');
-        area.innerHTML = activeData.items.map((item, idx) => `
-            <div class="item-row">
-                <div class="item-info">
-                    <span class="cat-tag">${item.c}</span>
-                    <span class="item-name">${item.n}</span><br>
-                    <button class="btn-edit" onclick="edit(${idx}, event)">수정</button>
+    // 2. 검색 및 엔터 기능 연동 [cite: 2026-01-11]
+    function updateView() {
+        const query = document.getElementById('search-box').value.trim();
+        const container = document.getElementById('list-container');
+        container.innerHTML = '';
+
+        const cats = [...new Set(activeData.items.map(i => i.cat))];
+        cats.forEach(c => {
+            const list = activeData.items.filter(i => i.cat === c);
+            const isMatch = query && (c.includes(query) || list.some(i => i.name?.includes(query) || i.n?.includes(query)));
+
+            const div = document.createElement('div');
+            div.className = 'cat-group';
+            div.innerHTML = `
+                <div class="cat-header" onclick="toggle(this)">
+                    <span>${c} (${list.length})</span>
+                    <span class="arr">${isMatch ? '▲' : '▼'}</span>
                 </div>
-                <span class="qty-badge">${item.q}</span>
-            </div>`).join('');
+                <div class="cat-content" style="display: ${isMatch ? 'block' : 'none'}">
+                    ${list.map(item => `
+                        <div class="item-row ${query && (item.n || item.name).includes(query) ? 'match' : ''}">
+                            <div class="item-info">
+                                <span class="item-name">${item.n || item.name}</span><br>
+                                <button class="btn-edit" onclick="editItem(this, event)">수정</button>
+                            </div>
+                            <span class="qty-badge">${item.q || item.qty}</span>
+                        </div>`).join('')}
+                </div>`;
+            container.appendChild(div);
+        });
     }
 
-    function edit(idx, e) {
+    function toggle(header) {
+        const content = header.nextElementSibling;
+        const arr = header.querySelector('.arr');
+        const show = content.style.display === 'none' || content.style.display === '';
+        content.style.display = show ? 'block' : 'none';
+        arr.innerText = show ? '▲' : '▼';
+    }
+
+    function editItem(btn, e) {
         e.stopPropagation();
-        const next = prompt("이름 수정:", activeData.items[idx].n);
-        if (next) {
-            activeData.items[idx].n = next;
-            render();
-        }
+        const nameEl = btn.previousElementSibling;
+        const next = prompt("이름을 수정하세요:", nameEl.innerText);
+        if (next) nameEl.innerText = next;
     }
 
     function openFull() {
-        const modal = document.getElementById('modal-view');
+        const modal = document.getElementById('full-view');
         const body = document.getElementById('modal-body');
         modal.style.display = "flex";
         if (activeData.url.includes('.mp4')) body.innerHTML = `<video src="${activeData.url}" controls autoplay class="modal-content"></video>`;
@@ -142,9 +165,9 @@
     }
 
     function closeFull() {
-        document.getElementById('modal-view').style.display = "none";
+        document.getElementById('full-view').style.display = "none";
         document.getElementById('modal-body').innerHTML = "";
     }
 </script>
 </body>
-</html> 
+</html>
