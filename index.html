@@ -1,26 +1,52 @@
-module.exports = async (req, res) => {
-  if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
-  const { image } = req.body;
-  
-  try {
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + process.env.GEMINI_API_KEY, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [
-          { text: "이 사진 속의 모든 물건을 아주 자세하게 찾아내서 쉼표로 구분한 목록으로 알려줘. 눈에 보이는 작은 파우치나 바구니, 세정제 병들도 모두 포함해줘." },
-          { inline_data: { mime_type: "image/jpeg", data: image } }
-        ]}]
-      })
-    });
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>찾았다! - 메인 검색</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: sans-serif; padding: 15px; background: #f4f7f6; color: #333; }
+        .search-container { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+        input#search-input { width: 100%; padding: 15px; border: 2px solid #007bff; border-radius: 8px; font-size: 16px; box-sizing: border-box; outline: none; }
+        .result-card { background: #fff; border-radius: 10px; margin-top: 15px; padding: 15px; border: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .btn-go { background: #1a1a1a; color: #fff; padding: 10px 15px; border-radius: 5px; text-decoration: none; font-size: 14px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="search-container">
+        <h3 style="margin-top:0">🔍 무엇을 찾으시나요?</h3>
+        <input type="text" id="search-input" placeholder="예: 트리트, 물티슈..." oninput="handleSearch()" onkeydown="if(event.key === 'Enter') goToFirstResult()">
+        <div id="results-list"></div>
+    </div>
+    <script>
+        const drawerDatabase = [
+            { id: "DRAWER001", name: "서랍 1번", items: ["쫀디기", "컵홀더", "금박비닐", "핫팩", "수중집어등", "칼", "나무꼬챙이", "종이컵", "커피믹스", "손전등"] },
+            { id: "DRAWER002", name: "서랍 2번", items: ["물티슈", "여성청결제", "트리트먼트", "클리너", "스프레이", "영양제", "소화기", "우산", "걸레", "파우치", "바구니", "세정제"] }
+        ];
 
-    const data = await response.json();
-    if (data.error) return res.status(500).json({ error: data.error.message });
-    if (!data.candidates || !data.candidates[0]) return res.status(500).json({ error: "분석 결과가 없습니다." });
-    
-    const result = data.candidates[0].content.parts[0].text;
-    res.status(200).json({ result });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
+        function handleSearch() {
+            const query = document.getElementById('search-input').value.trim();
+            const resultsContainer = document.getElementById('results-list');
+            resultsContainer.innerHTML = '';
+            if (!query) return;
+            const matched = drawerDatabase.filter(d => d.items.some(item => item.includes(query)));
+            matched.forEach(d => {
+                const div = document.createElement('div');
+                div.className = 'result-card';
+                div.innerHTML = `<div><strong>📦 ${d.name}</strong><p style="margin:5px 0 0; font-size:12px; color:#666">보관 중</p></div><a href="drawer.html?tag=${d.id}" class="btn-go">상세보기 ></a>`;
+                resultsContainer.appendChild(div);
+            });
+        }
+
+        // 엔터 키를 누르면 첫 번째 결과로 바로 이동하는 함수
+        function goToFirstResult() {
+            const query = document.getElementById('search-input').value.trim();
+            if (!query) return;
+            const matched = drawerDatabase.find(d => d.items.some(item => item.includes(query)));
+            if (matched) {
+                window.location.href = `drawer.html?tag=${matched.id}`;
+            }
+        }
+    </script>
+</body>
+</html>
