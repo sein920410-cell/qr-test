@@ -2,143 +2,117 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>찾았다! - 물품 상세 정보</title>
+    <title>찾았다! - 인벤토리 리포트</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        :root { --primary: #007bff; --bg: #f8fafc; --card: #ffffff; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; color: #1e293b; }
+        :root { --primary: #007bff; --bg: #f8fafc; --card: #ffffff; --item-bg: #f0f7ff; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 16px; color: #1e293b; }
+        .app-container { max-width: 500px; margin: 0 auto; }
         
-        .search-container { position: sticky; top: 0; background: var(--bg); padding-bottom: 10px; z-index: 10; }
-        .search-input { width: 100%; padding: 12px; border: 2px solid var(--primary); border-radius: 10px; box-sizing: border-box; font-size: 14px; margin-top: 5px; }
+        .main-card { background: var(--card); border-radius: 24px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.05); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .badge-id { background: #0f172a; color: #fff; padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 700; }
 
-        /* 미디어 카드 영역 (사진 전체 노출 설정) */
-        .media-container { 
-            width: 100%; 
-            height: 250px; /* 고정 높이로 스크롤 최소화 */
-            background: #f1f5f9; /* 검은 여백 대신 부드러운 배경색 [cite: 2026-01-11] */
-            border-radius: 12px; 
-            overflow: hidden; 
-            margin-bottom: 15px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-            border: 1px solid #eee;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        /* 썸네일 스타일 미디어 영역 */
+        .media-thumb { 
+            width: 100%; height: 240px; background: #f1f5f9; border-radius: 20px; 
+            overflow: hidden; margin-bottom: 24px; position: relative; 
+            display: flex; align-items: center; justify-content: center;
+            cursor: zoom-in; border: 1px solid #edf2f7;
         }
-        .media-container img, .media-container video { 
-            max-width: 100%; 
-            max-height: 100%; 
-            object-fit: contain; /* 사진 전체를 다 보여주는 핵심 명령 [cite: 2026-01-11] */
-            display: block; 
-        }
+        .media-thumb img, .media-thumb video { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .label-overlay { position: absolute; bottom: 12px; right: 12px; background: rgba(0,0,0,0.6); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 700; }
 
-        .control-btns { display: flex; gap: 8px; margin-bottom: 12px; }
-        .btn-toggle { flex: 1; padding: 10px; font-size: 12px; font-weight: bold; border: 1px solid #ddd; border-radius: 8px; background: #fff; cursor: pointer; }
+        /* 아이템 리스트 스타일 (image_acd19c.png 반영) */
+        .section-title { font-size: 16px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .item-list { display: flex; flex-direction: column; gap: 10px; }
+        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: var(--item-bg); border-radius: 14px; border: 1px solid #e0f0ff; }
+        .cat-name { font-size: 11px; color: var(--primary); font-weight: 700; margin-bottom: 2px; display: block; }
+        .item-name { font-size: 14px; font-weight: 700; color: #334155; }
+        .qty-badge { background: var(--primary); color: #fff; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; }
 
-        .cat-box { background: var(--card); border-radius: 12px; margin-bottom: 8px; border: 1px solid #edf2f7; overflow: hidden; }
-        .cat-head { padding: 12px 15px; display: flex; justify-content: space-between; font-weight: 800; font-size: 14px; cursor: pointer; }
-        .cat-list { display: none; padding: 8px; background: #fdfdfd; }
-
-        .item-card { display: flex; align-items: center; gap: 10px; padding: 10px; background: #fff; border-radius: 8px; margin-bottom: 6px; border: 1px solid #f1f5f9; }
-        .item-card.match { border: 2px solid var(--primary); background: #f0f7ff; }
-        .item-icon { font-size: 18px; width: 36px; height: 36px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; border-radius: 6px; }
+        /* 전체 화면 모달 */
+        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; }
+        .modal-content { max-width: 98%; max-height: 98%; object-fit: contain; }
+        .close-btn { position: absolute; top: 30px; right: 30px; color: #fff; font-size: 40px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div class="search-container">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:12px; font-weight:bold; background:#000; color:#fff; padding:3px 10px; border-radius:50px;">ID: <span id="id-display">...</span></span>
-        <span style="font-size:11px; color:#64748b;">AI 분석 정확도: 98.5%</span>
+<div class="app-container">
+    <div class="main-card">
+        <div class="header">
+            <div class="badge-id">ID: <span id="disp-id">...</span></div>
+            <div style="font-size: 11px; color: #94a3b8;">Last Sync: Just now</div>
+        </div>
+
+        <div class="media-thumb" id="thumb-box" onclick="openFull()">
+            <div id="media-content" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;"></div>
+            <div class="label-overlay">CAPTURED IMAGE</div>
+        </div>
+
+        <div class="section-title">📦 보관 물품 목록</div>
+        <div id="list-area" class="item-list"></div>
     </div>
-    <input type="text" id="find-box" class="search-input" placeholder="물건 이름을 검색하세요 (예: 물티슈)" oninput="updateList()">
 </div>
 
-<div class="media-container" id="media-viewer"></div>
-
-<div class="control-btns">
-    <button class="btn-toggle" onclick="toggleItems(true)">📂 전체 목록 보기</button>
-    <button class="btn-toggle" onclick="toggleItems(false)">📁 목록 접기</button>
+<div id="modal-screen" class="modal" onclick="closeFull()">
+    <span class="close-btn">&times;</span>
+    <div id="modal-target" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;"></div>
 </div>
-
-<div id="list-container"></div>
 
 <script>
     const params = new URLSearchParams(window.location.search);
-    const tagId = (params.get('tag') || 'DRAWER002').toUpperCase();
-    document.getElementById('id-display').innerText = tagId;
+    const id = (params.get('tag') || 'DRAWER002').toUpperCase();
+    document.getElementById('disp-id').innerText = id;
 
-    const dataSet = [
-        { category: "위생", name: "베베앙 물티슈 (대형)", qty: 3, icon: "🧼" },
-        { category: "케어", name: "일리윤 여성청결제", qty: 1, icon: "🧴" },
-        { category: "케어", name: "려 트리트먼트", qty: 1, icon: "💆" },
-        { category: "생활", name: "NOW 영양제", qty: 1, icon: "💊" },
-        { category: "위생", name: "베베앙 물티슈 (휴대)", qty: 2, icon: "🧼" },
-        { category: "안전", name: "표준 소화기", qty: 1, icon: "🧯" },
-        { category: "청소", name: "밀대 걸레", qty: 1, icon: "🧹" }
-    ];
-
-    const mediaMap = {
-        "DRAWER001": "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer1.mp4.mp4",
-        "DRAWER002": "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer2.jpg.jpg"
+    const database = {
+        "DRAWER001": {
+            url: "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer1.mp4.mp4",
+            items: [
+                { c: "식품", n: "쫀디기", q: "1 EA" },
+                { c: "식품", n: "맥심 커피믹스", q: "다수" },
+                { c: "캠핑", n: "수중 집어등", q: "1 EA" }
+            ]
+        },
+        "DRAWER002": {
+            url: "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer2.jpg.jpg",
+            items: [
+                { c: "위생", n: "베베앙 물티슈", q: "5 EA" },
+                { c: "케어", n: "여성청결제/트리트먼트", q: "각 1 EA" },
+                { c: "생활", n: "NOW 영양제/클리너", q: "각 1 EA" },
+                { c: "안전", n: "소방용 소화기", q: "1 EA" }
+            ]
+        }
     };
+
+    const config = database[id] || database["DRAWER002"];
 
     window.onload = () => {
-        const viewer = document.getElementById('media-viewer');
-        const url = mediaMap[tagId];
-        if (url.includes('.mp4')) viewer.innerHTML = `<video src="${url}" controls playsinline></video>`;
-        else viewer.innerHTML = `<img src="${url}">`;
-        updateList();
+        const target = document.getElementById('media-content');
+        if (config.url.includes('.mp4')) target.innerHTML = `<video src="${config.url}" autoplay loop muted playsinline></video>`;
+        else target.innerHTML = `<img src="${config.url}">`;
+        
+        const area = document.getElementById('list-area');
+        area.innerHTML = config.items.map(i => `
+            <div class="item-row">
+                <div><span class="cat-name">${i.c}</span><span class="item-name">${i.n}</span></div>
+                <span class="qty-badge">${i.q}</span>
+            </div>`).join('');
     };
 
-    function updateList() {
-        const query = document.getElementById('find-box').value.trim();
-        const container = document.getElementById('list-container');
-        container.innerHTML = '';
-
-        const cats = [...new Set(dataSet.map(d => d.category))];
-        cats.forEach(c => {
-            const list = dataSet.filter(d => d.category === c);
-            const isMatch = query && (c.includes(query) || list.some(d => d.name.includes(query)));
-
-            const section = document.createElement('div');
-            section.className = 'cat-box';
-            section.innerHTML = `
-                <div class="cat-head" onclick="toggle(this)">
-                    <span>${c} (${list.length})</span>
-                    <span class="arrow">${isMatch ? '▲' : '▼'}</span>
-                </div>
-                <div class="cat-list" style="display: ${isMatch ? 'block' : 'none'}">
-                    ${list.map(item => `
-                        <div class="item-card ${query && item.name.includes(query) ? 'match' : ''}">
-                            <div class="item-icon">${item.icon}</div>
-                            <div style="flex:1;">
-                                <div style="display:flex; justify-content:space-between; align-items:center;">
-                                    <span style="font-size:14px; font-weight:700;">${item.name}</span>
-                                    <span style="font-size:11px; background:var(--primary); color:#fff; padding:2px 6px; border-radius:4px;">${item.qty} EA</span>
-                                </div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-            container.appendChild(section);
-        });
+    function openFull() {
+        const modal = document.getElementById('modal-screen');
+        const target = document.getElementById('modal-target');
+        modal.style.display = "flex";
+        if (config.url.includes('.mp4')) target.innerHTML = `<video src="${config.url}" controls autoplay class="modal-content"></video>`;
+        else target.innerHTML = `<img src="${config.url}" class="modal-content">`;
     }
 
-    function toggle(el) {
-        const list = el.nextElementSibling;
-        const arr = el.querySelector('.arrow');
-        const show = list.style.display === 'none' || list.style.display === '';
-        list.style.display = show ? 'block' : 'none';
-        arr.innerText = show ? '▲' : '▼';
-    }
-
-    function toggleItems(open) {
-        document.querySelectorAll('.cat-list').forEach(l => l.style.display = open ? 'block' : 'none');
-        document.querySelectorAll('.arrow').forEach(a => a.innerText = open ? '▲' : '▼');
+    function closeFull() {
+        document.getElementById('modal-screen').style.display = "none";
+        document.getElementById('modal-target').innerHTML = "";
     }
 </script>
-
 </body>
 </html>
