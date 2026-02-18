@@ -1,26 +1,59 @@
-// index.html의 <script> 부분에 덮어쓰세요
-async function handleSearch() {
-    const query = document.getElementById('searchInput').value;
-    const resultList = document.getElementById('resultList');
-    resultList.innerHTML = '';
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>물건 찾기</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
+        .search-container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .result-item { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .result-item:last-child { border-bottom: none; }
+        button { padding: 8px 12px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="search-container">
+        <h2>어떤 물건을 찾으시나요?</h2>
+        <input type="text" id="searchInput" placeholder="물건 이름을 입력하세요 (2자 이상)" oninput="handleSearch()">
+        <div id="resultList"></div>
+    </div>
 
-    if (query.length >= 2) { // 2자 이상 [cite: 2026-02-16]
-        const { data, error } = await supabase
-            .from('tags') // 테이블 이름 'tags'로 수정 [cite: 2026-02-15]
-            .select('*')
-            .ilike('items', `%${query}%`); // items 컬럼에서 검색 [cite: 2026-02-15]
+    <script>
+        // 사진에서 확인한 정보 (주소와 키) [cite: 2026-01-11]
+        const S_URL = 'https://tqhtggusphhcsygiitrv.supabase.co';
+        const S_KEY = 'sb_publishable_D9nhmN5ZlyApSrHHasyQ3w_07Kdmv2m3vE9vU1tBfV3pG';
+        const supabase = window.supabase.createClient(S_URL, S_KEY);
 
-        if (data) {
-            data.forEach(tag => {
-                const div = document.createElement('div');
-                div.className = 'result-item';
-                // display_name을 서랍 위치로, items를 보관 물품으로 표시 [cite: 2026-02-16]
-                div.innerHTML = `
-                    <span>📦 ${query} → <strong>${tag.display_name}</strong></span>
-                    <button onclick="location.href='drawer.html?id=${tag.id}'">상세보기</button>
-                `;
-                resultList.appendChild(div);
-            });
+        async function handleSearch() {
+            const query = document.getElementById('searchInput').value;
+            const resultList = document.getElementById('resultList');
+            resultList.innerHTML = '';
+
+            // 2자 이상 입력했을 때만 작동 [cite: 2026-02-16]
+            if (query.length >= 2) { 
+                const { data, error } = await supabase
+                    .from('tags') 
+                    .select('*')
+                    .ilike('items', `%${query}%`); // items 컬럼에서 검색 [cite: 2026-02-15]
+
+                if (data && data.length > 0) {
+                    data.forEach(tag => {
+                        const div = document.createElement('div');
+                        div.className = 'result-item';
+                        div.innerHTML = `
+                            <span>📦 <strong>${tag.display_name}</strong> 안에 '${query}'(이)가 있어요.</span>
+                            <button onclick="location.href='drawer.html?id=${tag.id}'">보기</button>
+                        `;
+                        resultList.appendChild(div);
+                    });
+                } else if (query.length >= 2) {
+                    resultList.innerHTML = '<p style="color:#999; text-align:center;">찾는 물건이 없어요.</p>';
+                }
+            }
         }
-    }
-}
+    </script>
+</body>
+</html>
