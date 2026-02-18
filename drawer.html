@@ -3,95 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>서랍 정보 확인</title>
+    <title>서랍 확인</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <style>
-        body { font-family: sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
-        .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        #media-container { width: 100%; margin-bottom: 20px; text-align: center; }
-        #media-container img, #media-container video { width: 100%; border-radius: 8px; display: none; }
-        h1 { font-size: 1.4rem; color: #333; margin-top: 0; }
-        .item-box { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; }
-        ul { list-style: none; padding: 0; margin: 0; }
-        li { padding: 8px 0; border-bottom: 1px solid #eee; }
-        li:last-child { border-bottom: none; }
-        .loading { text-align: center; color: #666; }
+        body { font-family: sans-serif; padding: 20px; background: #fafafa; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1 { font-size: 1.2rem; color: #333; margin-top: 0; }
+        ul { padding: 0; list-style: none; }
+        li { padding: 10px 0; border-bottom: 1px solid #eee; }
+        #media img { width: 100%; border-radius: 8px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div id="loading" class="loading">서랍 정보를 불러오는 중...</div>
-        <div id="content" style="display:none;">
-            <div id="media-container">
-                <img id="drawer-image" src="" alt="서랍 이미지">
-                <video id="drawer-video" src="" controls muted loop></video>
-            </div>
-            <h1 id="display_name"></h1>
-            <div class="item-box">
-                <p style="margin-top:0; font-weight:bold; color:#666;">포함된 물건</p>
-                <ul id="items-list"></ul>
-            </div>
-        </div>
+    <div class="card">
+        <div id="media"></div>
+        <h1 id="title">정보를 불러오는 중...</h1>
+        <ul id="list"></ul>
     </div>
 
     <script>
-        // 1. 사진에서 확인한 사용자님 프로젝트 정보 [cite: 2026-01-11]
-        const supabaseUrl = 'https://tqhtggusphhcsygiitrv.supabase.co'; 
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc'; // image_6b8ce6.png에서 본 긴 키를 넣으세요
-        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+        // 사진(image_6b761e.png, image_6b8ce6.png)에서 확인한 실제 정보입니다. [cite: 2026-01-11]
+        const S_URL = 'https://tqhtggusphhcsygiitrv.supabase.co';
+        const S_KEY = 'sb_publishable_D9nhmN5ZlyApSrHHasyQ3w_O7Kdmssq';
+        const supabase = window.supabase.createClient(S_URL, S_KEY);
 
-        // 2. 주소창에서 id 가져오기 (예: ?id=DRAWER001) [cite: 2026-02-15]
-        const urlParams = new URLSearchParams(window.location.search);
-        const tagId = urlParams.get('id');
+        // 주소창의 id 값을 가져옵니다. [cite: 2026-02-15]
+        const id = new URLSearchParams(window.location.search).get('id');
 
-        async function loadDrawerData() {
-            if (!tagId) {
-                document.getElementById('loading').innerText = "QR 코드 ID가 없습니다.";
-                return;
-            }
+        async function load() {
+            if (!id) { document.getElementById('title').innerText = "ID가 없습니다."; return; }
 
-            const { data, error } = await supabaseClient
+            const { data, error } = await supabase
                 .from('tags')
                 .select('display_name, items, media_url')
-                .eq('id', tagId)
+                .eq('id', id)
                 .single();
 
             if (error || !data) {
-                document.getElementById('loading').innerText = "정보를 찾을 수 없습니다.";
+                document.getElementById('title').innerText = "정보를 찾을 수 없습니다.";
                 return;
             }
 
-            // 서랍 이름 넣기 [cite: 2026-02-15]
-            document.getElementById('display_name').innerText = data.display_name || "이름 없는 서랍";
+            // 서랍 이름 (display_name) 출력 [cite: 2026-02-15]
+            document.getElementById('title').innerText = data.display_name || "이름 없음";
 
-            // 물건 목록 쉼표로 나눠서 보여주기 [cite: 2026-02-15]
-            const listEl = document.getElementById('items-list');
+            // 물건 목록 (items) 출력 [cite: 2026-02-15]
             if (data.items) {
                 const itemList = data.items.split(',');
-                listEl.innerHTML = itemList.map(item => `<li>${item.trim()}</li>`).join('');
-            } else {
-                listEl.innerHTML = "<li>등록된 물건이 없습니다.</li>";
+                document.getElementById('list').innerHTML = itemList.map(i => `<li>${i.trim()}</li>`).join('');
             }
 
-            // 미디어(사진/영상) 처리 [cite: 2026-02-15]
+            // 사진 (media_url) 출력 [cite: 2026-02-15]
             if (data.media_url) {
-                const isVideo = data.media_url.match(/\.(mp4|mov|webm)$/i);
-                if (isVideo) {
-                    const video = document.getElementById('drawer-video');
-                    video.src = data.media_url;
-                    video.style.display = 'block';
-                } else {
-                    const img = document.getElementById('drawer-image');
-                    img.src = data.media_url;
-                    img.style.display = 'block';
-                }
+                document.getElementById('media').innerHTML = `<img src="${data.media_url}">`;
             }
-
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('content').style.display = 'block';
-        } 
-
-        loadDrawerData();
+        }
+        load();
     </script>
 </body>
 </html>
