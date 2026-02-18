@@ -8,27 +8,27 @@
         :root { --primary: #007bff; --bg: #f4f7f9; }
         body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 12px; color: #1e293b; }
         
-        /* 사진 크기 축소 및 고정 */
-        .media-mini { width: 100%; height: 180px; background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 12px; }
-        .media-mini img, .media-mini video { width: 100%; height: 100%; object-fit: contain; }
+        /* 사진 크기 확대 및 가독성 개선 */
+        .media-viewer { width: 100%; min-height: 250px; background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 12px; }
+        .media-viewer img, .media-viewer video { width: 100%; height: auto; display: block; }
 
         .search-container { position: sticky; top: 0; background: var(--bg); padding-bottom: 10px; z-index: 10; }
         .search-input { width: 100%; padding: 12px; border: 2px solid var(--primary); border-radius: 10px; box-sizing: border-box; font-size: 14px; }
+
+        /* 제어 버튼 영역 */
+        .control-btns { display: flex; gap: 8px; margin-bottom: 12px; }
+        .btn-toggle { flex: 1; padding: 8px; font-size: 12px; font-weight: bold; border: 1px solid #ddd; border-radius: 6px; background: #fff; cursor: pointer; }
 
         .cat-section { background: #fff; border-radius: 12px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
         .cat-head { padding: 12px 15px; display: flex; justify-content: space-between; font-weight: bold; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
         .cat-body { display: none; padding: 8px; background: #fafafa; }
 
-        /* 아이템 카드 및 액박 방지 */
         .item-row { display: flex; align-items: center; gap: 10px; padding: 10px; background: #fff; border-radius: 8px; margin-bottom: 6px; border: 1px solid #eee; }
-        .item-row.active { border-color: var(--primary); background: #f0f7ff; }
+        .item-row.active { border: 2px solid var(--primary); background: #f0f7ff; }
         .item-icon { width: 40px; height: 40px; background: #e2e8f0; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
         .item-main { flex: 1; }
-        .item-name { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
-        .item-info { font-size: 11px; color: #64748b; }
+        .item-name { font-size: 13px; font-weight: 700; }
         .qty-badge { background: var(--primary); color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; }
-
-        .btn-edit { font-size: 11px; color: var(--primary); border: 1px solid var(--primary); background: #fff; padding: 4px 8px; border-radius: 4px; margin-top: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -41,7 +41,12 @@
     <input type="text" id="search-box" class="search-input" placeholder="검색어 입력 (예: 물티슈)" oninput="updateUI()">
 </div>
 
-<div class="media-mini" id="media-wrap"></div>
+<div class="media-viewer" id="media-wrap"></div>
+
+<div class="control-btns">
+    <button class="btn-toggle" onclick="toggleAll(true)">📂 전체 펼치기</button>
+    <button class="btn-toggle" onclick="toggleAll(false)">📁 전체 접기</button>
+</div>
 
 <div id="list-wrap"></div>
 
@@ -50,8 +55,7 @@
     const id = (params.get('tag') || 'DRAWER002').toUpperCase();
     document.getElementById('disp-id').innerText = id;
 
-    // 초기 데이터 설정 [cite: 2026-02-16]
-    let items = [
+    const items = [
         { cat: "위생", name: "베베앙 물티슈 (대형)", qty: 3, pos: "상단-중앙", icon: "🧼" },
         { cat: "케어", name: "일리윤 여성청결제", qty: 1, pos: "중단-좌측", icon: "🧴" },
         { cat: "케어", name: "려 트리트먼트", qty: 1, pos: "중단-중앙", icon: "💆" },
@@ -82,18 +86,17 @@
         const cats = [...new Set(items.map(i => i.cat))];
         cats.forEach(c => {
             const catItems = items.filter(i => i.cat === c);
-            // 검색어 포함 시 카테고리 자동 열기 [cite: 2026-01-11]
-            const autoOpen = word && (c.includes(word) || catItems.some(i => i.name.includes(word)));
+            const isMatched = word && (c.includes(word) || catItems.some(i => i.name.includes(word)));
 
             const section = document.createElement('div');
             section.className = 'cat-section';
             section.innerHTML = `
                 <div class="cat-head" onclick="toggle(this)">
                     <span>${c} (${catItems.length})</span>
-                    <span>${autoOpen ? '▲' : '▼'}</span>
+                    <span class="arrow">${isMatched ? '▲' : '▼'}</span>
                 </div>
-                <div class="cat-body" style="display: ${autoOpen ? 'block' : 'none'}">
-                    ${catItems.map((item, idx) => `
+                <div class="cat-body" style="display: ${isMatched ? 'block' : 'none'}">
+                    ${catItems.map(item => `
                         <div class="item-row ${word && item.name.includes(word) ? 'active' : ''}">
                             <div class="item-icon">${item.icon}</div>
                             <div class="item-main">
@@ -101,8 +104,7 @@
                                     <span class="item-name">${item.name}</span>
                                     <span class="qty-badge">${item.qty} EA</span>
                                 </div>
-                                <div class="item-info">위치: ${item.pos}</div>
-                                <button class="btn-edit" onclick="editItem('${item.name}')">수정하기</button>
+                                <div style="font-size:11px; color:#64748b;">위치: ${item.pos}</div>
                             </div>
                         </div>
                     `).join('')}
@@ -114,18 +116,15 @@
 
     function toggle(head) {
         const body = head.nextElementSibling;
-        const arrow = head.querySelectorAll('span')[1];
+        const arrow = head.querySelector('.arrow');
         const isOff = body.style.display === 'none' || body.style.display === '';
         body.style.display = isOff ? 'block' : 'none';
         arrow.innerText = isOff ? '▲' : '▼';
     }
 
-    function editItem(oldName) {
-        const newName = prompt("변경할 이름을 입력하세요:", oldName);
-        if (newName) {
-            items = items.map(i => i.name === oldName ? {...i, name: newName} : i);
-            updateUI();
-        }
+    function toggleAll(open) {
+        document.querySelectorAll('.cat-body').forEach(b => b.style.display = open ? 'block' : 'none');
+        document.querySelectorAll('.arrow').forEach(a => a.innerText = open ? '▲' : '▼');
     }
 </script>
 
