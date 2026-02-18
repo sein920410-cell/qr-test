@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>찾았다! - 지능형 인벤토리</title>
+    <title>찾았다! - 상세 정보</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root { --primary: #007bff; --bg: #f8fafc; --card: #ffffff; --item-bg: #f0f7ff; }
@@ -10,51 +10,35 @@
         .container { max-width: 500px; margin: 0 auto; }
         .main-card { background: var(--card); border-radius: 24px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.05); }
         .id-badge { background: #0f172a; color: #fff; padding: 6px 14px; border-radius: 100px; font-size: 11px; font-weight: 700; display: inline-block; margin-bottom: 12px; }
-
-        /* [요청 1] 4:3 비율 & 220px 높이 (썸네일 방식, 사진 전체 노출) [cite: 2026-01-11] */
-        .media-box { 
-            width: 100%; height: 220px; aspect-ratio: 4 / 3; background: #f1f5f9; 
-            border-radius: 18px; overflow: hidden; margin-bottom: 20px; 
-            display: flex; align-items: center; justify-content: center; cursor: zoom-in;
-        }
+        .media-box { width: 100%; height: 220px; aspect-ratio: 4 / 3; background: #f1f5f9; border-radius: 18px; overflow: hidden; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; cursor: zoom-in; }
         .media-box img, .media-box video { max-width: 100%; max-height: 100%; object-fit: contain; }
-
-        /* [요청 3] 검색창 (엔터 키 지원) [cite: 2026-01-11] */
         .search-input { width: 100%; padding: 12px; border: 2px solid var(--primary); border-radius: 10px; box-sizing: border-box; font-size: 14px; margin-bottom: 15px; outline: none; }
-
-        /* [요청 2] 카테고리 접기/펼치기 구조 [cite: 2026-02-15] */
+        
+        /* 카테고리 그룹 및 접기/펼치기 스타일 */
         .cat-group { background: var(--card); border-radius: 14px; margin-bottom: 8px; border: 1px solid #e2e8f0; overflow: hidden; }
-        .cat-head { padding: 12px 15px; display: flex; justify-content: space-between; font-weight: 800; font-size: 14px; cursor: pointer; }
+        .cat-head { padding: 12px 15px; display: flex; justify-content: space-between; font-weight: 800; font-size: 14px; cursor: pointer; background: #fff; }
         .cat-body { display: none; padding: 8px; background: #fafafa; border-top: 1px solid #f1f5f9; }
-
-        /* 아이템 리스트 (하늘색 카드 UI) */
+        
         .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: var(--item-bg); border-radius: 12px; border: 1px solid #e0f0ff; margin-bottom: 6px; }
         .item-row.highlight { border: 2px solid var(--primary); background: #eef7ff; }
         .item-name { font-size: 13px; font-weight: 700; color: #334155; }
         .qty { background: var(--primary); color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; }
         .btn-edit { font-size: 10px; color: var(--primary); background: #fff; border: 1px solid var(--primary); border-radius: 4px; padding: 2px 5px; cursor: pointer; margin-top: 4px; }
-
-        /* 전체 화면 모달 [cite: 2026-01-11] */
         .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; }
         .modal-content { max-width: 98%; max-height: 98%; object-fit: contain; }
     </style>
 </head>
 <body>
-
 <div class="container">
     <div class="main-card">
         <div class="id-badge">ID: <span id="disp-id">...</span></div>
-
         <div class="media-box" onclick="openFull()">
             <div id="media-wrap" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;"></div>
         </div>
-
-        <input type="text" id="find-box" class="search-input" placeholder="검색 후 엔터를 누르세요." onkeydown="if(event.keyCode==13) updateList()">
-
+        <input type="text" id="find-box" class="search-input" placeholder="검색 후 엔터를 누르세요." onkeydown="if(event.key==='Enter') updateList()">
         <div id="list-container"></div>
     </div>
 </div>
-
 <div id="full-view" class="modal" onclick="this.style.display='none'">
     <div id="modal-body" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;"></div>
 </div>
@@ -64,7 +48,6 @@
     const tag = (params.get('tag') || 'DRAWER001').toUpperCase();
     document.getElementById('disp-id').innerText = tag;
 
-    // [요청 1] 사진 속 모든 물품 반영 및 서랍 데이터 분리 [cite: 20, 2026-01-11, 2026-02-16]
     const db = {
         "DRAWER001": {
             url: "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer1.mp4.mp4",
@@ -81,13 +64,17 @@
             items: [
                 { cat: "위생", n: "베베앙 물티슈 (대형)", q: "5 EA" },
                 { cat: "위생", n: "베베앙 물티슈 (휴대용)", q: "2 EA" },
-                { cat: "위생", n: "검정 파우치", q: "1 EA" },
+                { cat: "위생", n: "분홍색 파우치 (상단)", q: "2 EA" },
+                { cat: "위생", n: "검정색 파우치", q: "1 EA" },
                 { cat: "케어", n: "여성청결제 / 트리트먼트", q: "각 1 EA" },
+                { cat: "케어", n: "바디 로션 / 세정제", q: "각 1 EA" },
                 { cat: "생활", n: "NOW 영양제 / 클리너", q: "각 1 EA" },
-                { cat: "생활", n: "다목적 스프레이", q: "1 EA" },
+                { cat: "생활", n: "다목적 스프레이 / 탈취제", q: "다수" },
+                { cat: "생활", n: "흰색 보관 바구니", q: "1 EA" },
                 { cat: "안전", n: "소방용 소화기", q: "1 EA" },
                 { cat: "청소", n: "우산 / 밀대 걸레", q: "다수" },
-                { cat: "기타", n: "원숭이 인형 / 바구니", q: "각 1 EA" }
+                { cat: "청소", n: "청소기 헤드 부속품", q: "1 EA" },
+                { cat: "기타", n: "원숭이 인형", q: "1 EA" }
             ]
         }
     };
@@ -101,7 +88,6 @@
         updateList();
     };
 
-    // [요청 2 & 3] 접기 구조 및 엔터 검색 동시 구현 [cite: 2026-02-15, 2026-01-11]
     function updateList() {
         const word = document.getElementById('find-box').value.trim();
         const container = document.getElementById('list-container');
@@ -110,6 +96,7 @@
         const cats = [...new Set(active.items.map(i => i.cat))];
         cats.forEach(c => {
             const list = active.items.filter(i => i.cat === c);
+            // 검색어가 포함된 아이템이 있는 카테고리는 자동으로 열어둠
             const isMatch = word && (c.includes(word) || list.some(i => i.n.includes(word)));
 
             const div = document.createElement('div');
@@ -136,15 +123,14 @@
     function toggle(h) {
         const b = h.nextElementSibling;
         const a = h.querySelector('.arr');
-        const s = b.style.display === 'none' || b.style.display === '';
-        b.style.display = s ? 'block' : 'none';
-        a.innerText = s ? '▲' : '▼';
+        const isHidden = b.style.display === 'none' || b.style.display === '';
+        b.style.display = isHidden ? 'block' : 'none';
+        a.innerText = isHidden ? '▲' : '▼';
     }
 
-    // [수정 기능] 실제 텍스트가 바뀌도록 구현 [cite: 2026-01-11]
     function rename(btn, e) {
         e.stopPropagation();
-        const el = btn.previousElementSibling.previousElementSibling;
+        const el = btn.parentElement.querySelector('.item-name');
         const next = prompt("새 이름을 입력하세요:", el.innerText);
         if (next) el.innerText = next;
     }
