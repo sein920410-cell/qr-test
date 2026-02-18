@@ -4,57 +4,53 @@
     <meta charset="UTF-8">
     <title>찾았다! - 서랍 관리</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: sans-serif; padding: 15px; background: #f4f7f6; color: #333; }
         .card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         .drawer-badge { background: #1a1a1a; color: #fff; padding: 5px 12px; border-radius: 20px; font-size: 13px; display: inline-block; margin-bottom: 15px; }
         .media-box { width: 100%; min-height: 200px; background: #eee; border-radius: 8px; margin-bottom: 15px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         .media-box img, .media-box video { width: 100%; height: auto; display: block; }
-        textarea { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; min-height: 250px; line-height: 1.6; box-sizing: border-box; }
-        .btn-save { background: #28a745; color: #fff; border: none; padding: 15px; border-radius: 8px; font-weight: bold; width: 100%; margin-top: 15px; cursor: pointer; }
+        textarea { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; min-height: 250px; line-height: 1.6; box-sizing: border-box; background: #fafafa; }
+        .btn-home { display: block; text-align: center; margin-top: 20px; color: #007bff; text-decoration: none; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="card">
-        <div class="drawer-badge"><span id="drawer-id-display">...</span>번 서랍</div>
+        <div class="drawer-badge"><span id="drawer-id-display">...</span>번 서랍 내역</div>
         <div class="media-box" id="media-preview">미디어를 불러오는 중...</div>
-        <textarea id="items-list"></textarea>
-        <button class="btn-save" onclick="alert('저장되었습니다!')">💾 변경사항 저장</button>
+        <textarea id="items-list" placeholder="내용을 입력하세요..."></textarea>
+        <a href="index.html" class="btn-home">⬅ 메인 검색으로 가기</a>
     </div>
     <script>
-        const SUPABASE_URL = 'https://tqhtggusphhcsygiitrv.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc';
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
         const urlParams = new URLSearchParams(window.location.search);
         const drawerId = (urlParams.get('tag') || 'DRAWER001').toUpperCase();
         document.getElementById('drawer-id-display').innerText = drawerId;
 
+        // 보내주신 실제 주소와 데이터를 연결했습니다. [cite: 2026-02-15, 2026-02-16]
         const dataStore = {
-            "DRAWER001": "서랍1 목록:\n- 쫀디기 1개\n- 컵홀더 1개\n- 금박비닐 1개\n- 핫팩 다수\n- 수중집어등 1개\n- 칼 1개\n- 나무꼬챙이 다수\n- 종이컵 1뭉치\n- 커피믹스 다수\n- 손전등 1개",
-            "DRAWER002": "서랍2 목록:\n[상단] 베베앙 물티슈 3개, 검정 파우치 1개\n[2단] 일리윤 온가족 여성청결제 1개, 려 트리트먼트 1개, 만능 클리너 1개, 쿨링 스프레이 1개, NOW 영양제 1개\n[3단] 베베앙 물티슈 2개, 바구니 1개\n[하단] 소화기 1대, 우산 다수, 밀대 걸레 1개"
-        };
-
-        window.onload = () => {
-            document.getElementById('items-list').value = dataStore[drawerId] || "정보 없음";
-            loadMedia();
-        };
-
-        async function loadMedia() {
-            // 수파베이스에 올린 파일명과 일치해야 합니다. (drawer1.mp4 / drawer2.jpg)
-            const fileName = drawerId === "DRAWER001" ? "drawer1.mp4" : "drawer2.jpg";
-            const preview = document.getElementById('media-preview');
-            
-            const { data } = _supabase.storage.from('user_uploads').getPublicUrl(fileName);
-            
-            if (data.publicUrl) {
-                if (fileName.endsWith('.mp4')) {
-                    preview.innerHTML = `<video src="${data.publicUrl}" autoplay loop muted playsinline></video>`;
-                } else {
-                    preview.innerHTML = `<img src="${data.publicUrl}" onerror="this.parentElement.innerHTML='파일을 찾을 수 없습니다. (파일명 확인 필요)'">`;
-                }
+            "DRAWER001": {
+                "text": "서랍 1번 물품:\n- 쫀디기 1개\n- 컵홀더 1개\n- 금박비닐 1개\n- 핫팩(발/손) 다수\n- 수중집어등 1개\n- 칼 1개\n- 나무꼬챙이 다수\n- 종이컵 1뭉치\n- 맥심 커피믹스 다수\n- 손전등 1개\n- 메쉬 파우치 1개\n- 흰색 케이스 1개\n- 지퍼백 다수\n- 숟가락 1개\n- 주황색 도구 1개\n- 비닐 롤 1개",
+                "url": "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer1.mp4.mp4"
+            },
+            "DRAWER002": {
+                "text": "서랍 2번 물품:\n\n[상단 칸]\n- 베베앙 물티슈 3개\n- 검정 파우치 1개\n\n[두 번째 칸]\n- 일리윤 온가족 여성청결제 1개\n- 려 트리트먼트 1개\n- 만능 클리너 1개\n- 쿨링 스프레이 1개\n- NOW 영양제 1개\n- 빨간색 용기 1개\n- 기타 세정제 다수\n\n[세 번째 칸]\n- 베베앙 물티슈 2개\n- 흰색 메쉬 바구니 1개\n- 노란색 보관함 1개\n- 캐릭터 소품 1개\n\n[하단 칸]\n- 소화기 1대\n- 우산 다수\n- 밀대 걸레 1개",
+                "url": "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer2.jpg.jpg"
             }
+        };
+
+        const config = dataStore[drawerId] || { text: "정보 없음", url: "" };
+        document.getElementById('items-list').value = config.text;
+
+        // 미디어 표시 로직 [cite: 2026-01-11]
+        const preview = document.getElementById('media-preview');
+        if (config.url) {
+            if (config.url.toLowerCase().endsWith('.mp4')) {
+                preview.innerHTML = `<video src="${config.url}" autoplay loop muted playsinline></video>`;
+            } else {
+                preview.innerHTML = `<img src="${config.url}" alt="서랍 이미지">`;
+            }
+        } else {
+            preview.innerHTML = "표시할 미디어가 없습니다.";
         }
     </script>
 </body>
