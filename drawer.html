@@ -2,42 +2,45 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>찾았다! - 서랍 관리</title>
+    <title>찾았다! - 물품 상세 내역</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: sans-serif; padding: 15px; background: #f4f7f6; color: #333; }
-        .card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .drawer-badge { background: #1a1a1a; color: #fff; padding: 5px 12px; border-radius: 20px; font-size: 13px; display: inline-block; margin-bottom: 15px; }
-        .media-box { width: 100%; min-height: 200px; background: #eee; border-radius: 8px; margin-bottom: 15px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-        .media-box img, .media-box video { width: 100%; height: auto; display: block; }
-        textarea { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; min-height: 250px; line-height: 1.6; box-sizing: border-box; background: #fafafa; }
-        .btn-home { display: block; text-align: center; margin-top: 20px; color: #007bff; text-decoration: none; font-weight: bold; }
+        body { font-family: 'Pretendard', sans-serif; padding: 15px; background: #f8fafc; color: #1e293b; }
+        .card { background: #fff; padding: 24px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+        .drawer-badge { background: #0f172a; color: #fff; padding: 6px 14px; border-radius: 99px; font-size: 13px; font-weight: 600; display: inline-block; margin-bottom: 20px; }
+        .media-box { width: 100%; min-height: 220px; background: #f1f5f9; border-radius: 12px; margin-bottom: 20px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0; }
+        .media-box img, .media-box video { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .section-title { font-size: 16px; font-weight: 700; margin: 15px 0 8px; color: #334155; border-left: 4px solid #007bff; padding-left: 10px; }
+        textarea { width: 100%; padding: 18px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 14px; min-height: 320px; line-height: 1.7; box-sizing: border-box; background: #fdfdfd; color: #334155; resize: none; }
+        .btn-home { display: block; text-align: center; margin-top: 25px; color: #64748b; text-decoration: none; font-size: 14px; font-weight: 500; }
     </style>
 </head>
 <body>
     <div class="card">
-        <div class="drawer-badge"><span id="drawer-id-display">...</span>번 서랍 내역</div>
+        <div class="drawer-badge">ID: <span id="drawer-id-display">...</span></div>
         <div class="media-box" id="media-preview">미디어를 불러오는 중...</div>
-        <textarea id="items-list" placeholder="내용물 목록..."></textarea>
-        <a href="index.html" class="btn-home">⬅ 메인 검색으로 가기</a>
+        <div class="section-title">보관 물품 상세 리포트</div>
+        <textarea id="items-list" spellcheck="false"></textarea>
+        <a href="index.html" class="btn-home">⬅ 메인 대시보드로 돌아가기</a>
     </div>
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const drawerId = (urlParams.get('tag') || 'DRAWER001').toUpperCase();
         document.getElementById('drawer-id-display').innerText = drawerId;
 
+        // 고도화된 카테고리형 데이터 구조 [cite: 2026-02-15, 2026-02-16]
         const dataStore = {
             "DRAWER001": {
-                "text": "서랍 1번 물품 목록:\n- 쫀디기 1개\n- 컵홀더 1개\n- 금박비닐 1개\n- 핫팩(발/손) 다수\n- 수중집어등 1개\n- 칼 1개\n- 나무꼬챙이 다수\n- 종이컵 1뭉치\n- 맥심 커피믹스 다수\n- 손전등 1개\n- 메쉬 파우치 1개\n- 흰색 케이스 1개\n- 지퍼백 다수\n- 숟가락 1개\n- 주황색 도구 1개\n- 비닐 롤 1개",
+                "text": "📋 [서랍 1] 물품 관리 명세\n\n■ 식품 및 기호품\n- 쫀디기 (1 EA)\n- 맥심 커피믹스 (다수/뭉치)\n\n■ 주방 및 일회용품\n- 종이컵 (1 Set/100매)\n- 컵홀더 (1 EA)\n- 나무 꼬챙이 (다수)\n- 일회용 숟가락 (1 EA)\n- 위생 비닐 롤 (1 EA)\n- 지퍼백 (다수)\n\n■ 캠핑 및 공구류\n- 수중 집어등 (1 EA)\n- 다목적 칼 (1 EA)\n- 손전등 (1 EA)\n- 주황색 범용 도구 (1 EA)\n- 방한용 핫팩 (다수)\n\n■ 수납 및 기타\n- 메쉬 소재 파우치 (1 EA)\n- 화이트 하드 케이스 (1 EA)\n- 금박 포장재 (1 EA)",
                 "url": "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer1.mp4.mp4"
             },
             "DRAWER002": {
-                "text": "서랍 2번 물품 목록:\n\n[상단 칸]\n- 베베앙 물티슈 3개\n- 검정 파우치 1개\n\n[두 번째 칸]\n- 일리윤 온가족 여성청결제 1개\n- 려 트리트먼트 1개\n- 만능 클리너 1개\n- 쿨링 스프레이 1개\n- NOW 영양제 1개\n- 빨간색 용기 1개\n- 기타 세정제 다수\n\n[세 번째 칸]\n- 베베앙 물티슈 2개\n- 흰색 메쉬 바구니 1개\n- 노란색 보관함 1개\n- 캐릭터 소품 1개\n\n[하단 칸]\n- 소화기 1대\n- 우산 다수\n- 밀대 걸레 1개",
+                "text": "📋 [서랍 2] 물품 관리 명세\n\n[1단: 위생 및 위생용품]\n- 베베앙 물티슈 (3 EA)\n- 블랙 소형 파우치 (1 EA)\n\n[2단: 퍼스널 케어 및 생활용품]\n- 일리윤 여성청결제 (1 EA)\n- 려(RYO) 트리트먼트 (1 EA)\n- NOW 영양제 (1 EA)\n- 쿨링 스프레이 (1 EA)\n- 다목적 만능 클리너 (1 EA)\n- 레드 원형 용기 (1 EA)\n- 기타 액체 세정제 (다수)\n\n[3단: 수납 및 인테리어]\n- 베베앙 물티슈 (2 EA)\n- 화이트 메쉬 바구니 (1 EA)\n- 옐로우 보관함 (Cheese) (1 EA)\n- 원숭이 캐릭터 소품 (1 EA)\n\n[하단: 생활 안전 및 청소]\n- 소방용 소화기 (1 EA)\n- 우산 (장/접이식 다수)\n- 홈클리닝 밀대 걸레 (1 EA)",
                 "url": "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer2.jpg.jpg"
             }
         };
 
-        const config = dataStore[drawerId] || { text: "정보 없음", url: "" };
+        const config = dataStore[drawerId] || { text: "등록된 데이터가 없습니다.", url: "" };
         document.getElementById('items-list').value = config.text;
 
         const preview = document.getElementById('media-preview');
@@ -45,11 +48,11 @@
             if (config.url.toLowerCase().includes('.mp4')) {
                 preview.innerHTML = `<video src="${config.url}" autoplay loop muted playsinline></video>`;
             } else {
-                preview.innerHTML = `<img src="${config.url}" alt="서랍 이미지">`;
+                preview.innerHTML = `<img src="${config.url}" alt="Storage Image">`;
             }
         } else {
-            preview.innerHTML = "표시할 미디어가 없습니다.";
+            preview.innerHTML = "미디어가 등록되지 않았습니다.";
         }
     </script>
 </body>
-</html> 
+</html>
