@@ -69,7 +69,7 @@
         
         <div class="all-toggle-header" onclick="toggleAll()">
             <span>📦 보관 물품 전체 목록</span>
-            <span id="all-arr">전체 펼치기 ▲</span>
+            <span id="all-arr">전체 펼치기 ▼</span>
         </div>
 
         <div id="list-container"></div>
@@ -163,7 +163,7 @@
             div.innerHTML = `
                 <div class="cat-head" onclick="toggle(this)">
                     <span>${c} (${list.length})</span>
-                    <span class="arr">${isMatch ? '▲' : '▼'}</span>
+                    <span class="arr">${isMatch ? '▼' : '▲'}</span>
                 </div>
                 <div class="cat-body" style="display: ${isMatch ? 'block' : 'none'}">
                     ${list.map(item => {
@@ -226,8 +226,8 @@
         const arrows = document.querySelectorAll('.arr');
         const masterArr = document.getElementById('all-arr');
         bodies.forEach(b => b.style.display = isAllOpen ? 'block' : 'none');
-        arrows.forEach(a => a.innerText = isAllOpen ? '▲' : '▼');
-        masterArr.innerText = isAllOpen ? '전체 접기 ▼' : '전체 펼치기 ▲';
+        arrows.forEach(a => a.innerText = isAllOpen ? '▼' : '▲');
+        masterArr.innerText = isAllOpen ? '전체 접기 ▲' : '전체 펼치기 ▼';
     }
 
     function toggle(h) {
@@ -235,7 +235,7 @@
         const a = h.querySelector('.arr');
         const show = b.style.display === 'none' || b.style.display === '';
         b.style.display = show ? 'block' : 'none';
-        a.innerText = show ? '▲' : '▼';
+        a.innerText = show ? '▼' : '▲';
     }
 
     function openFull() {
