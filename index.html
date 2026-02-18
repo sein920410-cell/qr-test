@@ -15,14 +15,15 @@
 <body>
     <div class="search-container">
         <h3 style="margin-top:0">🔍 무엇을 찾으시나요?</h3>
-        <input type="text" id="search-input" placeholder="예: 트리트, 물티슈..." oninput="handleSearch()">
+        <input type="text" id="search-input" placeholder="예: 트리트, 물티슈..." oninput="handleSearch()" onkeydown="if(event.key === 'Enter') goToFirstResult()">
         <div id="results-list"></div>
     </div>
     <script>
         const drawerDatabase = [
             { id: "DRAWER001", name: "서랍 1번", items: ["쫀디기", "컵홀더", "금박비닐", "핫팩", "수중집어등", "칼", "나무꼬챙이", "종이컵", "커피믹스", "손전등"] },
-            { id: "DRAWER002", name: "서랍 2번", items: ["물티슈", "여성청결제", "트리트먼트", "클리너", "스프레이", "영양제", "소화기", "우산", "걸레"] }
+            { id: "DRAWER002", name: "서랍 2번", items: ["물티슈", "여성청결제", "트리트먼트", "클리너", "스프레이", "영양제", "소화기", "우산", "걸레", "파우치", "바구니", "세정제"] }
         ];
+
         function handleSearch() {
             const query = document.getElementById('search-input').value.trim();
             const resultsContainer = document.getElementById('results-list');
@@ -36,6 +37,16 @@
                 resultsContainer.appendChild(div);
             });
         }
+
+        // 엔터 키를 누르면 첫 번째 결과로 바로 이동하는 함수
+        function goToFirstResult() {
+            const query = document.getElementById('search-input').value.trim();
+            if (!query) return;
+            const matched = drawerDatabase.find(d => d.items.some(item => item.includes(query)));
+            if (matched) {
+                window.location.href = `drawer.html?tag=${matched.id}`;
+            }
+        }
     </script>
 </body>
-</html> 
+</html>
