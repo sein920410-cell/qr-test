@@ -38,7 +38,7 @@
         .qty { background: var(--primary); color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; }
         .btn-edit { font-size: 10px; color: var(--primary); background: #fff; border: 1px solid var(--primary); border-radius: 4px; padding: 2px 5px; cursor: pointer; margin-top: 4px; }
         
-        /* 봄 채팅창 [cite: 2026-02-16] */
+        /* 찾았다 채팅창 [cite: 2026-02-16] */
         .chat-btn { position: fixed; bottom: 20px; right: 20px; background: #000; color: #fff; border: none; border-radius: 50px; padding: 15px 20px; font-weight: 800; font-size: 14px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 1000; }
         #chat-window { display: none; position: fixed; bottom: 85px; right: 20px; width: 320px; height: 400px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); flex-direction: column; overflow: hidden; z-index: 1001; border: 1px solid #eee; }
         .chat-header { background: #0f172a; color: white; padding: 15px; font-size: 14px; font-weight: 800; display: flex; justify-content: space-between; }
@@ -82,7 +82,7 @@
 
 <div id="chat-window">
     <div class="chat-header">
-        <span>봄 (AI 비서)</span>
+        <span>찾았다 (인공지능 비서)</span>
         <span style="cursor:pointer" onclick="toggleChat()">✕</span>
     </div>
     <div class="chat-messages" id="chat-msgs">
@@ -117,12 +117,13 @@
             url: "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer2.jpg.jpg",
             items: [
                 { cat: "위생", n: "베베앙 물티슈 (대형)", q: "5 EA" }, { cat: "위생", n: "베베앙 물티슈 (휴대용)", q: "2 EA" },
-                { cat: "위생", n: "분홍색 파우치 (상단)", q: "2 EA" }, { cat: "위생", n: "검정색 파우치", q: "1 EA" },
-                { cat: "케어", n: "여성청결제 / 트리트먼트", q: "각 1 EA" }, { cat: "케어", n: "바디 로션 / 세정제", q: "각 1 EA" },
-                { cat: "생활", n: "NOW 영양제 / 클리너", q: "각 1 EA" }, { cat: "생활", n: "다목적 스프레이 / 탈취제", q: "다수" },
-                { cat: "생활", n: "흰색 보관 바구니", q: "1 EA" }, { cat: "안전", n: "소방용 소화기", q: "1 EA" },
-                { cat: "청소", n: "우산 / 밀대 걸레", q: "다수" }, { cat: "청소", n: "청소기 헤드 부속품", q: "1 EA" },
-                { cat: "기타", n: "원숭이 인형", q: "1 EA" }
+                { cat: "위생", n: "검정색 파우치 물티슈", q: "1 EA" },
+                { cat: "케어", n: "일리윤 여성청결제 / 려 트리트먼트", q: "각 1 EA" },
+                { cat: "생활", n: "NOW 영양제 / 만능 클리너", q: "각 1 EA" }, { cat: "생활", n: "다목적 스프레이 / 우산", q: "다수" },
+                { cat: "생활", n: "흰색 보관 바구니 / 노란색 원형 바구니", q: "각 1 EA" }, { cat: "안전", n: "소방용 소화기", q: "1 EA" },
+                { cat: "청소", n: "밀대 걸레", q: "1 EA" }, 
+                { cat: "기타", n: "원숭이 및 소모품", q: "각 1 EA" }
+                { cat: "추가", n: "", q: "EA" }
             ]
         }
     };
