@@ -2,46 +2,38 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>찾았다! - 지능형 관리</title>
+    <title>찾았다! - 물품 상세 정보</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root { --primary: #007bff; --bg: #f8fafc; --card: #ffffff; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; color: #1e293b; }
         
-        /* 1) 상단 고정 검색바 */
         .search-container { position: sticky; top: 0; background: var(--bg); padding-bottom: 10px; z-index: 10; }
         .search-input { width: 100%; padding: 12px; border: 2px solid var(--primary); border-radius: 10px; box-sizing: border-box; font-size: 14px; margin-top: 5px; }
 
-        /* 2) 반응형 미디어 카드 영역 */
-        .media-card { 
+        /* 미디어 카드 영역 (200px 고정, 검은 여백 제거) */
+        .media-container { 
             width: 100%; 
-            height: 260px; /* PC 기본 높이 */
-            background: #e2e8f0; 
+            height: 200px; /* 요청하신 200px 고정 */
+            background: #fff; 
             border-radius: 12px; 
             overflow: hidden; 
             margin-bottom: 15px; 
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid #eee;
         }
-        
-        /* 모바일 접속 시 (화면 너비 600px 이하) [cite: 2026-01-11] */
-        @media (max-width: 600px) {
-            .media-card { height: 210px; } /* 모바일 적정 높이 반영 */
-        }
-
-        .media-card img, .media-card video { 
+        .media-container img, .media-container video { 
             width: 100%; 
             height: 100%; 
-            object-fit: cover; 
+            object-fit: cover; /* 비율 유지하며 여백 없이 꽉 채움 */
             display: block; 
         }
 
-        /* 3) 컨트롤 버튼 */
-        .control-panel { display: flex; gap: 8px; margin-bottom: 12px; }
-        .btn-action { flex: 1; padding: 10px; font-size: 12px; font-weight: bold; border: 1px solid #ddd; border-radius: 8px; background: #fff; cursor: pointer; }
+        .control-btns { display: flex; gap: 8px; margin-bottom: 12px; }
+        .btn-toggle { flex: 1; padding: 10px; font-size: 12px; font-weight: bold; border: 1px solid #ddd; border-radius: 8px; background: #fff; cursor: pointer; }
 
-        /* 4) 리스트 영역 */
-        .cat-group { background: var(--card); border-radius: 12px; margin-bottom: 8px; border: 1px solid #edf2f7; overflow: hidden; }
-        .cat-title { padding: 12px 15px; display: flex; justify-content: space-between; font-weight: 800; font-size: 14px; cursor: pointer; }
+        .cat-box { background: var(--card); border-radius: 12px; margin-bottom: 8px; border: 1px solid #edf2f7; overflow: hidden; }
+        .cat-head { padding: 12px 15px; display: flex; justify-content: space-between; font-weight: 800; font-size: 14px; cursor: pointer; }
         .cat-list { display: none; padding: 8px; background: #fdfdfd; }
 
         .item-card { display: flex; align-items: center; gap: 10px; padding: 10px; background: #fff; border-radius: 8px; margin-bottom: 6px; border: 1px solid #f1f5f9; }
@@ -53,25 +45,25 @@
 
 <div class="search-container">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:12px; font-weight:bold; background:#000; color:#fff; padding:3px 10px; border-radius:50px;">ID: <span id="id-tag">...</span></span>
-        <span style="font-size:11px; color:#64748b;">AI 분석 정확도: 98.5%</span>
+        <span style="font-size:12px; font-weight:bold; background:#000; color:#fff; padding:3px 10px; border-radius:50px;">ID: <span id="id-display">...</span></span>
+        <span style="font-size:11px; color:#64748b;">AI 분석 신뢰도: 98.5%</span>
     </div>
-    <input type="text" id="find-input" class="search-input" placeholder="물건을 검색하면 카테고리가 자동으로 열립니다." oninput="refreshUI()">
+    <input type="text" id="find-box" class="search-input" placeholder="물건 이름을 검색하세요 (예: 물티슈)" oninput="updateList()">
 </div>
 
-<div class="media-card" id="media-content"></div>
+<div class="media-container" id="media-viewer"></div>
 
-<div class="control-panel">
-    <button class="btn-action" onclick="expandAll(true)">📂 전체 목록 보기</button>
-    <button class="btn-action" onclick="expandAll(false)">📁 목록 접기</button>
+<div class="control-btns">
+    <button class="btn-toggle" onclick="toggleItems(true)">📂 전체 목록 보기</button>
+    <button class="btn-toggle" onclick="toggleItems(false)">📁 목록 접기</button>
 </div>
 
-<div id="item-container"></div>
+<div id="list-container"></div>
 
 <script>
     const params = new URLSearchParams(window.location.search);
     const tagId = (params.get('tag') || 'DRAWER002').toUpperCase();
-    document.getElementById('id-tag').innerText = tagId;
+    document.getElementById('id-display').innerText = tagId;
 
     const dataSet = [
         { category: "위생", name: "베베앙 물티슈 (대형)", qty: 3, icon: "🧼" },
@@ -83,22 +75,23 @@
         { category: "청소", name: "밀대 걸레", qty: 1, icon: "🧹" }
     ];
 
-    const sourceMap = {
+    const mediaMap = {
         "DRAWER001": "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer1.mp4.mp4",
         "DRAWER002": "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer2.jpg.jpg"
     };
 
     window.onload = () => {
-        const viewer = document.getElementById('media-content');
-        const url = sourceMap[tagId];
+        const viewer = document.getElementById('media-viewer');
+        const url = mediaMap[tagId];
+        // autoplay 제거, controls 유지 [cite: 2026-01-11]
         if (url.includes('.mp4')) viewer.innerHTML = `<video src="${url}" controls playsinline></video>`;
         else viewer.innerHTML = `<img src="${url}">`;
-        refreshUI();
+        updateList();
     };
 
-    function refreshUI() {
-        const query = document.getElementById('find-input').value.trim();
-        const container = document.getElementById('item-container');
+    function updateList() {
+        const query = document.getElementById('find-box').value.trim();
+        const container = document.getElementById('list-container');
         container.innerHTML = '';
 
         const cats = [...new Set(dataSet.map(d => d.category))];
@@ -107,11 +100,11 @@
             const isMatch = query && (c.includes(query) || list.some(d => d.name.includes(query)));
 
             const section = document.createElement('div');
-            section.className = 'cat-group';
+            section.className = 'cat-box';
             section.innerHTML = `
-                <div class="cat-title" onclick="toggleCat(this)">
+                <div class="cat-head" onclick="toggle(this)">
                     <span>${c} (${list.length})</span>
-                    <span class="indicator">${isMatch ? '▲' : '▼'}</span>
+                    <span class="arrow">${isMatch ? '▲' : '▼'}</span>
                 </div>
                 <div class="cat-list" style="display: ${isMatch ? 'block' : 'none'}">
                     ${list.map(item => `
@@ -131,17 +124,17 @@
         });
     }
 
-    function toggleCat(el) {
+    function toggle(el) {
         const list = el.nextElementSibling;
-        const ind = el.querySelector('.indicator');
+        const arr = el.querySelector('.arrow');
         const show = list.style.display === 'none' || list.style.display === '';
         list.style.display = show ? 'block' : 'none';
-        ind.innerText = show ? '▲' : '▼';
+        arr.innerText = show ? '▲' : '▼';
     }
 
-    function expandAll(open) {
+    function toggleItems(open) {
         document.querySelectorAll('.cat-list').forEach(l => l.style.display = open ? 'block' : 'none');
-        document.querySelectorAll('.indicator').forEach(i => i.innerText = open ? '▲' : '▼');
+        document.querySelectorAll('.arrow').forEach(a => a.innerText = open ? '▲' : '▼');
     }
 </script>
 
