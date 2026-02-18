@@ -1,34 +1,84 @@
-// drawer.html의 <script> 부분에 덮어쓰세요
-async function loadDrawerData() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const drawerId = urlParams.get('id'); // QR 코드로 찍힌 ID
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>모바일 웹 서랍 확인</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 20px; line-height: 1.6; }
+        #media-container { width: 100%; margin-bottom: 20px; text-align: center; }
+        #media-container img, #media-container video { max-width: 100%; border-radius: 8px; }
+        h1 { font-size: 1.5rem; color: #333; }
+        ul { list-style: none; padding: 0; }
+        li { padding: 10px; border-bottom: 1px solid #eee; }
+        .error { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
 
-    const { data, error } = await supabase
-        .from('tags')
-        .select('*')
-        .eq('id', drawerId)
-        .single(); // 데이터 1개만 가져오기 [cite: 2026-02-15]
+    <div id="app-view">
+        <h1 id="drawer-name">서랍 정보를 불러오는 중...</h1>
 
-    if (data) {
-        // 1. 미디어 노출 (media_url 사용) [cite: 2026-02-15]
-        const mediaElement = document.getElementById('drawerMedia'); // img나 video 태그
-        if (data.media_url) {
-            // 주소에 mp4가 포함되면 비디오, 아니면 이미지로 판단
-            if (data.media_url.includes('mp4')) {
-                mediaElement.innerHTML = `<video src="${data.media_url}" controls width="100%"></video>`;
+        <div id="media-container"></div>
+
+        <h3>포함된 물건</h3>
+        <ul id="item-list"></ul>
+    </div>
+
+    <script>
+        // 사용자님의 수파베이스 설정 (여기에 실제 값을 넣어주세요)
+        const supabaseUrl = 'https://tqhtggusphhcsygiitrv.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc';
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        // 주소창에서 id 값 가져오기 (예: drawer.html?id=123)
+        const urlParams = new URLSearchParams(window.location.search);
+        const tagId = urlParams.get('id');
+
+        async function fetchDrawerData() {
+            if (!tagId) {
+                document.getElementById('drawer-name').innerText = "잘못된 접근입니다. (ID 없음)";
+                return;
+            }
+
+            // 실제 테이블 이름 'tags' 사용
+            const { data, error } = await supabase
+                .from('tags')
+                .select('display_name, items, media_url')
+                .eq('id', tagId)
+                .single();
+
+            if (error || !data) {
+                document.getElementById('drawer-name').innerText = "정보를 찾을 수 없습니다.";
+                return;
+            }
+
+            // 1. 서랍 이름 출력
+            document.getElementById('drawer-name').innerText = data.display_name;
+
+            // 2. 미디어(사진/영상) 출력
+            const mediaContainer = document.getElementById('media-container');
+            if (data.media_url) {
+                const isVideo = data.media_url.match(/\.(mp4|mov|webm)$/i);
+                if (isVideo) {
+                    mediaContainer.innerHTML = `<video src="${data.media_url}" controls autoplay muted loop></video>`;
+                } else {
+                    mediaContainer.innerHTML = `<img src="${data.media_url}" alt="서랍 이미지">`;
+                }
+            }
+
+            // 3. 물건 목록 출력 (쉼표로 구분된 텍스트를 리스트로 변환)
+            const itemList = document.getElementById('item-list');
+            if (data.items) {
+                const itemsArray = data.items.split(',');
+                itemList.innerHTML = itemsArray.map(item => `<li>${item.trim()}</li>`).join('');
             } else {
-                mediaElement.innerHTML = `<img src="${data.media_url}" width="100%">`;
+                itemList.innerHTML = "<li>등록된 물건이 없습니다.</li>";
             }
         }
 
-        // 2. 체크리스트 (items 텍스트를 쉼표로 분리) [cite: 2026-01-11, 2026-02-16]
-        const list = document.getElementById('checklist');
-        const itemArray = data.items ? data.items.split(',') : ['등록된 물건이 없습니다'];
-        list.innerHTML = itemArray.map(item => `
-            <li><input type="checkbox"> ${item.trim()}</li>
-        `).join('');
-
-        document.getElementById('drawerTitle').innerText = data.display_name;
-    }
-} 
-loadDrawerData();
+        fetchDrawerData();
+    </script>
+</body>
+</html>
