@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root { --primary: #007bff; --bg: #f8fafc; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; font-size: 20px; } /* 글씨 대폭 확대 [cite: 2026-02-18] */
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; font-size: 20px; }
         .search-container { max-width: 600px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
         .search-box { width: 100%; padding: 20px; border: 3px solid var(--primary); border-radius: 15px; font-size: 22px; outline: none; box-sizing: border-box; }
         .result-item { display: flex; justify-content: space-between; align-items: center; padding: 20px; border: 1px solid #eee; border-radius: 15px; margin-top: 15px; cursor: pointer; background: #fff; }
@@ -38,7 +38,7 @@
                         <div class="result-item" onclick="location.href='drawer.html?tag=${tag}&search=${encodeURIComponent(item)}'">
                             <div>
                                 <div class="item-info">${item}</div>
-                                <div class="drawer-info">${db[tag].title}에 보관 중</div>
+                                <div class="drawer-info">${db[tag].title} 보관 중</div>
                             </div>
                             <button class="btn-view">열기 ></button>
                         </div>`;
@@ -47,8 +47,8 @@
         });
     }
     function handleEnter() {
-        const items = document.querySelectorAll('.result-item');
-        if(items.length > 0) items[0].click(); [cite: 2026-01-11]
+        const firstResult = document.querySelector('.result-item');
+        if(firstResult) firstResult.click(); [cite: 2026-01-11]
     }
 </script>
 </body>
