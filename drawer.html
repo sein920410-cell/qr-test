@@ -6,49 +6,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root { --primary: #007bff; --bg: #f8fafc; --card: #ffffff; --item-bg: #f0f7ff; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; color: #1e293b; padding-bottom: 100px; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; color: #1e293b; padding-bottom: 100px; font-size: 20px; } /* 글씨 키움 [cite: 2026-02-18] */
         .container { max-width: 500px; margin: 0 auto; }
         .main-card { background: var(--card); border-radius: 24px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.05); }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .title-badge { background: #0f172a; color: #fff; padding: 6px 14px; border-radius: 100px; font-size: 11px; font-weight: 700; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .title-badge { background: #0f172a; color: #fff; padding: 10px 18px; border-radius: 100px; font-size: 16px; font-weight: 800; }
         
-        /* 사진: 4:3 비율 고정 및 확대 기능 복구 [cite: 2026-01-11] */
-        .media-box { width: 100%; height: 260px; aspect-ratio: 4 / 3; background: #f1f5f9; border-radius: 18px; overflow: hidden; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; cursor: zoom-in; }
+        /* 사진 및 확대 기능 [cite: 2026-01-11] */
+        .media-box { width: 100%; height: 260px; aspect-ratio: 4 / 3; background: #f1f5f9; border-radius: 18px; overflow: hidden; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; cursor: zoom-in; }
         .media-box img, .media-box video { max-width: 100%; max-height: 100%; object-fit: contain; }
 
-        .search-input { width: 100%; padding: 12px; border: 2px solid var(--primary); border-radius: 10px; box-sizing: border-box; font-size: 14px; margin-bottom: 15px; outline: none; }
+        .search-input { width: 100%; padding: 18px; border: 3px solid var(--primary); border-radius: 15px; box-sizing: border-box; font-size: 20px; margin-bottom: 15px; outline: none; }
         
-        /* [유지] 카테고리 헤더 및 화살표 [cite: 2026-02-15] */
-        .all-toggle { background: #f1f5f9; border-radius: 12px; margin-bottom: 10px; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid #e2e8f0; }
-        .all-toggle span { font-size: 13px; font-weight: 800; color: #475569; }
+        /* 카테고리 헤더 복구 [cite: 2026-02-15] */
+        .all-toggle { background: #f1f5f9; border-radius: 12px; margin-bottom: 12px; padding: 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid #e2e8f0; }
+        .all-toggle span { font-size: 18px; font-weight: 800; color: #1e293b; }
 
-        .cat-group { background: var(--card); border-radius: 14px; margin-bottom: 8px; border: 1px solid #e2e8f0; overflow: hidden; }
-        .cat-head { padding: 15px; display: flex; justify-content: space-between; font-weight: 800; font-size: 14px; cursor: pointer; align-items: center; }
-        .cat-body { display: none; padding: 8px; background: #fafafa; border-top: 1px solid #f1f5f9; }
-        .arr { font-size: 14px; color: #64748b; transition: transform 0.2s; }
+        .cat-group { background: var(--card); border-radius: 14px; margin-bottom: 10px; border: 1px solid #e2e8f0; overflow: hidden; }
+        .cat-head { padding: 18px; display: flex; justify-content: space-between; font-weight: 800; font-size: 18px; cursor: pointer; background: #fff; border-bottom: 1px solid #f1f5f9; }
+        .cat-body { display: none; padding: 12px; background: #fafafa; }
         
-        /* [요청] 항목별 분리 및 키보드 입력 UI [cite: 2026-02-18, 2026-01-11] */
-        .item-row { display: flex; flex-direction: column; padding: 12px 15px; background: var(--item-bg); border-radius: 14px; border: 1px solid #e0f0ff; margin-bottom: 8px; }
-        .item-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .item-name { font-size: 13px; font-weight: 700; color: #334155; }
-        .qty-input { width: 60px; padding: 6px; border: 1px solid #d1e9ff; border-radius: 6px; text-align: center; font-size: 12px; font-weight: 800; }
-        .btn-save { background: var(--primary); color: #fff; border: none; border-radius: 6px; padding: 5px 12px; font-size: 11px; font-weight: 800; cursor: pointer; align-self: flex-end; }
+        /* [핵심] 항목별 분리 및 키보드 입력+저장 UI [cite: 2026-02-18, 2026-01-11] */
+        .item-row { display: flex; flex-direction: column; padding: 18px; background: var(--item-bg); border-radius: 15px; border: 1px solid #e0f0ff; margin-bottom: 12px; }
+        .item-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .item-name { font-size: 18px; font-weight: 800; color: #1e293b; }
+        .qty-input { width: 90px; padding: 10px; border: 2px solid #d1e9ff; border-radius: 10px; text-align: center; font-size: 18px; font-weight: 800; background: #fff; }
+        .btn-save { background: var(--primary); color: #fff; border: none; border-radius: 10px; padding: 12px; font-size: 16px; font-weight: 800; cursor: pointer; margin-top: 5px; }
 
-        .chat-btn { position: fixed; bottom: 20px; right: 20px; background: #000; color: #fff; border: none; border-radius: 50px; padding: 15px 22px; font-weight: 800; font-size: 14px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 1000; }
-        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; }
+        .chat-btn { position: fixed; bottom: 25px; right: 25px; background: #000; color: #fff; border: none; border-radius: 60px; padding: 20px 30px; font-weight: 800; font-size: 18px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); cursor: pointer; z-index: 1000; }
+        #chat-window { display: none; position: fixed; bottom: 100px; right: 25px; width: 350px; height: 500px; background: white; border-radius: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); flex-direction: column; overflow: hidden; z-index: 1001; border: 1px solid #eee; }
+        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="main-card">
         <div class="header">
-            <div class="title-badge" id="disp-id">불러오는 중...</div>
-            <button style="font-size: 10px; padding: 4px 8px; border: 1px solid #ddd; background: #fff;" onclick="alert('재촬영 분석 시작')">📸 재촬영 AI 분석</button>
+            <div class="title-badge" id="disp-id">로딩 중...</div>
+            <button style="font-size: 14px; padding: 8px 12px; border-radius: 10px; border: 1px solid #ddd; background: #fff;" onclick="alert('분석을 시작합니다.')">📸 재촬영 분석</button>
         </div>
         <div class="media-box" onclick="openFull()">
             <div id="media-wrap" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;"></div>
         </div>
-        <input type="text" id="find-box" class="search-input" placeholder="무엇을 찾으시나요? (예: 물슈)" oninput="updateList()">
+        <input type="text" id="find-box" class="search-input" placeholder="무엇을 찾으시나요? (예: 종이컵)" oninput="updateList()">
         <div class="all-toggle" onclick="toggleAll()">
             <span>📦 보관 물품 전체 목록</span>
             <span id="all-arr">전체 펼치기 ▼</span>
@@ -57,15 +57,24 @@
     </div>
 </div>
 
-<button class="chat-btn" onclick="alert('찾았다 비서 활성화')">✨ 찾았다에게 물어보기</button>
+<button class="chat-btn" onclick="toggleChat()">✨ 찾았다에게 물어보기</button>
+<div id="chat-window">
+    <div style="background:#0f172a; color:#fff; padding:20px; font-size:18px; font-weight:800; display:flex; justify-content:space-between;">
+        <span>찾았다 AI 비서</span><span style="cursor:pointer" onclick="toggleChat()">✕</span>
+    </div>
+    <div id="chat-msgs" style="flex:1; padding:20px; overflow-y:auto; font-size:16px; background:#f8fafc;">
+        <div style="background:#e2e8f0; padding:15px; border-radius:15px; max-width:85%;">반갑습니다! 무엇을 도와드릴까요?</div>
+    </div>
+</div>
+
 <div id="full-view" class="modal" onclick="this.style.display='none'"><div id="modal-body" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;"></div></div>
 
 <script>
     const params = new URLSearchParams(window.location.search);
     const tag = (params.get('tag') || 'DRAWER001').toUpperCase();
+    const searchParam = params.get('search') || "";
     let isAllOpen = false;
 
-    // [데이터 완벽 분리] 항목별로 하나씩 다 쪼개고 수량 복구 [cite: 2026-02-18, 2026-01-11]
     const defaultDb = {
         "DRAWER001": { title: "쫀디기 서랍 1번", url: "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer1.mp4.mp4", 
             items: [
@@ -79,22 +88,25 @@
         "DRAWER002": { title: "물티슈 서랍 2번", url: "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer2.jpg.jpg", 
             items: [
                 { cat: "위생", n: "베베앙 물티슈 (대형)", q: "5" }, { cat: "위생", n: "베베앙 물티슈 (휴대용)", q: "2" }, { cat: "위생", n: "검정색 파우치 물티슈", q: "1" },
-                { cat: "케어", n: "일리윤 여성청결제", q: "1" }, { cat: "케어", n: "려(RYO) 트리트먼트", q: "1" },
+                { cat: "케어", n: "일리윤 여성청결제", q: "1" }, { cat: "케어", n: "려 트리트먼트", q: "1" },
                 { cat: "생활", n: "NOW 영양제", q: "1" }, { cat: "생활", n: "만능 클리너", q: "1" },
-                { cat: "생활", n: "쿨링 스프레이", q: "1" }, { cat: "생활", n: "우산", q: "4" },
-                { cat: "안전", n: "소방용 소화기", q: "1" }, { cat: "청소", n: "밀대 걸레", q: "1" }, { cat: "기타", n: "원숭이 소품", q: "1" }
+                { cat: "생활", n: "쿨링 스프레이", q: "1" }, { cat: "생활", n: "빨간색 단자함", q: "1" }, { cat: "생활", n: "우산", q: "4" },
+                { cat: "생활", n: "기타 세정제", q: "10" }, { cat: "안전", n: "소방용 소화기", q: "1" }, { cat: "청소", n: "밀대 걸레", q: "1" }, { cat: "기타", n: "원숭이 소품", q: "1" }
             ]
         }
     };
 
-    let db = JSON.parse(localStorage.getItem('final_v4_db')) || defaultDb;
+    let db = JSON.parse(localStorage.getItem('final_absolute_db')) || defaultDb;
     let active = db[tag] || db["DRAWER001"];
 
     window.onload = () => {
-        document.getElementById('disp-id').innerText = active.title;
-        const wrap = document.getElementById('media-wrap');
-        wrap.innerHTML = active.url.includes('.mp4') ? `<video src="${active.url}" autoplay loop muted playsinline></video>` : `<img src="${active.url}">`;
-        updateList();
+        try {
+            document.getElementById('disp-id').innerText = active.title;
+            const wrap = document.getElementById('media-wrap');
+            wrap.innerHTML = active.url.includes('.mp4') ? `<video src="${active.url}" autoplay loop muted playsinline></video>` : `<img src="${active.url}">`;
+            if(searchParam) document.getElementById('find-box').value = searchParam;
+            updateList();
+        } catch(e) { console.error(e); updateList(); }
     };
 
     function updateList() {
@@ -107,12 +119,12 @@
             if(list.length === 0 && word) return;
             const div = document.createElement('div');
             div.className = 'cat-group';
-            div.innerHTML = `<div class="cat-head" onclick="toggle(this)"><span>${c} (${list.length})</span><span class="arr">〉</span></div>
+            div.innerHTML = `<div class="cat-head" onclick="toggle(this)"><span>${c} (${list.length})</span><span style="font-size:24px;">〉</span></div>
                 <div class="cat-body" style="display: ${word || isAllOpen ? 'block' : 'none'}">${list.map(item => {
                     const idx = active.items.indexOf(item);
                     return `<div class="item-row"><div class="item-top"><span class="item-name">${item.n}</span>
-                        <input type="number" class="qty-input" value="${item.q}" id="input-${idx}"></div>
-                        <button class="btn-save" onclick="saveQty(${idx})">기록 저장</button></div>`;
+                        <input type="text" class="qty-input" value="${item.q}" id="input-${idx}"></div>
+                        <button class="btn-save" onclick="saveQty(${idx})">기록 저장하기</button></div>`;
                 }).join('')}</div>`;
             container.appendChild(div);
         });
@@ -120,8 +132,9 @@
 
     function saveQty(idx) {
         active.items[idx].q = document.getElementById('input-' + idx).value;
-        localStorage.setItem('final_v4_db', JSON.stringify(db));
-        alert('저장되었습니다!'); [cite: 2026-01-11]
+        db[tag] = active;
+        localStorage.setItem('final_absolute_db', JSON.stringify(db));
+        alert('✅ 재고 정보가 안전하게 저장되었습니다!'); [cite: 2026-01-11]
     }
 
     function toggleAll() {
@@ -132,15 +145,19 @@
 
     function toggle(h) {
         const b = h.nextElementSibling;
-        const show = b.style.display === 'none' || b.style.display === '';
-        b.style.display = show ? 'block' : 'none';
-        h.querySelector('.arr').style.transform = show ? 'rotate(90deg)' : 'rotate(0deg)';
+        const isShow = b.style.display === 'block';
+        b.style.display = isShow ? 'none' : 'block';
     }
 
     function openFull() {
         const m = document.getElementById('full-view');
         m.style.display = "flex";
         document.getElementById('modal-body').innerHTML = active.url.includes('.mp4') ? `<video src="${active.url}" controls autoplay style="max-width:98%;max-height:98%;"></video>` : `<img src="${active.url}" style="max-width:98%;max-height:98%;">`;
+    }
+
+    function toggleChat() {
+        const w = document.getElementById('chat-window');
+        w.style.display = w.style.display === 'none' || w.style.display === '' ? 'flex' : 'none';
     }
 </script>
 </body>
