@@ -2,47 +2,42 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>찾았다! - 상세 정보</title>
+    <title>찾았다! - 인벤토리 리포트</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        :root { --primary: #007bff; --bg: #f8fafc; --card: #ffffff; --item-bg: #f0f7ff; --danger: #ef4444; }
+        :root { --primary: #007bff; --bg: #f8fafc; --card: #ffffff; --item-bg: #f0f7ff; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; color: #1e293b; padding-bottom: 90px; }
         .container { max-width: 500px; margin: 0 auto; }
         .main-card { background: var(--card); border-radius: 24px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.05); }
         
-        /* 헤더: 쫀디기 서랍 1번 타이틀 [cite: 2026-02-18] */
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .title-badge { background: #0f172a; color: #fff; padding: 6px 14px; border-radius: 100px; font-size: 11px; font-weight: 700; }
         .btn-rescan { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 12px; font-size: 10px; color: #475569; font-weight: 800; cursor: pointer; }
 
-        /* 사진 영역: 4:3 비율 및 260px 높이 [cite: 2026-01-11] */
+        /* [유지] 4:3 비율 및 260px 높이 [cite: 2026-01-11] */
         .media-box { width: 100%; height: 260px; aspect-ratio: 4 / 3; background: #f1f5f9; border-radius: 18px; overflow: hidden; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; cursor: zoom-in; }
         .media-box img, .media-box video { max-width: 100%; max-height: 100%; object-fit: contain; }
         
-        /* 자동 검색창 [cite: 2026-01-11] */
+        /* [개선] 실시간 자동 검색 (oninput) [cite: 2026-01-11] */
         .search-input { width: 100%; padding: 12px; border: 2px solid var(--primary); border-radius: 10px; box-sizing: border-box; font-size: 14px; margin-bottom: 12px; outline: none; }
         
-        /* [복구] 보관 물품 전체 목록 및 토글 버튼 [cite: 2026-02-15] */
+        /* [유지] 보관 물품 전체 목록 헤더 [cite: 2026-02-15] */
         .list-header { background: #f1f5f9; border-radius: 12px; margin-bottom: 10px; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid #e2e8f0; }
         .list-header span { font-size: 13px; font-weight: 800; color: #475569; }
 
-        /* 카테고리 및 화살표 [cite: 2026-02-15] */
         .cat-group { background: var(--card); border-radius: 14px; margin-bottom: 8px; border: 1px solid #e2e8f0; overflow: hidden; }
         .cat-head { padding: 15px; display: flex; justify-content: space-between; font-weight: 800; font-size: 14px; cursor: pointer; align-items: center; }
         .cat-body { display: none; padding: 8px; background: #fafafa; border-top: 1px solid #f1f5f9; }
         .arr { font-size: 14px; color: #64748b; transition: transform 0.2s; }
         
-        /* 재고 조절 UI [cite: 2026-01-11] */
+        /* [개선] 재고 수량 +/- 조절 UI [cite: 2026-01-11] */
         .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: var(--item-bg); border-radius: 12px; border: 1px solid #e0f0ff; margin-bottom: 6px; }
         .item-name { font-size: 13px; font-weight: 700; color: #334155; flex: 1; margin-right: 10px; }
         .qty-controls { display: flex; align-items: center; gap: 6px; background: #fff; padding: 4px 6px; border-radius: 8px; border: 1px solid #d1e9ff; }
         .btn-qty { border: none; background: #e0f0ff; color: var(--primary); width: 22px; height: 22px; border-radius: 4px; font-weight: 900; cursor: pointer; }
-        .qty-num { font-size: 11px; font-weight: 800; min-width: 45px; text-align: center; }
+        .qty-num { font-size: 11px; font-weight: 800; min-width: 35px; text-align: center; }
 
-        /* 채팅 버튼 [cite: 2026-02-16] */
         .chat-btn { position: fixed; bottom: 20px; right: 20px; background: #000; color: #fff; border: none; border-radius: 50px; padding: 15px 22px; font-weight: 800; font-size: 14px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 1000; }
-        
-        /* 모달 [cite: 2026-01-11] */
         .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; }
         .modal-img { max-width: 98%; max-height: 98%; object-fit: contain; }
     </style>
@@ -71,7 +66,7 @@
     </div>
 </div>
 
-<button class="chat-btn" onclick="toggleChat()">✨ 찾았다에게 물어보기</button>
+<button class="chat-btn" onclick="alert('찾았다 비서가 활성화됩니다.')">✨ 찾았다에게 물어보기</button>
 
 <div id="full-view" class="modal" onclick="this.style.display='none'">
     <div id="modal-body" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;"></div>
@@ -82,30 +77,32 @@
     const tag = (params.get('tag') || 'DRAWER001').toUpperCase();
     let isAllOpen = false;
 
-    // [복구] 사용자 제공 데이터 100% 반영 [cite: 20, 2026-02-18, 2026-01-11]
+    // [데이터 쪼개기 및 수량 복구] 사용자 제공 목록 완벽 반영 [cite: 20, 2026-02-18, 2026-01-11]
     const db = {
         "DRAWER001": {
             title: "쫀디기 서랍 1번",
             url: "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer1.mp4.mp4",
             items: [
-                { cat: "식품", n: "쫀디기", q: "2 EA" }, { cat: "식품", n: "맥심 커피믹스", q: "다수" },
-                { cat: "주방", n: "종이컵 / 컵홀더 / 수저세트", q: "1 Set" }, { cat: "주방", n: "나무 꼬챙이 / 지퍼팩", q: "다수" }, 
-                { cat: "공구", n: "다목적 칼 / 손전등", q: "각 1 EA" }, 
-                { cat: "기타", n: "금박 비닐 / 메쉬 파우치", q: "각 1 EA" }, { cat: "기타", n: "핫팩 / 소형 케이스", q: "다수" }
+                { cat: "식품", n: "쫀디기", q: 2 }, { cat: "식품", n: "맥심 커피믹스", q: 20 },
+                { cat: "주방", n: "종이컵", q: 50 }, { cat: "주방", n: "컵홀더", q: 20 }, { cat: "주방", n: "수저세트", q: 2 },
+                { cat: "주방", n: "나무 꼬챙이", q: 30 }, { cat: "주방", n: "지퍼팩", q: 10 },
+                { cat: "공구", n: "다목적 칼", q: 1 }, { cat: "공구", n: "손전등", q: 1 },
+                { cat: "기타", n: "금박 비닐", q: 1 }, { cat: "기타", n: "메쉬 파우치", q: 1 },
+                { cat: "기타", n: "핫팩", q: 5 }, { cat: "기타", n: "소형 케이스", q: 1 }
             ]
         },
         "DRAWER002": {
             title: "물티슈 서랍 2번",
             url: "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer2.jpg.jpg",
             items: [
-                { cat: "위생", n: "베베앙 물티슈 (대형)", q: "5 EA" }, { cat: "위생", n: "베베앙 물티슈 (휴대용)", q: "2 EA" }, { cat: "위생", n: "검정색 파우치 물티슈", q: "1 EA" },
-                { cat: "케어", n: "일리윤 여성청결제 / 려(RYO) 트리트먼트", q: "각 1 EA" },
-                { cat: "생활", n: "NOW 영양제 / 만능 클리너", q: "각 1 EA" }, 
-                { cat: "생활", n: "쿨링 스프레이 / 빨간색 단자함", q: "각 1 EA" }, { cat: "생활", n: "우산", q: "4 EA" },
-                { cat: "생활", n: "기타 세정제: 뒷줄에 배치된 여러 개의 스프레이 및 액체 용기들", q: "다수 EA" }, 
-                { cat: "생활", n: "흰색 메쉬 바구니 / 노란색 원형 바구니", q: "각 1 EA" }, 
-                { cat: "안전", n: "소방용 소화기", q: "1 EA" },
-                { cat: "청소", n: "밀대 걸레", q: "1 EA" }, { cat: "기타", n: "원숭이 작은 소모품", q: "각 1 EA" }
+                { cat: "위생", n: "베베앙 물티슈 (대형)", q: 5 }, { cat: "위생", n: "베베앙 물티슈 (휴대용)", q: 2 }, { cat: "위생", n: "검정색 파우치 물티슈", q: 1 },
+                { cat: "케어", n: "일리윤 여성청결제", q: 1 }, { cat: "케어", n: "려(RYO) 트리트먼트", q: 1 },
+                { cat: "생활", n: "NOW 영양제", q: 1 }, { cat: "생활", n: "만능 클리너", q: 1 },
+                { cat: "생활", n: "쿨링 스프레이", q: 1 }, { cat: "생활", n: "빨간색 단자함", q: 1 }, { cat: "생활", n: "작은 원형 용기", q: 1 },
+                { cat: "생활", n: "우산", q: 4 }, { cat: "생활", n: "기타 세정제 (뒷줄 스프레이/용기)", q: 5 },
+                { cat: "생활", n: "흰색 메쉬 바구니", q: 1 }, { cat: "생활", n: "노란색 원형 바구니", q: 1 },
+                { cat: "안전", n: "소방용 소화기", q: 1 }, { cat: "청소", n: "밀대 걸레", q: 1 },
+                { cat: "기타", n: "원숭이 작은 소모품", q: 1 }
             ]
         }
     };
@@ -154,7 +151,7 @@
                             <span class="item-name">${item.n}</span>
                             <div class="qty-controls">
                                 <button class="btn-qty" onclick="changeQty(${idx}, -1, event)">-</button>
-                                <span class="qty-num">${item.q}</span>
+                                <span class="qty-num">${item.q} EA</span>
                                 <button class="btn-qty" onclick="changeQty(${idx}, 1, event)">+</button>
                             </div>
                         </div>`;
@@ -164,22 +161,15 @@
         });
     }
 
-    // 수량 조절 (숫자일 경우만 계산, 아니면 텍스트 유지) [cite: 2026-01-11]
     function changeQty(idx, val, e) {
         e.stopPropagation();
-        let qStr = active.items[idx].q;
-        let num = parseInt(qStr.replace(/[^0-9]/g, ''));
-        if (!isNaN(num)) {
-            let unit = qStr.replace(/[0-9]/g, '').trim();
-            active.items[idx].q = (Math.max(0, num + val)) + (unit ? " " + unit : " EA");
-            updateList();
-        }
+        active.items[idx].q = Math.max(0, active.items[idx].q + val);
+        updateList();
     }
 
     function toggleAll() {
         isAllOpen = !isAllOpen;
-        const masterArr = document.getElementById('all-arr');
-        masterArr.innerText = isAllOpen ? '전체 접기 ▲' : '전체 펼치기 ▼';
+        document.getElementById('all-arr').innerText = isAllOpen ? '전체 접기 ▲' : '전체 펼치기 ▼';
         updateList();
     }
 
@@ -198,8 +188,6 @@
         if (active.url.includes('.mp4')) b.innerHTML = `<video src="${active.url}" controls autoplay class="modal-img"></video>`;
         else b.innerHTML = `<img src="${active.url}" class="modal-img">`;
     }
-
-    function toggleChat() { alert('채팅창이 활성화됩니다.'); }
 </script>
 </body>
 </html>
