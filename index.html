@@ -6,38 +6,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root { --primary: #007bff; --bg: #f8fafc; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; font-size: 18px; } /* 글씨 크기 확대 [cite: 2026-02-18] */
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; font-size: 18px; }
         .search-container { max-width: 600px; margin: 50px auto; background: #fff; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .search-box { width: 100%; padding: 18px; border: 2px solid var(--primary); border-radius: 12px; font-size: 20px; outline: none; box-sizing: border-box; }
-        .result-item { display: flex; justify-content: space-between; align-items: center; padding: 18px; border: 1px solid #eee; border-radius: 12px; margin-top: 12px; cursor: pointer; transition: 0.2s; }
-        .result-item:hover { background: #f0f7ff; border-color: var(--primary); }
-        .item-info { font-weight: 800; font-size: 18px; }
-        .drawer-info { color: #64748b; font-size: 14px; margin-top: 6px; }
-        .btn-view { background: #1e293b; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
+        .search-box { width: 100%; padding: 15px; border: 2px solid var(--primary); border-radius: 12px; font-size: 18px; outline: none; box-sizing: border-box; }
+        .result-item { display: flex; justify-content: space-between; align-items: center; padding: 18px; border: 1px solid #eee; border-radius: 12px; margin-top: 12px; cursor: pointer; }
+        .item-info { font-weight: 800; font-size: 16px; }
+        .drawer-info { color: #64748b; font-size: 13px; margin-top: 4px; }
+        .btn-view { background: #1e293b; color: #fff; border: none; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
     </style>
 </head>
 <body>
-
 <div class="search-container">
-    <h2 style="font-size: 22px; margin-bottom: 25px;">🔍 무엇을 찾으시나요?</h2>
+    <h2 style="font-size: 20px; margin-bottom: 20px;">🔍 무엇을 찾으시나요?</h2>
     <input type="text" id="main-search" class="search-box" placeholder="예: 종이컵, 쫀디기" 
            oninput="searchItems()" onkeydown="if(event.key==='Enter') handleEnter()">
     <div id="result-list"></div>
 </div>
-
 <script>
-    // [데이터 쪼개기 반영] 모든 항목을 개별 분리 [cite: 2026-02-18]
     const db = {
         "DRAWER001": { title: "쫀디기 서랍 1번", items: ["쫀디기", "맥심 커피믹스", "종이컵", "컵홀더", "수저세트", "나무 꼬챙이", "지퍼팩", "다목적 칼", "손전등", "금박 비닐", "메쉬 파우치", "핫팩", "소형 케이스"] },
-        "DRAWER002": { title: "물티슈 서랍 2번", items: ["베베앙 물티슈 (대형)", "베베앙 물티슈 (휴대용)", "검정색 파우치 물티슈", "일리윤 여성청결제", "려 트리트먼트", "NOW 영양제", "만능 클리너", "쿨링 스프레이", "빨간색 단자함", "작은 원형 용기", "우산", "기타 세정제", "흰색 메쉬 바구니", "노란색 원형 바구니", "소방용 소화기", "밀대 걸레", "원숭이 작은 소모품"] }
+        "DRAWER002": { title: "물티슈 서랍 2번", items: ["베베앙 물티슈 (대형)", "베베앙 물티슈 (휴대용)", "검정색 파우치 물티슈", "일리윤 여성청결제", "려 트리트먼트", "NOW 영양제", "만능 클리너", "쿨링 스프레이", "빨간색 단자함", "작은 원형 용기", "우산", "기타 세정제", "흰색 메쉬 바구니", "노란색 원형 바구니", "소방용 소화기", "밀대 걸레", "원숭이 소품"] }
     };
-
     function searchItems() {
         const query = document.getElementById('main-search').value.trim().toLowerCase();
         const list = document.getElementById('result-list');
         list.innerHTML = '';
         if(!query) return;
-
         Object.keys(db).forEach(tag => {
             db[tag].items.forEach(item => {
                 if(item.toLowerCase().includes(query)) {
@@ -53,10 +47,9 @@
             });
         });
     }
-
     function handleEnter() {
         const items = document.querySelectorAll('.result-item');
-        if(items.length > 0) items[0].click();
+        if(items.length > 0) items[0].click(); [cite: 2026-01-11]
     }
 </script>
 </body>
