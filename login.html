@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>공간:결 - 로그인</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: -apple-system, sans-serif; background: #f8fafc; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .login-card { background: #fff; padding: 40px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); width: 100%; max-width: 350px; text-align: center; }
+        h2 { margin-bottom: 24px; font-size: 20px; }
+        input { width: 100%; padding: 15px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #007bff; color: #fff; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h2>✨ 공간:결 로그인</h2>
+        <input type="email" id="email" placeholder="이메일 주소">
+        <input type="password" id="pw" placeholder="비밀번호">
+        <button onclick="login()">로그인하기</button>
+    </div>
+
+    <script>
+        // 세인 님 프로젝트 정보
+        const SUPABASE_URL = 'https://tqhtggusphhcsygiitrv.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('pw').value;
+
+            const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                alert("로그인 실패: " + error.message);
+            } else {
+                alert("반가워요! 로그인 되었습니다.");
+                window.location.href = "index.html"; // 로그인 성공 시 검색창으로 이동
+            }
+        }
+    </script>
+</body>
+</html>
