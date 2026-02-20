@@ -81,7 +81,7 @@
 <button class="chat-btn" onclick="toggleChat()">✨ 결에게 묻기</button>
 <div id="chat-window" class="chat-window">
     <div class="chat-header"><span>비서 '결'</span><span style="cursor:pointer" onclick="toggleChat()">✕</span></div>
-    <div id="chat-messages" class="chat-messages"><div class="msg bot">안녕하세요! 무엇을 찾아드릴까요?</div></div>
+    <div id="chat-messages" class="chat-messages"><div class="msg bot">안녕하세요! 세인 님, 무엇을 찾아드릴까요?</div></div>
     <div class="chat-input-area">
         <input type="text" class="chat-input" placeholder="메시지 입력..." onkeydown="if(event.key==='Enter') sendMsg(this)">
     </div>
@@ -96,16 +96,15 @@
 
     const params = new URLSearchParams(window.location.search);
     const tag = (params.get('tag') || 'DRAWER001').toUpperCase();
-    let isAllOpen = true; // 기본적으로 열어둠
+    let isAllOpen = true; 
     let openCats = {};
     let active = { title: "", url: "", items: [] };
 
-    // 상태 바 안내 함수
-    function showNote(text, type='info') {
+    function showNote(text, stay = false) {
         const bar = document.getElementById('status-msg');
         bar.innerText = text;
         bar.style.display = 'block';
-        if(type !== 'stay') setTimeout(() => { bar.style.display = 'none'; }, 3000);
+        if(!stay) setTimeout(() => { bar.style.display = 'none'; }, 3000);
     }
 
     async function checkUser() {
@@ -116,8 +115,8 @@
     function loadData() {
         const saved = localStorage.getItem('gonggan_gyeol_' + tag);
         const savedUrl = localStorage.getItem('gonggan_gyeol_url_' + tag);
-        if (saved) active.items = JSON.parse(saved);
-        if (savedUrl) active.url = savedUrl;
+        active.items = saved ? JSON.parse(saved) : [];
+        active.url = savedUrl || "";
         active.title = (tag === 'DRAWER002') ? "서랍 2번" : "서랍 1번";
     }
 
@@ -144,120 +143,75 @@
     async function uploadAndPreview(input) {
         const file = input.files[0];
         if(!file) return;
-
-        showNote("사진 업로드 중...", "stay");
+        showNote("사진을 업로드하고 있습니다...", true);
         const path = `${tag}/${Date.now()}_${file.name}`;
         const { data, error } = await _supabase.storage.from('user_uploads').upload(path, file);
-        
         if(error) { showNote("업로드 실패: " + error.message); return; }
-
         const { data: { publicUrl } } = _supabase.storage.from('user_uploads').getPublicUrl(path);
         active.url = publicUrl;
         saveData();
         refreshMedia();
-        showNote("업로드 완료! AI 분석을 시작하시려면 재촬영 버튼을 눌러주세요.");
+        document.getElementById('status-msg').style.display = 'none';
+        showNote("업로드 완료! '재촬영 AI 분석'을 눌러보세요.");
     }
 
-    // AI 분석 연동 함수 (실제 실물 버전 셋팅)
     async function startAIAnalysis() {
-        if(!active.url) { showNote("먼저 사진을 등록해주세요."); return; }
-        
-        showNote("AI가 사진 속 물건을 찾고 있습니다. 잠시만 기다려주세요...", "stay");
-        
+        if(!active.url) { showNote("먼저 사진을 올려주세요."); return; }
+        showNote("AI가 물건을 분석하고 있습니다. 잠시만 기다려주세요...", true);
         try {
-            // 이미지를 base64로 변환하여 API 전달 (analyze.js용)
             const response = await fetch(active.url);
             const blob = await response.blob();
-            const reader = new FileReader();
-            reader.readAsDataURL(blob);
-            reader.onloadend = async () => {
-                const base64data = reader.result.split(',')[1];
-                
-                const res = await fetch('/api/analyze', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ image: base64data })
-                });
-                
-                const data = await res.json();
-                if(data.result) {
-                    const foundItems = data.result.split(',').map(name => ({
-                        cat: "AI분석",
-                        n: name.trim(),
-                        q: 1
-                    }));
-                    active.items = foundItems; // 새 분석 결과로 덮어쓰기
-                    saveData();
-                    updateList();
-                    showNote("분석 완료! 목록이 업데이트되었습니다.");
-                } else {
-                    showNote("분석에 실패했습니다.");
-                }
-            };
-        } catch(e) { showNote("오류가 발생했습니다."); }
+            const base64data = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                reader.readAsDataURL(blob);
+            });
+            const res = await fetch('/api/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: base64data })
+            });
+            const data = await res.json();
+            if(res.ok && data.result) {
+                const foundItems = data.result.split(',').map(name => ({ cat: "AI분석", n: name.trim(), q: 1 }));
+                active.items = foundItems;
+                saveData();
+                updateList();
+                document.getElementById('status-msg').style.display = 'none';
+                showNote("분석 완료! 목록을 확인해보세요.");
+            } else { throw new Error(); }
+        } catch(e) { showNote("분석 중 오류가 발생했습니다."); }
     }
 
     function updateList() {
         const word = document.getElementById('find-box').value.trim().toLowerCase();
         const container = document.getElementById('list-container');
         container.innerHTML = '';
-        
         const filtered = active.items.filter(i => i.n.toLowerCase().includes(word));
         const cats = [...new Set(filtered.map(i => i.cat))];
-        
         cats.forEach(c => {
             const list = filtered.filter(i => i.cat === c);
             const div = document.createElement('div');
             div.className = 'cat-group';
             const isOpen = word || isAllOpen || openCats[c];
-            
-            div.innerHTML = `
-                <div class="cat-head" onclick="toggle('${c}', this)">
-                    <span>${c} (${list.length})</span>
-                    <span class="arr" style="transform: rotate(${isOpen ? '90deg' : '0deg'})">›</span>
-                </div>
-                <div class="cat-body" style="display: ${isOpen ? 'block' : 'none'}">
-                    ${list.map(item => {
-                        const idx = active.items.indexOf(item);
-                        return `
-                        <div class="item-row">
-                            <span class="item-name">${item.n}</span>
-                            <div class="item-footer">
-                                <div class="qty-controls">
-                                    <button class="btn-qty" onclick="changeQty(${idx}, -1)">-</button>
-                                    <input type="number" class="qty-input" value="${item.q}" onchange="inputQty(${idx}, this.value)">
-                                    <button class="btn-qty" onclick="changeQty(${idx}, 1)">+</button>
-                                </div>
-                                <button class="btn-qty" style="color:red; background:none;" onclick="deleteItem(${idx})">삭제</button>
-                            </div>
-                        </div>`;
-                    }).join('')}
-                </div>`;
+            div.innerHTML = `<div class="cat-head" onclick="toggle('${c}', this)"><span>${c} (${list.length})</span><span class="arr" style="transform: rotate(${isOpen ? '90deg' : '0deg'})">›</span></div>
+                <div class="cat-body" style="display: ${isOpen ? 'block' : 'none'}">${list.map(item => {
+                    const idx = active.items.indexOf(item);
+                    return `<div class="item-row"><span class="item-name">${item.n}</span><div class="item-footer"><div class="qty-controls"><button class="btn-qty" onclick="changeQty(${idx}, -1)">-</button><input type="number" class="qty-input" value="${item.q}" onchange="inputQty(${idx}, this.value)"><button class="btn-qty" onclick="changeQty(${idx}, 1)">+</button></div><button class="btn-qty" style="color:red; background:none;" onclick="deleteItem(${idx})">삭제</button></div></div>`;
+                }).join('')}</div>`;
             container.appendChild(div);
         });
         document.getElementById('all-arr-icon').style.transform = isAllOpen ? 'rotate(90deg)' : 'rotate(0deg)';
     }
 
     function toggleAll() { isAllOpen = !isAllOpen; updateList(); }
-    function toggle(cat, h) { 
-        const b = h.nextElementSibling; 
-        const a = h.querySelector('.arr');
-        const show = b.style.display === 'none';
-        b.style.display = show ? 'block' : 'none';
-        a.style.transform = show ? 'rotate(90deg)' : 'rotate(0deg)';
-        openCats[cat] = show;
-    }
-
-    function addItem() {
-        const n = prompt("물건 이름?");
-        const c = prompt("카테고리?", "기타");
-        if(n && c) { active.items.push({cat:c, n:n, q:1}); saveData(); updateList(); }
-    }
-
+    function toggle(cat, h) { const b = h.nextElementSibling; const a = h.querySelector('.arr'); const show = b.style.display === 'none'; b.style.display = show ? 'block' : 'none'; a.style.transform = show ? 'rotate(90deg)' : 'rotate(0deg)'; openCats[cat] = show; }
+    function addItem() { const n = prompt("물건 이름?"); const c = prompt("카테고리?", "기타"); if(n && c) { active.items.push({cat:c, n:n, q:1}); saveData(); updateList(); } }
     function deleteItem(i) { active.items.splice(i,1); saveData(); updateList(); }
     function changeQty(i,v) { active.items[i].q = Math.max(0, active.items[i].q + v); saveData(); updateList(); }
     function inputQty(i,v) { active.items[i].q = Math.max(0, parseInt(v)||0); saveData(); updateList(); }
     function resetData() { if(confirm("모든 데이터를 지우고 초기화할까요?")) { active.items = []; active.url = ""; saveData(); location.reload(); } }
+    function toggleChat() { const w = document.getElementById('chat-window'); w.style.display = (w.style.display==='flex')?'none':'flex'; }
 
     async function sendMsg(input) {
         const text = input.value.trim();
@@ -265,23 +219,17 @@
         const msgs = document.getElementById('chat-messages');
         msgs.innerHTML += `<div class="msg user">${text}</div>`;
         input.value = '';
-        
         const inv = active.items.map(i => `${i.n}(${i.q}개)`).join(', ');
         try {
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text, inventory: inv })
+                body: JSON.stringify({ message: text, inventory: inv || "현재 비어 있음" })
             });
             const data = await res.json();
-            msgs.innerHTML += `<div class="msg bot">${data.reply}</div>`;
-        } catch(e) { msgs.innerHTML += `<div class="msg bot">비서 '결'이 응답하지 못했어요.</div>`; }
+            msgs.innerHTML += `<div class="msg bot">${data.reply || "응답을 받지 못했어요."}</div>`;
+        } catch(e) { msgs.innerHTML += `<div class="msg bot">잠시 후 다시 시도해주세요.</div>`; }
         msgs.scrollTop = msgs.scrollHeight;
-    }
-
-    function toggleChat() { 
-        const w = document.getElementById('chat-window');
-        w.style.display = (w.style.display==='flex')?'none':'flex'; 
     }
 </script>
 </body>
