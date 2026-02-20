@@ -19,23 +19,26 @@
         
         .search-input { width: 100%; padding: 15px; border: 2px solid var(--primary); border-radius: 12px; box-sizing: border-box; font-size: 16px; margin-bottom: 15px; outline: none; }
         
-        /* [레이아웃 수정] 헤더 버튼 위치 변경 */
-        .list-header { background: #f1f5f9; border-radius: 14px; margin-bottom: 12px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; }
-        .btn-add { background: var(--primary); color: #fff; border: none; border-radius: 8px; padding: 8px 14px; font-size: 12px; font-weight: 800; cursor: pointer; order: -1; } /* 왼쪽 배치 */
-        .list-header-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; order: 1; } /* 오른쪽 배치 */
-        .list-header-toggle span { font-size: 14px; font-weight: 800; color: #475569; }
+        /* [레이아웃 수정] 목록 추가 버튼 위치 (노란 칸) */
+        .add-area { display: flex; justify-content: flex-end; margin-bottom: 10px; padding-right: 5px; }
+        .btn-add { background: var(--primary); color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 800; cursor: pointer; box-shadow: 0 2px 8px rgba(0,123,255,0.2); }
+
+        .list-header { background: #f1f5f9; border-radius: 14px; margin-bottom: 12px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .list-header span { font-size: 14px; font-weight: 800; color: #475569; }
 
         .cat-group { background: var(--card); border-radius: 16px; margin-bottom: 10px; border: 1px solid #e2e8f0; overflow: hidden; }
-        .cat-head { padding: 18px; display: flex; justify-content: space-between; font-weight: 800; font-size: 16px; cursor: pointer; }
+        .cat-head { padding: 18px; display: flex; justify-content: space-between; font-weight: 800; font-size: 16px; cursor: pointer; align-items: center; }
         .cat-body { display: none; padding: 10px; background: #fafafa; border-top: 1px solid #f1f5f9; }
         
-        /* [레이아웃 수정] 물품 행 구성 (이름 아래 수정/삭제) */
+        /* [통일] 깔끔한 화살표 스타일 */
+        .arr { font-size: 18px; color: #64748b; transition: transform 0.3s; display: inline-block; font-family: serif; font-weight: bold; }
+
         .item-row { background: var(--item-bg); border-radius: 14px; margin-bottom: 8px; padding: 12px; border: 1px solid #e0f0ff; }
-        .item-name { font-size: 15px; font-weight: 700; color: #334155; display: block; margin-bottom: 10px; }
+        .item-name { font-size: 15px; font-weight: 700; color: #334155; display: block; margin-bottom: 12px; }
         
         .item-footer { display: flex; justify-content: space-between; align-items: center; }
-        .item-tools { display: flex; gap: 6px; } /* 왼쪽 정렬 */
-        .btn-tool { background: #fff; border: 1px solid #d1e9ff; border-radius: 6px; padding: 5px 10px; font-size: 11px; font-weight: 700; color: #64748b; cursor: pointer; }
+        .item-tools { display: flex; gap: 6px; }
+        .btn-tool { background: #fff; border: 1px solid #d1e9ff; border-radius: 6px; padding: 6px 10px; font-size: 11px; font-weight: 700; color: #64748b; cursor: pointer; }
         .btn-delete { color: var(--danger); border-color: #ffdada; }
 
         .qty-controls { display: flex; align-items: center; gap: 6px; background: #fff; padding: 4px 6px; border-radius: 10px; border: 1px solid #d1e9ff; }
@@ -70,11 +73,13 @@
 
         <input type="text" id="find-box" class="search-input" placeholder="무엇을 찾으시나요?" oninput="updateList()">
         
-        <div class="list-header">
+        <div class="add-area">
             <button class="btn-add" onclick="addItem()">+ 물품 추가</button>
-            <div class="list-header-toggle" onclick="toggleAll()">
-                <span id="all-arr">전체 펼치기 ▼</span>
-            </div>
+        </div>
+
+        <div class="list-header" onclick="toggleAll()">
+            <span>📦 보관 물품 전체 목록</span>
+            <span id="all-arr-icon" class="arr">›</span>
         </div>
 
         <div id="list-container"></div>
@@ -107,24 +112,18 @@
         "DRAWER001": { title: "서랍 1번", url: "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer1.mp4.mp4", items: [] },
         "DRAWER002": { title: "서랍 2번", url: "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer2.jpg.jpg", items: [] }
     };
-    // 초기 샘플 데이터 (localStorage 없을 때용)
-    const defaultItems = {
-        "DRAWER001": [
-            { cat: "식품", n: "쫀디기", q: 2 }, { cat: "식품", n: "맥심 커피믹스", q: 20 },
-            { cat: "주방", n: "종이컵", q: 50 }, { cat: "주방", n: "컵홀더", q: 20 }, { cat: "주방", n: "수저세트", q: 2 },
-            { cat: "주방", n: "나무 꼬챙이", q: 30 }, { cat: "주방", n: "지퍼팩", q: 10 },
-            { cat: "공구", n: "다목적 칼", q: 1 }, { cat: "공구", n: "손전등", q: 1 },
-            { cat: "기타", n: "금박 비닐", q: 1 }, { cat: "기타", n: "메쉬 파우치", q: 1 },
-            { cat: "기타", n: "핫팩", q: 5 }, { cat: "기타", n: "소형 케이스", q: 1 }
-        ]
-    };
 
     let active = db[tag] || db["DRAWER001"];
 
     function loadSavedData() {
         const saved = localStorage.getItem('gonggan_gyeol_' + tag);
         if (saved) active.items = JSON.parse(saved);
-        else if (defaultItems[tag]) active.items = defaultItems[tag];
+        else {
+            active.items = [
+                { cat: "식품", n: "쫀디기", q: 2 }, { cat: "식품", n: "맥심 커피믹스", q: 20 },
+                { cat: "주방", n: "종이컵", q: 50 }, { cat: "주방", n: "컵홀더", q: 20 }
+            ];
+        }
     }
 
     function saveData() { localStorage.setItem('gonggan_gyeol_' + tag, JSON.stringify(active.items)); }
@@ -155,7 +154,7 @@
             div.innerHTML = `
                 <div class="cat-head" onclick="toggle('${c}', this)">
                     <span>${c} (${list.length})</span>
-                    <span class="arr" style="transform: rotate(${isOpen ? '90deg' : '0deg'})">〉</span>
+                    <span class="arr" style="transform: rotate(${isOpen ? '90deg' : '0deg'})">›</span>
                 </div>
                 <div class="cat-body" style="display: ${isOpen ? 'block' : 'none'}">
                     ${list.map(item => {
@@ -180,6 +179,9 @@
                 </div>`;
             container.appendChild(div);
         });
+        
+        // 전체 펼치기 아이콘 상태 업데이트
+        document.getElementById('all-arr-icon').style.transform = isAllOpen ? 'rotate(90deg)' : 'rotate(0deg)';
     }
 
     function addItem() {
@@ -221,9 +223,9 @@
     function sendMsg(input) {
         if(!input.value.trim()) return;
         const msgs = document.getElementById('chat-messages');
-        msgs.innerHTML += `<div class="msg user" style="background:#007bff; color:#fff; align-self:flex-end; margin-left:auto;">${input.value}</div>`;
+        msgs.innerHTML += `<div class="msg user" style="background:#007bff; color:#fff; align-self:flex-end; margin-left:auto; padding:10px; border-radius:12px; margin-bottom:10px;">${input.value}</div>`;
         setTimeout(() => {
-            msgs.innerHTML += `<div class="msg bot">확인해 드릴게요! 잠시만 기다려 주세요.</div>`;
+            msgs.innerHTML += `<div class="msg bot">확인 중입니다! 무엇을 도와드릴까요?</div>`;
             msgs.scrollTop = msgs.scrollHeight;
         }, 500);
         input.value = ''; msgs.scrollTop = msgs.scrollHeight;
@@ -231,7 +233,6 @@
 
     function toggleAll() {
         isAllOpen = !isAllOpen; openCats = {};
-        document.getElementById('all-arr').innerText = isAllOpen ? '전체 접기 ▲' : '전체 펼치기 ▼';
         updateList();
     }
 
