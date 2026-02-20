@@ -2,42 +2,48 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>찾았다! - 인벤토리 리포트</title>
+    <title>공간:결 - 인벤토리 리포트</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root { --primary: #007bff; --bg: #f8fafc; --card: #ffffff; --item-bg: #f0f7ff; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; color: #1e293b; padding-bottom: 90px; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; color: #1e293b; padding-bottom: 100px; font-size: 16px; }
         .container { max-width: 500px; margin: 0 auto; }
-        .main-card { background: var(--card); border-radius: 24px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.05); }
+        .main-card { background: var(--card); border-radius: 28px; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.05); }
         
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .title-badge { background: #0f172a; color: #fff; padding: 6px 14px; border-radius: 100px; font-size: 11px; font-weight: 700; }
-        .btn-rescan { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 12px; font-size: 10px; color: #475569; font-weight: 800; cursor: pointer; }
+        .title-badge { background: #0f172a; color: #fff; padding: 8px 16px; border-radius: 100px; font-size: 13px; font-weight: 700; }
+        .btn-rescan { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 14px; font-size: 12px; color: #475569; font-weight: 800; cursor: pointer; }
 
-        /* [유지] 4:3 비율 및 260px 높이 [cite: 2026-01-11] */
-        .media-box { width: 100%; height: 260px; aspect-ratio: 4 / 3; background: #f1f5f9; border-radius: 18px; overflow: hidden; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; cursor: zoom-in; }
+        .media-box { width: 100%; height: 260px; aspect-ratio: 4 / 3; background: #f1f5f9; border-radius: 20px; overflow: hidden; margin-bottom: 18px; display: flex; align-items: center; justify-content: center; cursor: zoom-in; }
         .media-box img, .media-box video { max-width: 100%; max-height: 100%; object-fit: contain; }
         
-        /* [개선] 실시간 자동 검색 (oninput) [cite: 2026-01-11] */
-        .search-input { width: 100%; padding: 12px; border: 2px solid var(--primary); border-radius: 10px; box-sizing: border-box; font-size: 14px; margin-bottom: 12px; outline: none; }
+        .search-input { width: 100%; padding: 15px; border: 2px solid var(--primary); border-radius: 12px; box-sizing: border-box; font-size: 16px; margin-bottom: 15px; outline: none; }
         
-        /* [유지] 보관 물품 전체 목록 헤더 [cite: 2026-02-15] */
-        .list-header { background: #f1f5f9; border-radius: 12px; margin-bottom: 10px; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid #e2e8f0; }
-        .list-header span { font-size: 13px; font-weight: 800; color: #475569; }
+        .list-header { background: #f1f5f9; border-radius: 14px; margin-bottom: 12px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .list-header span { font-size: 15px; font-weight: 800; color: #475569; }
 
-        .cat-group { background: var(--card); border-radius: 14px; margin-bottom: 8px; border: 1px solid #e2e8f0; overflow: hidden; }
-        .cat-head { padding: 15px; display: flex; justify-content: space-between; font-weight: 800; font-size: 14px; cursor: pointer; align-items: center; }
-        .cat-body { display: none; padding: 8px; background: #fafafa; border-top: 1px solid #f1f5f9; }
-        .arr { font-size: 14px; color: #64748b; transition: transform 0.2s; }
+        .cat-group { background: var(--card); border-radius: 16px; margin-bottom: 10px; border: 1px solid #e2e8f0; overflow: hidden; }
+        .cat-head { padding: 18px; display: flex; justify-content: space-between; font-weight: 800; font-size: 16px; cursor: pointer; }
+        .cat-body { display: none; padding: 10px; background: #fafafa; border-top: 1px solid #f1f5f9; }
         
-        /* [개선] 재고 수량 +/- 조절 UI [cite: 2026-01-11] */
-        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: var(--item-bg); border-radius: 12px; border: 1px solid #e0f0ff; margin-bottom: 6px; }
-        .item-name { font-size: 13px; font-weight: 700; color: #334155; flex: 1; margin-right: 10px; }
-        .qty-controls { display: flex; align-items: center; gap: 6px; background: #fff; padding: 4px 6px; border-radius: 8px; border: 1px solid #d1e9ff; }
-        .btn-qty { border: none; background: #e0f0ff; color: var(--primary); width: 22px; height: 22px; border-radius: 4px; font-weight: 900; cursor: pointer; }
-        .qty-num { font-size: 11px; font-weight: 800; min-width: 35px; text-align: center; }
+        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: var(--item-bg); border-radius: 14px; margin-bottom: 8px; }
+        .item-name { font-size: 15px; font-weight: 700; color: #334155; flex: 1; }
+        
+        /* 수량 입력 칸 수정 */
+        .qty-controls { display: flex; align-items: center; gap: 8px; background: #fff; padding: 5px 8px; border-radius: 10px; border: 1px solid #d1e9ff; }
+        .btn-qty { border: none; background: #e0f0ff; color: var(--primary); width: 26px; height: 26px; border-radius: 6px; font-weight: 900; cursor: pointer; }
+        .qty-input { width: 45px; border: none; text-align: center; font-size: 14px; font-weight: 800; outline: none; background: transparent; }
 
-        .chat-btn { position: fixed; bottom: 20px; right: 20px; background: #000; color: #fff; border: none; border-radius: 50px; padding: 15px 22px; font-weight: 800; font-size: 14px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 1000; }
+        /* 채팅 UI */
+        .chat-btn { position: fixed; bottom: 20px; right: 20px; background: #000; color: #fff; border: none; border-radius: 50px; padding: 16px 26px; font-weight: 800; font-size: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 1000; }
+        .chat-window { display: none; position: fixed; bottom: 90px; right: 20px; width: 320px; height: 400px; background: #fff; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); flex-direction: column; overflow: hidden; z-index: 1001; }
+        .chat-header { background: #000; color: #fff; padding: 15px; font-weight: 800; font-size: 14px; display: flex; justify-content: space-between; }
+        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; font-size: 14px; background: #f8fafc; }
+        .msg { margin-bottom: 10px; padding: 10px; border-radius: 12px; max-width: 80%; }
+        .msg.bot { background: #e2e8f0; align-self: flex-start; }
+        .chat-input-area { padding: 10px; border-top: 1px solid #eee; display: flex; }
+        .chat-input { flex: 1; border: 1px solid #ddd; padding: 8px; border-radius: 8px; outline: none; }
+
         .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; }
         .modal-img { max-width: 98%; max-height: 98%; object-fit: contain; }
     </style>
@@ -55,7 +61,7 @@
             <div id="media-wrap" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;"></div>
         </div>
 
-        <input type="text" id="find-box" class="search-input" placeholder="무엇을 찾으시나요? (예: 물슈)" oninput="updateList()">
+        <input type="text" id="find-box" class="search-input" placeholder="무엇을 찾으시나요?" oninput="updateList()">
         
         <div class="list-header" onclick="toggleAll()">
             <span>📦 보관 물품 전체 목록</span>
@@ -66,7 +72,20 @@
     </div>
 </div>
 
-<button class="chat-btn" onclick="alert('찾았다 비서가 활성화됩니다.')">✨ 찾았다에게 물어보기</button>
+<button class="chat-btn" onclick="toggleChat()">✨ 결에게 묻기</button>
+
+<div id="chat-window" class="chat-window">
+    <div class="chat-header">
+        <span>비서 '결'</span>
+        <span style="cursor:pointer" onclick="toggleChat()">✕</span>
+    </div>
+    <div class="chat-messages" id="chat-messages">
+        <div class="msg bot">안녕하세요 세인님! 어떤 물건을 찾아드릴까요?</div>
+    </div>
+    <div class="chat-input-area">
+        <input type="text" class="chat-input" placeholder="메시지 입력..." onkeydown="if(event.key==='Enter') sendMsg(this)">
+    </div>
+</div>
 
 <div id="full-view" class="modal" onclick="this.style.display='none'">
     <div id="modal-body" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;"></div>
@@ -77,10 +96,10 @@
     const tag = (params.get('tag') || 'DRAWER001').toUpperCase();
     let isAllOpen = false;
 
-    // [데이터 쪼개기 및 수량 복구] 사용자 제공 목록 완벽 반영 [cite: 20, 2026-02-18, 2026-01-11]
+    // 초기 데이터
     const db = {
         "DRAWER001": {
-            title: "쫀디기 서랍 1번",
+            title: "서랍 1번",
             url: "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer1.mp4.mp4",
             items: [
                 { cat: "식품", n: "쫀디기", q: 2 }, { cat: "식품", n: "맥심 커피믹스", q: 20 },
@@ -92,24 +111,35 @@
             ]
         },
         "DRAWER002": {
-            title: "물티슈 서랍 2번",
+            title: "서랍 2번",
             url: "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer2.jpg.jpg",
             items: [
                 { cat: "위생", n: "베베앙 물티슈 (대형)", q: 5 }, { cat: "위생", n: "베베앙 물티슈 (휴대용)", q: 2 }, { cat: "위생", n: "검정색 파우치 물티슈", q: 1 },
                 { cat: "케어", n: "일리윤 여성청결제", q: 1 }, { cat: "케어", n: "려(RYO) 트리트먼트", q: 1 },
                 { cat: "생활", n: "NOW 영양제", q: 1 }, { cat: "생활", n: "만능 클리너", q: 1 },
                 { cat: "생활", n: "쿨링 스프레이", q: 1 }, { cat: "생활", n: "빨간색 단자함", q: 1 }, { cat: "생활", n: "작은 원형 용기", q: 1 },
-                { cat: "생활", n: "우산", q: 4 }, { cat: "생활", n: "기타 세정제 (뒷줄 스프레이/용기)", q: 5 },
-                { cat: "생활", n: "흰색 메쉬 바구니", q: 1 }, { cat: "생활", n: "노란색 원형 바구니", q: 1 },
-                { cat: "안전", n: "소방용 소화기", q: 1 }, { cat: "청소", n: "밀대 걸레", q: 1 },
-                { cat: "기타", n: "원숭이 작은 소모품", q: 1 }
+                { cat: "생활", n: "우산", q: 4 }, { cat: "생활", n: "기타 세정제", q: 5 }
             ]
         }
     };
 
     let active = db[tag] || db["DRAWER001"];
 
+    // [중요] 저장된 데이터 불러오기
+    function loadSavedData() {
+        const saved = localStorage.getItem('gonggan_gyeol_' + tag);
+        if (saved) {
+            active.items = JSON.parse(saved);
+        }
+    }
+
+    // [중요] 데이터 저장하기
+    function saveData() {
+        localStorage.setItem('gonggan_gyeol_' + tag, JSON.stringify(active.items));
+    }
+
     window.onload = () => {
+        loadSavedData();
         document.getElementById('disp-id').innerText = active.title;
         const wrap = document.getElementById('media-wrap');
         if (active.url.includes('.mp4')) wrap.innerHTML = `<video src="${active.url}" autoplay loop muted playsinline></video>`;
@@ -124,14 +154,8 @@
 
         const filtered = active.items.filter(i => {
             if (!word) return true;
-            const name = i.n.toLowerCase();
-            return name.includes(word) || word.split('').every(c => name.includes(c));
+            return i.n.toLowerCase().includes(word);
         });
-
-        if (word && filtered.length === 0) {
-            container.innerHTML = `<div style="text-align:center; padding:30px; color:#94a3b8; font-size:13px;">"<b>${word}</b>"를 찾을 수 없습니다.</div>`;
-            return;
-        }
 
         const cats = [...new Set(filtered.map(i => i.cat))];
         cats.forEach(c => {
@@ -151,7 +175,8 @@
                             <span class="item-name">${item.n}</span>
                             <div class="qty-controls">
                                 <button class="btn-qty" onclick="changeQty(${idx}, -1, event)">-</button>
-                                <span class="qty-num">${item.q} EA</span>
+                                <input type="number" class="qty-input" value="${item.q}" onchange="inputQty(${idx}, this.value)" onclick="event.stopPropagation()">
+                                <span style="font-size:12px; font-weight:800; color:#94a3b8; margin-right:5px;">EA</span>
                                 <button class="btn-qty" onclick="changeQty(${idx}, 1, event)">+</button>
                             </div>
                         </div>`;
@@ -164,7 +189,34 @@
     function changeQty(idx, val, e) {
         e.stopPropagation();
         active.items[idx].q = Math.max(0, active.items[idx].q + val);
+        saveData(); // 변경 즉시 저장
         updateList();
+    }
+
+    function inputQty(idx, val) {
+        active.items[idx].q = Math.max(0, parseInt(val) || 0);
+        saveData(); // 변경 즉시 저장
+        updateList();
+    }
+
+    function toggleChat() {
+        const win = document.getElementById('chat-window');
+        win.style.display = (win.style.display === 'flex') ? 'none' : 'flex';
+    }
+
+    function sendMsg(input) {
+        if(!input.value.trim()) return;
+        const msgs = document.getElementById('chat-messages');
+        msgs.innerHTML += `<div class="msg user" style="background:#007bff; color:#fff; align-self:flex-end; margin-left:auto;">${input.value}</div>`;
+        
+        // 간단한 응답 로직 (나중에 API 연결 가능)
+        setTimeout(() => {
+            msgs.innerHTML += `<div class="msg bot">네, 세인님. 해당 물건의 위치와 수량을 확인 중입니다...</div>`;
+            msgs.scrollTop = msgs.scrollHeight;
+        }, 500);
+        
+        input.value = '';
+        msgs.scrollTop = msgs.scrollHeight;
     }
 
     function toggleAll() {
