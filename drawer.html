@@ -2,42 +2,43 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>공간:결 - 통합 리포트</title>
+    <title>공간:결 - 인벤토리 리포트</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #007bff; --bg: #f8fafc; --card: #ffffff; }
+        :root { --primary: #007bff; --bg: #f8fafc; --danger: #ff4d4d; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; padding-bottom: 100px; }
-        .main-card { background: var(--card); border-radius: 28px; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); }
-        #status-msg { position: fixed; top: 0; left: 0; width: 100%; background: #0f172a; color: #fff; text-align: center; padding: 12px; font-size: 13px; font-weight: 700; display: none; z-index: 10000; }
-        .media-box { width: 100%; height: 260px; background: #f1f5f9; border-radius: 20px; overflow: hidden; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px dashed #cbd5e1; }
+        .main-card { background: #fff; border-radius: 28px; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); }
+        #status-msg { position: fixed; top: 0; left: 0; width: 100%; background: #0f172a; color: #fff; text-align: center; padding: 10px; font-size: 13px; font-weight: 700; display: none; z-index: 10000; }
+        .media-box { width: 100%; height: 260px; background: #f1f5f9; border-radius: 20px; overflow: hidden; margin-bottom: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px dashed #cbd5e1; }
         .media-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
-        .btn-action { background: #000; color: #fff; border: none; border-radius: 12px; padding: 15px; width: 100%; font-weight: 800; margin-bottom: 15px; cursor: pointer; }
-        .item-row { background: #f0f7ff; padding: 15px; margin-bottom: 8px; border-radius: 12px; display: flex; justify-content: space-between; font-weight: 700; }
-        .chat-btn { position: fixed; bottom: 20px; right: 20px; background: #000; color: #fff; border: none; border-radius: 50px; padding: 15px 25px; font-weight: 800; cursor: pointer; }
+        .btn-action { background: #000; color: #fff; border: none; border-radius: 12px; padding: 15px; width: 100%; font-weight: 800; font-size: 16px; margin-bottom: 15px; cursor: pointer; }
+        .item-row { background: #f0f7ff; padding: 15px; margin-bottom: 8px; border-radius: 14px; display: flex; justify-content: space-between; font-weight: 700; }
     </style>
 </head>
 <body>
 <div id="status-msg"></div>
 <div class="container">
     <div class="main-card">
+        <h3 id="disp-id" style="margin: 0 0 15px 0;">서랍 로딩 중...</h3>
         <div class="media-box" onclick="document.getElementById('file-input').click()">
             <div id="media-wrap"><span>📷 사진 터치해서 업로드</span></div>
         </div>
         <button class="btn-action" onclick="startAIAnalysis()">✨ AI로 내용물 분석하기</button>
         <div id="list-container"></div>
-        <button style="width:100%; background:#fee2e2; color:#ef4444; border:none; padding:10px; border-radius:10px; margin-top:15px; font-weight:700;" onclick="if(confirm('데이터를 초기화할까요?')){localStorage.clear(); location.reload();}">전체 초기화</button>
+        <button style="width:100%; background:#fee2e2; color:#ef4444; border:none; padding:10px; border-radius:10px; margin-top:15px; font-weight:700;" onclick="resetAll()">데이터 초기화</button>
     </div>
 </div>
-<button class="chat-btn" onclick="toggleChat()">✨ 결에게 묻기</button>
 <input type="file" id="file-input" style="display:none" accept="image/*" onchange="uploadAndPreview(this)">
 
 <script>
+    // ⚠️ Supabase Dashboard -> Settings -> API에서 'anon' 키를 새로 복사해서 꼭 확인해주세요.
     const SUPABASE_URL = 'https://tqhtggusphhcsygiitrv.supabase.co'; 
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExNDMxMTMsImV4cCI6MjA4NjcyOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc'; 
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
     const tag = new URLSearchParams(location.search).get('tag') || 'DRAWER001';
-    let currentImgUrl = "";
+    let active = { url: "", items: [] };
 
     function showStatus(text, isError = false) {
         const bar = document.getElementById('status-msg');
@@ -48,28 +49,31 @@
 
     async function uploadAndPreview(input) {
         const file = input.files[0]; if(!file) return;
-        showStatus("사진 전송 중...");
+        showStatus("사진을 저장하고 있습니다...");
+        
         const path = `${tag}/${Date.now()}.jpg`;
         const { error } = await _supabase.storage.from('user_uploads').upload(path, file);
-        if(error) return showStatus("업로드 에러: " + error.message, true);
+        
+        if(error) return showStatus("업로드 실패: " + error.message, true); // 여기서 signature verification failed 해결 여부 확인
+
         const { data: { publicUrl } } = _supabase.storage.from('user_uploads').getPublicUrl(path);
-        currentImgUrl = publicUrl;
+        active.url = publicUrl;
         localStorage.setItem('gonggan_gyeol_url_' + tag, publicUrl);
         document.getElementById('media-wrap').innerHTML = `<img src="${publicUrl}">`;
-        showStatus("업로드 완료!");
+        showStatus("업로드 성공! 분석 버튼을 눌러주세요.");
     }
 
     async function startAIAnalysis() {
-        if(!currentImgUrl) return showStatus("먼저 사진을 등록해주세요.", true);
+        if(!active.url) return showStatus("사진을 먼저 올려주세요.", true);
         showStatus("AI 분석 중...", false);
+        
         try {
             const img = new Image();
-            img.crossOrigin = "anonymous"; // [CORS 폭탄 제거]
-            img.src = currentImgUrl;
+            img.crossOrigin = "anonymous";
+            img.src = active.url;
             img.onload = async () => {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
-                // [용량 폭탄 제거] 가로 700px로 압축
                 canvas.width = 700; canvas.height = (img.height / img.width) * 700;
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 const base64 = canvas.toDataURL('image/jpeg', 0.5).split(',')[1];
@@ -80,28 +84,29 @@
                     body: JSON.stringify({ image: base64 })
                 });
                 const data = await res.json();
-                if(!res.ok) throw new Error(data.error);
+                if(!res.ok) throw new Error(data.error || "분석 실패");
 
-                const items = data.result.split(',').map(n => ({ n: n.trim(), q: 1 }));
-                localStorage.setItem('gonggan_gyeol_' + tag, JSON.stringify(items));
-                renderList(items);
+                active.items = data.result.split(',').map(n => ({ cat: "AI분석", n: n.trim(), q: 1 }));
+                localStorage.setItem('gonggan_gyeol_' + tag, JSON.stringify(active.items));
+                renderList();
                 showStatus("분석 성공!");
             };
-            img.onerror = () => { throw new Error("이미지를 불러올 수 없습니다."); };
-        } catch(e) { showStatus("에러: " + e.message, true); }
+        } catch(e) { showStatus("에러 발생: " + e.message, true); }
     }
 
-    function renderList(items) {
-        document.getElementById('list-container').innerHTML = items.map(it => `<div class="item-row"><span>${it.n}</span><span>${it.q}개</span></div>`).join('');
+    function renderList() {
+        document.getElementById('list-container').innerHTML = active.items.map(it => `<div class="item-row"><span>${it.n}</span><span>${it.q}개</span></div>`).join('');
     }
 
-    function toggleChat() { alert("채팅 기능은 분석 완료 후 자동으로 연동됩니다."); }
+    function resetAll() { if(confirm('모든 데이터를 지울까요?')) { localStorage.clear(); location.reload(); } }
 
-    window.onload = () => {
+    window.onload = async () => {
         const saved = localStorage.getItem('gonggan_gyeol_' + tag);
         const url = localStorage.getItem('gonggan_gyeol_url_' + tag);
-        if(saved) renderList(JSON.parse(saved));
-        if(url) { currentImgUrl = url; document.getElementById('media-wrap').innerHTML = `<img src="${url}">`; }
+        if(saved) active.items = JSON.parse(saved);
+        if(url) { active.url = url; document.getElementById('media-wrap').innerHTML = `<img src="${url}">`; }
+        document.getElementById('disp-id').innerText = (tag === 'DRAWER002') ? "서랍 2번" : "서랍 1번";
+        renderList();
     };
 </script>
 </body>
