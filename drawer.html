@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* 기존 스타일 유지 */
         :root { --primary: #007bff; --bg: #f8fafc; --card: #ffffff; --item-bg: #f0f7ff; --danger: #ff4d4d; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; color: #1e293b; padding-bottom: 100px; font-size: 16px; }
         .container { max-width: 500px; margin: 0 auto; }
@@ -14,30 +13,36 @@
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .title-badge { background: #0f172a; color: #fff; padding: 8px 16px; border-radius: 100px; font-size: 13px; font-weight: 700; }
         .btn-rescan { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 14px; font-size: 12px; color: #475569; font-weight: 800; cursor: pointer; }
-        .media-box { width: 100%; height: 260px; aspect-ratio: 4 / 3; background: #f1f5f9; border-radius: 20px; overflow: hidden; margin-bottom: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px dashed #cbd5e1; position: relative; }
+        .media-box { width: 100%; height: 260px; aspect-ratio: 4 / 3; background: #f1f5f9; border-radius: 20px; overflow: hidden; margin-bottom: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px dashed #cbd5e1; }
         .media-box img, .media-box video { max-width: 100%; max-height: 100%; object-fit: contain; }
-        
-        /* 상태 알림 레이어 추가 */
-        .status-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.8); display: none; align-items: center; justify-content: center; font-weight: bold; color: var(--primary); z-index: 10; }
-
-        /* 채팅/리스트 등 나머지 스타일 동일 */
-        .add-area { display: flex; justify-content: space-between; margin-bottom: 8px; }
-        .btn-add { background: var(--primary); color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 800; cursor: pointer; }
-        .btn-reset { background: #fee2e2; color: #ef4444; border: none; border-radius: 8px; padding: 8px 12px; font-size: 11px; font-weight: 800; cursor: pointer; }
+        .add-area { display: flex; justify-content: flex-start; margin-bottom: 8px; padding-left: 2px; }
+        .btn-add { background: var(--primary); color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 800; cursor: pointer; box-shadow: 0 2px 8px rgba(0,123,255,0.15); }
         .search-input { width: 100%; padding: 15px; border: 2px solid var(--primary); border-radius: 12px; box-sizing: border-box; font-size: 16px; margin-bottom: 15px; outline: none; }
         .list-header { background: #f1f5f9; border-radius: 14px; margin-bottom: 12px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .list-header span { font-size: 14px; font-weight: 800; color: #475569; }
         .cat-group { background: var(--card); border-radius: 16px; margin-bottom: 10px; border: 1px solid #e2e8f0; overflow: hidden; }
-        .cat-head { padding: 18px; display: flex; justify-content: space-between; font-weight: 800; font-size: 16px; cursor: pointer; }
+        .cat-head { padding: 18px; display: flex; justify-content: space-between; font-weight: 800; font-size: 16px; cursor: pointer; align-items: center; }
         .cat-body { display: none; padding: 10px; background: #fafafa; border-top: 1px solid #f1f5f9; }
+        .arr { font-size: 18px; color: #64748b; transition: transform 0.3s; display: inline-block; font-family: serif; font-weight: bold; }
         .item-row { background: var(--item-bg); border-radius: 14px; margin-bottom: 8px; padding: 12px; border: 1px solid #e0f0ff; }
+        .item-name { font-size: 15px; font-weight: 700; color: #334155; display: block; margin-bottom: 12px; }
+        .item-footer { display: flex; justify-content: space-between; align-items: center; }
+        .item-tools { display: flex; gap: 6px; }
+        .btn-tool { background: #fff; border: 1px solid #d1e9ff; border-radius: 6px; padding: 6px 10px; font-size: 11px; font-weight: 700; color: #64748b; cursor: pointer; }
+        .btn-delete { color: var(--danger); border-color: #ffdada; }
         .qty-controls { display: flex; align-items: center; gap: 6px; background: #fff; padding: 4px 6px; border-radius: 10px; border: 1px solid #d1e9ff; }
+        .btn-qty { border: none; background: #e0f0ff; color: var(--primary); width: 24px; height: 24px; border-radius: 6px; font-weight: 900; cursor: pointer; }
+        .qty-input { width: 35px; border: none; text-align: center; font-size: 13px; font-weight: 800; outline: none; background: transparent; }
         .chat-btn { position: fixed; bottom: 20px; right: 20px; background: #000; color: #fff; border: none; border-radius: 50px; padding: 16px 26px; font-weight: 800; font-size: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 1000; }
-        .chat-window { display: none; position: fixed; bottom: 90px; right: 20px; width: 320px; height: 400px; background: #fff; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); flex-direction: column; z-index: 1001; }
+        .chat-window { display: none; position: fixed; bottom: 90px; right: 20px; width: 320px; height: 400px; background: #fff; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); flex-direction: column; overflow: hidden; z-index: 1001; }
         .chat-header { background: #000; color: #fff; padding: 15px; font-weight: 800; font-size: 14px; display: flex; justify-content: space-between; }
-        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; font-size: 14px; background: #f8fafc; display: flex; flex-direction: column; }
+        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; font-size: 14px; background: #f8fafc; }
         .msg { margin-bottom: 10px; padding: 10px; border-radius: 12px; max-width: 80%; }
         .msg.bot { background: #e2e8f0; align-self: flex-start; }
-        .msg.user { background: #007bff; color: #fff; align-self: flex-end; }
+        .chat-input-area { padding: 10px; border-top: 1px solid #eee; display: flex; }
+        .chat-input { flex: 1; border: 1px solid #ddd; padding: 8px; border-radius: 8px; outline: none; }
+        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; }
+        .modal-img { max-width: 98%; max-height: 98%; object-fit: contain; }
     </style>
 </head>
 <body>
@@ -46,36 +51,35 @@
     <div class="main-card">
         <div class="header">
             <div class="title-badge" id="disp-id">불러오는 중...</div>
-            <button class="btn-rescan" onclick="startAnalysis()">📸 재촬영 AI 분석</button>
+            <button class="btn-rescan" onclick="alert('AI 분석 준비 중...')">📸 재촬영 AI 분석</button>
         </div>
 
-        <div class="media-box" onclick="document.getElementById('file-input').click()">
-            <div id="status-overlay" class="status-overlay">업로드 중...</div>
+        <div class="media-box" onclick="handleImageClick()">
             <div id="media-wrap" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
-                <span style="color:#94a3b8; font-size:14px;">📷 사진/영상 업로드 (터치)</span>
+                <span style="color:#94a3b8; font-size:14px;">📷 사진/영상 업로드</span>
             </div>
         </div>
 
         <div class="add-area">
             <button class="btn-add" onclick="addItem()">+ 물품 추가</button>
-            <button class="btn-reset" onclick="resetData()">데이터 초기화</button>
         </div>
 
         <input type="text" id="find-box" class="search-input" placeholder="무엇을 찾으시나요?" oninput="updateList()">
         
         <div class="list-header" onclick="toggleAll()">
             <span>📦 보관 물품 전체 목록</span>
+            <span id="all-arr-icon" class="arr">›</span>
         </div>
         <div id="list-container"></div>
     </div>
 </div>
 
 <button class="chat-btn" onclick="toggleChat()">✨ 결에게 묻기</button>
-<div id="chat-window" class="chat-window" style="display:none;">
+<div id="chat-window" class="chat-window">
     <div class="chat-header"><span>비서 '결'</span><span style="cursor:pointer" onclick="toggleChat()">✕</span></div>
     <div id="chat-messages" class="chat-messages"><div class="msg bot">안녕하세요! 무엇을 찾아드릴까요?</div></div>
-    <div style="padding: 10px; border-top: 1px solid #eee; display: flex;">
-        <input type="text" id="chat-input" style="flex:1; border:1px solid #ddd; padding:8px; border-radius:8px;" placeholder="메시지 입력..." onkeydown="if(event.key==='Enter') sendMsg()">
+    <div class="chat-input-area">
+        <input type="text" class="chat-input" placeholder="메시지 입력..." onkeydown="if(event.key==='Enter') sendMsg(this)">
     </div>
 </div>
 
@@ -86,36 +90,47 @@
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    async function checkUser() {
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session) { alert("로그인이 필요합니다!"); window.location.href = "login.html"; }
+    }
+
     const params = new URLSearchParams(window.location.search);
     const tag = (params.get('tag') || 'DRAWER001').toUpperCase();
     let isAllOpen = false;
-    let active = { title: tag === 'DRAWER002' ? "서랍 2번" : "서랍 1번", url: "", items: [] };
+    let openCats = {};
 
-    // 데이터 초기화 함수 (수동 삭제용)
-    function resetData() {
-        if(confirm("모든 데이터를 초기화하고 처음부터 시작할까요?")) {
-            localStorage.removeItem('gonggan_gyeol_' + tag);
-            localStorage.removeItem('gonggan_gyeol_url_' + tag);
-            location.reload();
-        }
-    }
+    const db = {
+        "DRAWER001": { title: "서랍 1번", url: "", items: [] },
+        "DRAWER002": { title: "서랍 2번", url: "", items: [] }
+    };
+    let active = db[tag] || db["DRAWER001"];
 
     function loadSavedData() {
         const saved = localStorage.getItem('gonggan_gyeol_' + tag);
         if (saved) active.items = JSON.parse(saved);
         else {
-            // 기본 데이터
-            active.items = tag === 'DRAWER002' ? [{cat:"위생", n:"물티슈", q:1}] : [{cat:"식품", n:"쫀디기", q:1}];
+            if (tag === 'DRAWER002') {
+                active.items = [
+                    { cat: "위생", n: "베베앙 물티슈 (대형)", q: 3 }, { cat: "위생", n: "베베앙 물티슈 (휴대용)", q: 2 },
+                    { cat: "생활", n: "NOW 영양제", q: 1 }, { cat: "청소", n: "소방용 소화기", q: 1 }
+                ];
+            } else {
+                active.items = [{ cat: "식품", n: "쫀디기", q: 2 }, { cat: "주방", n: "종이컵", q: 50 }];
+            }
         }
-        active.url = localStorage.getItem('gonggan_gyeol_url_' + tag) || "";
+        // 저장된 이미지 주소 불러오기
+        const savedUrl = localStorage.getItem('gonggan_gyeol_url_' + tag);
+        if(savedUrl) active.url = savedUrl;
     }
 
-    function saveData() {
-        localStorage.setItem('gonggan_gyeol_' + tag, JSON.stringify(active.items));
-        localStorage.setItem('gonggan_gyeol_url_' + tag, active.url);
+    function saveData() { 
+        localStorage.setItem('gonggan_gyeol_' + tag, JSON.stringify(active.items)); 
+        localStorage.setItem('gonggan_gyeol_url_' + tag, active.url || "");
     }
 
     window.onload = async () => {
+        await checkUser();
         loadSavedData();
         document.getElementById('disp-id').innerText = active.title;
         refreshMedia();
@@ -125,41 +140,36 @@
     function refreshMedia() {
         const wrap = document.getElementById('media-wrap');
         if (active.url) {
-            if (active.url.includes('.mp4')) wrap.innerHTML = `<video src="${active.url}" autoplay loop muted playsinline style="width:100%"></video>`;
-            else wrap.innerHTML = `<img src="${active.url}" style="width:100%">`;
+            if (active.url.includes('.mp4')) wrap.innerHTML = `<video src="${active.url}" autoplay loop muted playsinline></video>`;
+            else wrap.innerHTML = `<img src="${active.url}">`;
         }
     }
+
+    function handleImageClick() { document.getElementById('file-input').click(); }
 
     async function uploadFile(input) {
         const file = input.files[0];
         if(!file) return;
-        
-        const overlay = document.getElementById('status-overlay');
-        overlay.style.display = 'flex'; // 업로드 중 표시 (자동)
-
+        alert("업로드를 시작합니다...");
         const path = `${tag}/${Date.now()}_${file.name}`;
         const { data, error } = await _supabase.storage.from('user_uploads').upload(path, file);
-        
-        if(error) {
-            alert("업로드 실패: " + error.message);
-        } else {
+        if(error) alert("실패: " + error.message);
+        else {
             const { data: { publicUrl } } = _supabase.storage.from('user_uploads').getPublicUrl(path);
             active.url = publicUrl;
             saveData(); refreshMedia();
+            alert("업로드 완료!");
         }
-        overlay.style.display = 'none'; // 완료 후 자동 숨김
     }
 
-    async function sendMsg() {
-        const input = document.getElementById('chat-input');
+    async function sendMsg(input) {
         const text = input.value.trim();
         if(!text) return;
-        
         const msgs = document.getElementById('chat-messages');
-        msgs.innerHTML += `<div class="msg user">${text}</div>`;
+        msgs.innerHTML += `<div class="msg user" style="background:#007bff; color:#fff; align-self:flex-end; margin-left:auto; padding:10px; border-radius:12px; margin-bottom:10px;">${text}</div>`;
         input.value = '';
-        msgs.scrollTop = msgs.scrollHeight;
-
+        
+        // [진짜 채팅 로직] Gemini API 호출
         const inv = active.items.map(i => `${i.n}(${i.q}개)`).join(', ');
         try {
             const res = await fetch('/api/chat', {
@@ -169,34 +179,40 @@
             });
             const data = await res.json();
             msgs.innerHTML += `<div class="msg bot">${data.reply}</div>`;
-        } catch(e) { msgs.innerHTML += `<div class="msg bot">응답을 가져오지 못했어요. Vercel 설정을 확인해 주세요!</div>`; }
+        } catch(e) { msgs.innerHTML += `<div class="msg bot">오류가 발생했어요.</div>`; }
         msgs.scrollTop = msgs.scrollHeight;
     }
 
-    // 리스트 업데이트 로직
+    // 기존 리스트 관리 함수들 (updateList, addItem, editItem 등 유지)
     function updateList() {
+        const word = document.getElementById('find-box').value.trim().toLowerCase();
         const container = document.getElementById('list-container');
         container.innerHTML = '';
-        const cats = [...new Set(active.items.map(i => i.cat))];
+        const filtered = active.items.filter(i => i.n.toLowerCase().includes(word));
+        const cats = [...new Set(filtered.map(i => i.cat))];
         cats.forEach(c => {
-            const list = active.items.filter(i => i.cat === c);
+            const list = filtered.filter(i => i.cat === c);
             const div = document.createElement('div');
             div.className = 'cat-group';
-            div.innerHTML = `<div class="cat-head"><span>${c} (${list.length})</span></div><div class="cat-body" style="display:block">${list.map((item, idx) => `<div class="item-row">${item.n} (${item.q}개)</div>`).join('')}</div>`;
+            const isOpen = word || isAllOpen || openCats[c];
+            div.innerHTML = `<div class="cat-head" onclick="toggle('${c}', this)"><span>${c} (${list.length})</span><span class="arr" style="transform: rotate(${isOpen ? '90deg' : '0deg'})">›</span></div>
+            <div class="cat-body" style="display: ${isOpen ? 'block' : 'none'}">${list.map(item => {
+                const idx = active.items.indexOf(item);
+                return `<div class="item-row"><span class="item-name">${item.n}</span><div class="item-footer"><div class="item-tools"><button class="btn-tool" onclick="editItem(${idx})">수정</button><button class="btn-tool btn-delete" onclick="deleteItem(${idx})">삭제</button></div>
+                <div class="qty-controls"><button class="btn-qty" onclick="changeQty(${idx}, -1, event)">-</button><input type="number" class="qty-input" value="${item.q}" onchange="inputQty(${idx}, this.value)"><span style="font-size:11px; font-weight:800; color:#94a3b8;">EA</span><button class="btn-qty" onclick="changeQty(${idx}, 1, event)">+</button></div></div></div>`;
+            }).join('')}</div>`;
             container.appendChild(div);
         });
+        document.getElementById('all-arr-icon').style.transform = isAllOpen ? 'rotate(90deg)' : 'rotate(0deg)';
     }
-
-    function toggleChat() {
-        const win = document.getElementById('chat-window');
-        win.style.display = win.style.display === 'none' ? 'flex' : 'none';
-    }
-
-    function addItem() {
-        const n = prompt("물건 이름?");
-        const c = prompt("카테고리?");
-        if(n && c) { active.items.push({cat:c, n:n, q:1}); saveData(); updateList(); }
-    }
+    function toggleAll() { isAllOpen = !isAllOpen; openCats = {}; updateList(); }
+    function toggle(cat, h) { const b = h.nextElementSibling; const a = h.querySelector('.arr'); const show = b.style.display === 'none'; b.style.display = show ? 'block' : 'none'; a.style.transform = show ? 'rotate(90deg)' : 'rotate(0deg)'; openCats[cat] = show; }
+    function addItem() { const n = prompt("이름?"); const c = prompt("카테고리?", "기타"); if(n && c) { active.items.push({cat:c, n:n, q:1}); saveData(); updateList(); } }
+    function editItem(i) { const n = prompt("새 이름?", active.items[i].n); if(n) { active.items[i].n = n; saveData(); updateList(); } }
+    function deleteItem(i) { if(confirm("삭제?")) { active.items.splice(i,1); saveData(); updateList(); } }
+    function changeQty(i,v,e) { e.stopPropagation(); active.items[i].q = Math.max(0, active.items[i].q + v); saveData(); updateList(); }
+    function inputQty(i,v) { active.items[i].q = Math.max(0, parseInt(v)||0); saveData(); updateList(); }
+    function toggleChat() { const w = document.getElementById('chat-window'); w.style.display = (w.style.display==='flex')?'none':'flex'; }
 </script>
 </body>
 </html>
