@@ -23,13 +23,15 @@
     <input type="text" id="main-search" class="search-box" placeholder="보관된 물건 이름을 입력하세요" oninput="searchItems()">
     <div id="result-list"></div>
 </div>
-
 <script>
-    // 실제 저장된 데이터를 불러오는 함수
-    function getRealInventory() {
+    function searchItems() {
+        const query = document.getElementById('main-search').value.trim().toLowerCase();
+        const list = document.getElementById('result-list');
+        list.innerHTML = '';
+        if(!query) return;
+
         const inventory = [];
-        const tags = ['DRAWER001', 'DRAWER002'];
-        tags.forEach(tag => {
+        ['DRAWER001', 'DRAWER002'].forEach(tag => {
             const saved = localStorage.getItem('gonggan_gyeol_' + tag);
             if (saved) {
                 const items = JSON.parse(saved);
@@ -37,18 +39,8 @@
                 items.forEach(it => inventory.push({ ...it, tag, title }));
             }
         });
-        return inventory;
-    }
 
-    function searchItems() {
-        const query = document.getElementById('main-search').value.trim().toLowerCase();
-        const list = document.getElementById('result-list');
-        list.innerHTML = '';
-        if(!query) return;
-
-        const inventory = getRealInventory();
         const results = inventory.filter(it => it.n.toLowerCase().includes(query));
-
         if(results.length === 0) {
             list.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8;">검색 결과가 없습니다.</div>`;
             return;
@@ -59,7 +51,7 @@
                 <div class="result-item" onclick="location.href='drawer.html?tag=${it.tag}'">
                     <div>
                         <div class="item-info">${it.n} (${it.q}개)</div>
-                        <div class="drawer-info">${it.title} (${it.cat}) 보관 중</div>
+                        <div class="drawer-info">${it.title} 보관 중</div>
                     </div>
                     <button class="btn-view">상세보기 ></button>
                 </div>`;
