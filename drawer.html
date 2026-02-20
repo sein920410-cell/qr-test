@@ -2,112 +2,157 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>공간:결 - 인벤토리 리포트</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>(주)현세인 - 서랍 관리</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <style>
-        :root { --primary: #007bff; --bg: #f8fafc; --danger: #ff4d4d; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; padding-bottom: 100px; }
-        .main-card { background: #fff; border-radius: 28px; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); }
-        #status-msg { position: fixed; top: 0; left: 0; width: 100%; background: #0f172a; color: #fff; text-align: center; padding: 10px; font-size: 13px; font-weight: 700; display: none; z-index: 10000; }
-        .media-box { width: 100%; height: 260px; background: #f1f5f9; border-radius: 20px; overflow: hidden; margin-bottom: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px dashed #cbd5e1; }
-        .media-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
-        .btn-action { background: #000; color: #fff; border: none; border-radius: 12px; padding: 15px; width: 100%; font-weight: 800; font-size: 16px; margin-bottom: 15px; cursor: pointer; }
-        .item-row { background: #f0f7ff; padding: 15px; margin-bottom: 8px; border-radius: 14px; display: flex; justify-content: space-between; font-weight: 700; }
+        /* 세인 님의 요청대로 UI는 최대한 심플하게 유지합니다. */
+        #status-bar {
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            padding: 10px;
+            background: #333; color: #fff;
+            text-align: center;
+            display: none; /* 필요할 때만 노출 */
+            z-index: 1000;
+        }
+        .container { padding: 20px; margin-top: 40px; }
+        .upload-btn { padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        #preview { width: 100%; max-width: 300px; margin-top: 10px; display: none; }
     </style>
 </head>
 <body>
-<div id="status-msg"></div>
-<div class="container">
-    <div class="main-card">
-        <h3 id="disp-id" style="margin: 0 0 15px 0;">서랍 로딩 중...</h3>
-        <div class="media-box" onclick="document.getElementById('file-input').click()">
-            <div id="media-wrap"><span>📷 사진 터치해서 업로드</span></div>
+
+    <div id="status-bar">준비 중...</div>
+
+    <div class="container">
+        <h2>서랍 아이템 등록</h2>
+        <input type="file" id="file-input" accept="image/*" capture="environment" style="display: none;">
+        <button class="upload-btn" onclick="document.getElementById('file-input').click()">📷 사진 찍어서 등록하기</button>
+        
+        <img id="preview" alt="미리보기">
+        
+        <div id="result-list" style="margin-top: 20px;">
+            <h3>분석된 물건 목록:</h3>
+            <ul id="items-ul"></ul>
         </div>
-        <button class="btn-action" onclick="startAIAnalysis()">✨ AI로 내용물 분석하기</button>
-        <div id="list-container"></div>
-        <button style="width:100%; background:#fee2e2; color:#ef4444; border:none; padding:10px; border-radius:10px; margin-top:15px; font-weight:700;" onclick="resetAll()">데이터 초기화</button>
     </div>
-</div>
-<input type="file" id="file-input" style="display:none" accept="image/*" onchange="uploadAndPreview(this)">
 
-<script>
-    // ⚠️ Supabase Dashboard -> Settings -> API에서 'anon' 키를 새로 복사해서 꼭 확인해주세요.
-    const SUPABASE_URL = 'https://tqhtggusphhcsygiitrv.supabase.co'; 
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc'; 
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    <script>
+        // 1. Supabase 초기화 (세인 님의 프로젝트 URL과 Anon Key를 입력하세요)
+        const SUPABASE_URL = 'https://tqhtggusphhcsygiitrv.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const tag = new URLSearchParams(location.search).get('tag') || 'DRAWER001';
-    let active = { url: "", items: [] };
+        const fileInput = document.getElementById('file-input');
+        const statusBar = document.getElementById('status-bar');
+        const itemsUl = document.getElementById('items-ul');
+        const preview = document.getElementById('preview');
 
-    function showStatus(text, isError = false) {
-        const bar = document.getElementById('status-msg');
-        bar.innerText = text; bar.style.display = 'block';
-        bar.style.background = isError ? "#ef4444" : "#0f172a";
-        if(!isError && text !== "AI 분석 중...") setTimeout(() => bar.style.display = 'none', 3000);
-    }
+        // 상태 안내 메시지 함수 (alert() 대신 사용)
+        function showStatus(msg, isError = false) {
+            statusBar.innerText = msg;
+            statusBar.style.display = 'block';
+            statusBar.style.background = isError ? '#ff4d4d' : '#333';
+        }
 
-    async function uploadAndPreview(input) {
-        const file = input.files[0]; if(!file) return;
-        showStatus("사진을 저장하고 있습니다...");
-        
-        const path = `${tag}/${Date.now()}.jpg`;
-        const { error } = await _supabase.storage.from('user_uploads').upload(path, file);
-        
-        if(error) return showStatus("업로드 실패: " + error.message, true); // 여기서 signature verification failed 해결 여부 확인
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
 
-        const { data: { publicUrl } } = _supabase.storage.from('user_uploads').getPublicUrl(path);
-        active.url = publicUrl;
-        localStorage.setItem('gonggan_gyeol_url_' + tag, publicUrl);
-        document.getElementById('media-wrap').innerHTML = `<img src="${publicUrl}">`;
-        showStatus("업로드 성공! 분석 버튼을 눌러주세요.");
-    }
+            // 미리보기 노출
+            preview.src = URL.createObjectURL(file);
+            preview.style.display = 'block';
 
-    async function startAIAnalysis() {
-        if(!active.url) return showStatus("사진을 먼저 올려주세요.", true);
-        showStatus("AI 분석 중...", false);
-        
-        try {
-            const img = new Image();
-            img.crossOrigin = "anonymous";
-            img.src = active.url;
-            img.onload = async () => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = 700; canvas.height = (img.height / img.width) * 700;
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                const base64 = canvas.toDataURL('image/jpeg', 0.5).split(',')[1];
+            try {
+                // 2. 로그인 확인 (RLS 통과를 위해 필수)
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) {
+                    showStatus("로그인이 필요합니다. 다시 로그인해 주세요.", true);
+                    return;
+                }
 
-                const res = await fetch('/api/analyze', {
+                showStatus("사진을 최적화하는 중입니다...");
+                
+                // 3. 이미지 압축 (Vercel 4.5MB 제한 및 10초 타임아웃 방지)
+                const compressedBlob = await compressImage(file);
+
+                showStatus("서랍에 사진을 저장하는 중...");
+                
+                // 4. Supabase Storage 업로드 (USER_UPLOADS 버킷)
+                const filePath = `${user.id}/${Date.now()}.jpg`; // 사용자 전용 경로 설정
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('USER_UPLOADS') 
+                    .upload(filePath, compressedBlob, {
+                        contentType: 'image/jpeg',
+                        upsert: true
+                    });
+
+                if (uploadError) throw uploadError;
+
+                // 5. 공개 URL 가져오기
+                const { data: { publicUrl } } = supabase.storage.from('USER_UPLOADS').getPublicUrl(filePath);
+
+                showStatus("지능형 비서 '결'이 물건을 분석 중입니다...");
+
+                // 6. Gemini API 분석 요청 (api/analyze.js 호출)
+                const response = await fetch('/api/analyze', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ image: base64 })
+                    body: JSON.stringify({ imageUrl: publicUrl })
                 });
-                const data = await res.json();
-                if(!res.ok) throw new Error(data.error || "분석 실패");
 
-                active.items = data.result.split(',').map(n => ({ cat: "AI분석", n: n.trim(), q: 1 }));
-                localStorage.setItem('gonggan_gyeol_' + tag, JSON.stringify(active.items));
-                renderList();
-                showStatus("분석 성공!");
-            };
-        } catch(e) { showStatus("에러 발생: " + e.message, true); }
-    }
+                const analysis = await response.json();
+                
+                if (analysis.items) {
+                    displayItems(analysis.items);
+                    showStatus("분석이 완료되었습니다!");
+                } else {
+                    throw new Error(analysis.error || "분석 실패");
+                }
 
-    function renderList() {
-        document.getElementById('list-container').innerHTML = active.items.map(it => `<div class="item-row"><span>${it.n}</span><span>${it.q}개</span></div>`).join('');
-    }
+            } catch (err) {
+                console.error(err);
+                showStatus(`에러 발생: ${err.message}`, true);
+            }
+        });
 
-    function resetAll() { if(confirm('모든 데이터를 지울까요?')) { localStorage.clear(); location.reload(); } }
+        // 이미지 압축 로직 (가로 700px 기준)
+        function compressImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 700;
+                        const scaleSize = MAX_WIDTH / img.width;
+                        canvas.width = MAX_WIDTH;
+                        canvas.height = img.height * scaleSize;
 
-    window.onload = async () => {
-        const saved = localStorage.getItem('gonggan_gyeol_' + tag);
-        const url = localStorage.getItem('gonggan_gyeol_url_' + tag);
-        if(saved) active.items = JSON.parse(saved);
-        if(url) { active.url = url; document.getElementById('media-wrap').innerHTML = `<img src="${url}">`; }
-        document.getElementById('disp-id').innerText = (tag === 'DRAWER002') ? "서랍 2번" : "서랍 1번";
-        renderList();
-    };
-</script>
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        
+                        canvas.toBlob((blob) => {
+                            resolve(blob);
+                        }, 'image/jpeg', 0.7); // 화질 70% 수준으로 압축
+                    };
+                };
+            });
+        }
+
+        // 결과 목록 출력
+        function displayItems(itemsString) {
+            itemsUl.innerHTML = '';
+            const items = itemsString.split(',');
+            items.forEach(item => {
+                const li = document.createElement('li');
+                li.innerText = item.trim();
+                itemsUl.appendChild(li);
+            });
+        }
+    </script>
 </body>
 </html>
