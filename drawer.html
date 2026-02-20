@@ -19,30 +19,30 @@
         
         .search-input { width: 100%; padding: 15px; border: 2px solid var(--primary); border-radius: 12px; box-sizing: border-box; font-size: 16px; margin-bottom: 15px; outline: none; }
         
-        /* 목록 헤더 및 추가 버튼 */
+        /* [레이아웃 수정] 헤더 버튼 위치 변경 */
         .list-header { background: #f1f5f9; border-radius: 14px; margin-bottom: 12px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; }
-        .list-header-left { display: flex; align-items: center; gap: 10px; cursor: pointer; flex: 1; }
-        .list-header span { font-size: 15px; font-weight: 800; color: #475569; }
-        .btn-add { background: var(--primary); color: #fff; border: none; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 800; cursor: pointer; }
+        .btn-add { background: var(--primary); color: #fff; border: none; border-radius: 8px; padding: 8px 14px; font-size: 12px; font-weight: 800; cursor: pointer; order: -1; } /* 왼쪽 배치 */
+        .list-header-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; order: 1; } /* 오른쪽 배치 */
+        .list-header-toggle span { font-size: 14px; font-weight: 800; color: #475569; }
 
         .cat-group { background: var(--card); border-radius: 16px; margin-bottom: 10px; border: 1px solid #e2e8f0; overflow: hidden; }
         .cat-head { padding: 18px; display: flex; justify-content: space-between; font-weight: 800; font-size: 16px; cursor: pointer; }
         .cat-body { display: none; padding: 10px; background: #fafafa; border-top: 1px solid #f1f5f9; }
         
-        /* 물품 행 구성 */
-        .item-row { display: flex; flex-direction: column; background: var(--item-bg); border-radius: 14px; margin-bottom: 8px; padding: 12px; border: 1px solid #e0f0ff; }
-        .item-main { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .item-name { font-size: 15px; font-weight: 700; color: #334155; flex: 1; }
+        /* [레이아웃 수정] 물품 행 구성 (이름 아래 수정/삭제) */
+        .item-row { background: var(--item-bg); border-radius: 14px; margin-bottom: 8px; padding: 12px; border: 1px solid #e0f0ff; }
+        .item-name { font-size: 15px; font-weight: 700; color: #334155; display: block; margin-bottom: 10px; }
         
-        /* 수정/삭제 버튼 */
-        .item-tools { display: flex; gap: 8px; }
-        .btn-tool { background: #fff; border: 1px solid #d1e9ff; border-radius: 6px; padding: 4px 8px; font-size: 11px; font-weight: 700; color: #64748b; cursor: pointer; }
+        .item-footer { display: flex; justify-content: space-between; align-items: center; }
+        .item-tools { display: flex; gap: 6px; } /* 왼쪽 정렬 */
+        .btn-tool { background: #fff; border: 1px solid #d1e9ff; border-radius: 6px; padding: 5px 10px; font-size: 11px; font-weight: 700; color: #64748b; cursor: pointer; }
         .btn-delete { color: var(--danger); border-color: #ffdada; }
 
-        .qty-controls { display: flex; align-items: center; gap: 8px; background: #fff; padding: 5px 8px; border-radius: 10px; border: 1px solid #d1e9ff; align-self: flex-end; }
-        .btn-qty { border: none; background: #e0f0ff; color: var(--primary); width: 26px; height: 26px; border-radius: 6px; font-weight: 900; cursor: pointer; }
-        .qty-input { width: 45px; border: none; text-align: center; font-size: 14px; font-weight: 800; outline: none; background: transparent; }
+        .qty-controls { display: flex; align-items: center; gap: 6px; background: #fff; padding: 4px 6px; border-radius: 10px; border: 1px solid #d1e9ff; }
+        .btn-qty { border: none; background: #e0f0ff; color: var(--primary); width: 24px; height: 24px; border-radius: 6px; font-weight: 900; cursor: pointer; }
+        .qty-input { width: 35px; border: none; text-align: center; font-size: 13px; font-weight: 800; outline: none; background: transparent; }
 
+        /* 기타 UI (변동 없음) */
         .chat-btn { position: fixed; bottom: 20px; right: 20px; background: #000; color: #fff; border: none; border-radius: 50px; padding: 16px 26px; font-weight: 800; font-size: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 1000; }
         .chat-window { display: none; position: fixed; bottom: 90px; right: 20px; width: 320px; height: 400px; background: #fff; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); flex-direction: column; overflow: hidden; z-index: 1001; }
         .chat-header { background: #000; color: #fff; padding: 15px; font-weight: 800; font-size: 14px; display: flex; justify-content: space-between; }
@@ -51,7 +51,6 @@
         .msg.bot { background: #e2e8f0; align-self: flex-start; }
         .chat-input-area { padding: 10px; border-top: 1px solid #eee; display: flex; }
         .chat-input { flex: 1; border: 1px solid #ddd; padding: 8px; border-radius: 8px; outline: none; }
-
         .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; }
         .modal-img { max-width: 98%; max-height: 98%; object-fit: contain; }
     </style>
@@ -72,11 +71,10 @@
         <input type="text" id="find-box" class="search-input" placeholder="무엇을 찾으시나요?" oninput="updateList()">
         
         <div class="list-header">
-            <div class="list-header-left" onclick="toggleAll()">
-                <span>📦 보관 물품 전체 목록</span>
+            <button class="btn-add" onclick="addItem()">+ 물품 추가</button>
+            <div class="list-header-toggle" onclick="toggleAll()">
                 <span id="all-arr">전체 펼치기 ▼</span>
             </div>
-            <button class="btn-add" onclick="addItem()">+ 물품 추가</button>
         </div>
 
         <div id="list-container"></div>
@@ -86,10 +84,7 @@
 <button class="chat-btn" onclick="toggleChat()">✨ 결에게 묻기</button>
 
 <div id="chat-window" class="chat-window">
-    <div class="chat-header">
-        <span>비서 '결'</span>
-        <span style="cursor:pointer" onclick="toggleChat()">✕</span>
-    </div>
+    <div class="chat-header"><span>비서 '결'</span><span style="cursor:pointer" onclick="toggleChat()">✕</span></div>
     <div class="chat-messages" id="chat-messages">
         <div class="msg bot">안녕하세요! 어떤 물건을 찾아드릴까요?</div>
     </div>
@@ -109,29 +104,19 @@
     let openCats = {};
 
     const db = {
-        "DRAWER001": {
-            title: "서랍 1번",
-            url: "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer1.mp4.mp4",
-            items: [
-                { cat: "식품", n: "쫀디기", q: 2 }, { cat: "식품", n: "맥심 커피믹스", q: 10 },
-                { cat: "주방", n: "종이컵", q: 5 }, { cat: "주방", n: "컵홀더", q: 1 }, { cat: "주방", n: "수저세트", q: 2 },
-                { cat: "주방", n: "나무 꼬챙이", q: 10 }, { cat: "주방", n: "지퍼팩", q: 10 },
-                { cat: "공구", n: "다목적 칼", q: 1 }, { cat: "공구", n: "손전등", q: 1 },
-                { cat: "기타", n: "금박 비닐", q: 1 }, { cat: "기타", n: "메쉬 파우치", q: 1 },
-                { cat: "기타", n: "핫팩", q: 5 }, { cat: "기타", n: "소형 케이스", q: 1 }
-            ]
-        },
-        "DRAWER002": {
-            title: "서랍 2번",
-            url: "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer2.jpg.jpg",
-            items: [
-                { cat: "위생", n: "베베앙 물티슈 (대형)", q: 5 }, { cat: "위생", n: "검정색 파우치 물티슈", q: 1 },
-                { cat: "케어", n: "일리윤 여성청결제", q: 1 }, { cat: "케어", n: "려(RYO) 트리트먼트", q: 1 },
-                { cat: "생활", n: "NOW 영양제", q: 1 }, { cat: "생활", n: "만능 클리너", q: 1 },
-                { cat: "생활", n: "쿨링 스프레이", q: 1 }, { cat: "생활", n: "빨간색 단자함", q: 1 }, { cat: "생활", n: "작은 원형 용기", q: 1 },
-                { cat: "생활", n: "우산", q: 4 }, { cat: "생활", n: "기타 세정제", q: 5 }
-            ]
-        }
+        "DRAWER001": { title: "서랍 1번", url: "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer1.mp4.mp4", items: [] },
+        "DRAWER002": { title: "서랍 2번", url: "https://tqhtggusphhcsygiitrv.supabase.co/storage/v1/object/public/user_uploads/DRAWER001/drawer2.jpg.jpg", items: [] }
+    };
+    // 초기 샘플 데이터 (localStorage 없을 때용)
+    const defaultItems = {
+        "DRAWER001": [
+            { cat: "식품", n: "쫀디기", q: 2 }, { cat: "식품", n: "맥심 커피믹스", q: 20 },
+            { cat: "주방", n: "종이컵", q: 50 }, { cat: "주방", n: "컵홀더", q: 20 }, { cat: "주방", n: "수저세트", q: 2 },
+            { cat: "주방", n: "나무 꼬챙이", q: 30 }, { cat: "주방", n: "지퍼팩", q: 10 },
+            { cat: "공구", n: "다목적 칼", q: 1 }, { cat: "공구", n: "손전등", q: 1 },
+            { cat: "기타", n: "금박 비닐", q: 1 }, { cat: "기타", n: "메쉬 파우치", q: 1 },
+            { cat: "기타", n: "핫팩", q: 5 }, { cat: "기타", n: "소형 케이스", q: 1 }
+        ]
     };
 
     let active = db[tag] || db["DRAWER001"];
@@ -139,11 +124,10 @@
     function loadSavedData() {
         const saved = localStorage.getItem('gonggan_gyeol_' + tag);
         if (saved) active.items = JSON.parse(saved);
+        else if (defaultItems[tag]) active.items = defaultItems[tag];
     }
 
-    function saveData() {
-        localStorage.setItem('gonggan_gyeol_' + tag, JSON.stringify(active.items));
-    }
+    function saveData() { localStorage.setItem('gonggan_gyeol_' + tag, JSON.stringify(active.items)); }
 
     window.onload = () => {
         loadSavedData();
@@ -178,18 +162,18 @@
                         const globalIdx = active.items.indexOf(item);
                         return `
                         <div class="item-row">
-                            <div class="item-main">
-                                <span class="item-name">${item.n}</span>
+                            <span class="item-name">${item.n}</span>
+                            <div class="item-footer">
                                 <div class="item-tools">
                                     <button class="btn-tool" onclick="editItem(${globalIdx})">수정</button>
                                     <button class="btn-tool btn-delete" onclick="deleteItem(${globalIdx})">삭제</button>
                                 </div>
-                            </div>
-                            <div class="qty-controls">
-                                <button class="btn-qty" onclick="changeQty(${globalIdx}, -1, event)">-</button>
-                                <input type="number" class="qty-input" value="${item.q}" onchange="inputQty(${globalIdx}, this.value)">
-                                <span style="font-size:12px; font-weight:800; color:#94a3b8; margin-right:5px;">EA</span>
-                                <button class="btn-qty" onclick="changeQty(${globalIdx}, 1, event)">+</button>
+                                <div class="qty-controls">
+                                    <button class="btn-qty" onclick="changeQty(${globalIdx}, -1, event)">-</button>
+                                    <input type="number" class="qty-input" value="${item.q}" onchange="inputQty(${globalIdx}, this.value)">
+                                    <span style="font-size:11px; font-weight:800; color:#94a3b8;">EA</span>
+                                    <button class="btn-qty" onclick="changeQty(${globalIdx}, 1, event)">+</button>
+                                </div>
                             </div>
                         </div>`;
                     }).join('')}
@@ -198,54 +182,35 @@
         });
     }
 
-    // ➕ 물품 추가 기능
     function addItem() {
-        const name = prompt("추가할 물품 이름을 입력하세요.");
-        if (!name) return;
-        const cat = prompt("카테고리를 입력하세요. (예: 식품, 주방, 공구)", "기타");
-        if (!cat) return;
-        
+        const name = prompt("추가할 물품 이름을 입력하세요."); if (!name) return;
+        const cat = prompt("카테고리를 입력하세요.", "기타"); if (!cat) return;
         active.items.push({ cat: cat, n: name, q: 1 });
-        openCats[cat] = true; // 추가한 카테고리는 자동으로 열리게 설정
-        saveData();
-        updateList();
+        openCats[cat] = true; saveData(); updateList();
     }
 
-    // ✏️ 물품 수정 기능
     function editItem(idx) {
         const item = active.items[idx];
-        const newName = prompt("새로운 물품 이름을 입력하세요.", item.n);
-        if (!newName) return;
-        const newCat = prompt("카테고리를 수정하시겠습니까?", item.cat);
-        if (!newCat) return;
-
-        item.n = newName;
-        item.cat = newCat;
-        openCats[newCat] = true;
-        saveData();
-        updateList();
+        const newName = prompt("새로운 물품 이름을 입력하세요.", item.n); if (!newName) return;
+        const newCat = prompt("카테고리를 수정하시겠습니까?", item.cat); if (!newCat) return;
+        item.n = newName; item.cat = newCat;
+        openCats[newCat] = true; saveData(); updateList();
     }
 
-    // 🗑️ 물품 삭제 기능
     function deleteItem(idx) {
         if (confirm(`'${active.items[idx].n}' 물품을 정말 삭제할까요?`)) {
-            active.items.splice(idx, 1);
-            saveData();
-            updateList();
+            active.items.splice(idx, 1); saveData(); updateList();
         }
     }
 
     function changeQty(idx, val, e) {
-        e.stopPropagation();
-        active.items[idx].q = Math.max(0, active.items[idx].q + val);
-        saveData();
-        updateList();
+        e.stopPropagation(); active.items[idx].q = Math.max(0, active.items[idx].q + val);
+        saveData(); updateList();
     }
 
     function inputQty(idx, val) {
         active.items[idx].q = Math.max(0, parseInt(val) || 0);
-        saveData();
-        updateList();
+        saveData(); updateList();
     }
 
     function toggleChat() {
@@ -256,18 +221,16 @@
     function sendMsg(input) {
         if(!input.value.trim()) return;
         const msgs = document.getElementById('chat-messages');
-        msgs.innerHTML += `<div class="msg user" style="background:#007bff; color:#fff; align-self:flex-end; margin-left:auto; padding:10px; border-radius:12px; margin-bottom:10px; font-size:14px; max-width:80%;">${input.value}</div>`;
+        msgs.innerHTML += `<div class="msg user" style="background:#007bff; color:#fff; align-self:flex-end; margin-left:auto;">${input.value}</div>`;
         setTimeout(() => {
-            msgs.innerHTML += `<div class="msg bot">네, 확인 중입니다! 무엇이든 물어보세요.</div>`;
+            msgs.innerHTML += `<div class="msg bot">확인해 드릴게요! 잠시만 기다려 주세요.</div>`;
             msgs.scrollTop = msgs.scrollHeight;
         }, 500);
-        input.value = '';
-        msgs.scrollTop = msgs.scrollHeight;
+        input.value = ''; msgs.scrollTop = msgs.scrollHeight;
     }
 
     function toggleAll() {
-        isAllOpen = !isAllOpen;
-        openCats = {};
+        isAllOpen = !isAllOpen; openCats = {};
         document.getElementById('all-arr').innerText = isAllOpen ? '전체 접기 ▲' : '전체 펼치기 ▼';
         updateList();
     }
