@@ -122,7 +122,7 @@
         const { data: { session } } = await _supabase.auth.getSession();
         if (!session) {
             alert("로그인이 필요합니다!");
-            window.location.href = "index.html"; 
+            window.location.href = "login.html"; 
         }
     }
 
