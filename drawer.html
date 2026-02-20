@@ -3,155 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>(주)현세인 - 서랍 관리</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <title>(주)현세인 - 시스템</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* 세인 님의 요청대로 UI는 최대한 심플하게 유지합니다. */
-        #status-bar {
-            position: fixed;
-            top: 0; left: 0; width: 100%;
-            padding: 10px;
-            background: #333; color: #fff;
-            text-align: center;
-            display: none; /* 필요할 때만 노출 */
-            z-index: 1000;
-        }
-        .container { padding: 20px; margin-top: 40px; }
-        .upload-btn { padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        #preview { width: 100%; max-width: 300px; margin-top: 10px; display: none; }
+        body { font-family: -apple-system, sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; background: #f8f9fa; }
+        #status-bar { width: 100%; position: fixed; top: 0; padding: 12px; background: #007bff; color: white; text-align: center; font-weight: bold; display: none; z-index: 1000; }
+        .card { width: 100%; max-width: 400px; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 50px; }
+        h2 { font-size: 20px; margin-bottom: 20px; color: #333; }
+        .btn { width: 100%; padding: 15px; background: #4A90E2; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        #preview { width: 100%; border-radius: 10px; margin: 20px 0; display: none; }
+        .list-container { width: 100%; text-align: left; margin-top: 20px; }
+        ul { list-style: none; padding: 0; border-top: 1px solid #eee; }
+        li { padding: 12px 0; border-bottom: 1px solid #eee; color: #555; }
     </style>
 </head>
 <body>
 
-    <div id="status-bar">준비 중...</div>
+    <div id="status-bar"></div>
 
-    <div class="container">
-        <h2>서랍 아이템 등록</h2>
-        <input type="file" id="file-input" accept="image/*" capture="environment" style="display: none;">
-        <button class="upload-btn" onclick="document.getElementById('file-input').click()">📷 사진 찍어서 등록하기</button>
+    <div class="card">
+        <h2>📦 서랍 아이템 등록</h2>
+        <input type="file" id="cam" accept="image/*" capture="environment" style="display: none;">
+        <button class="btn" onclick="document.getElementById('cam').click()">📷 사진 찍기</button>
         
-        <img id="preview" alt="미리보기">
+        <img id="preview">
         
-        <div id="result-list" style="margin-top: 20px;">
-            <h3>분석된 물건 목록:</h3>
-            <ul id="items-ul"></ul>
+        <div class="list-container">
+            <strong>📋 분석 결과</strong>
+            <ul id="item-list"></ul>
         </div>
     </div>
 
     <script>
-        // 1. Supabase 초기화 (세인 님의 프로젝트 URL과 Anon Key를 입력하세요)
-        const SUPABASE_URL = 'https://tqhtggusphhcsygiitrv.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // 1. 프로젝트 설정 (스크린샷 주소 반영)
+        const S_URL = 'https://tqhtggusphhcsygiitrv.supabase.co';
+        const S_KEY = 'YOUR_SUPABASE_ANON_KEY'; // 세인님의 ANON KEY를 입력하세요
+        const supabase = lib.supabase.createClient(S_URL, S_KEY);
 
-        const fileInput = document.getElementById('file-input');
-        const statusBar = document.getElementById('status-bar');
-        const itemsUl = document.getElementById('items-ul');
-        const preview = document.getElementById('preview');
+        const cam = document.getElementById('cam');
+        const bar = document.getElementById('status-bar');
+        const list = document.getElementById('item-list');
+        const prev = document.getElementById('preview');
 
-        // 상태 안내 메시지 함수 (alert() 대신 사용)
-        function showStatus(msg, isError = false) {
-            statusBar.innerText = msg;
-            statusBar.style.display = 'block';
-            statusBar.style.background = isError ? '#ff4d4d' : '#333';
+        function msg(text, err = false) {
+            bar.innerText = text;
+            bar.style.display = 'block';
+            bar.style.background = err ? '#ff4d4d' : '#007bff';
         }
 
-        fileInput.addEventListener('change', async (e) => {
+        cam.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
-            // 미리보기 노출
-            preview.src = URL.createObjectURL(file);
-            preview.style.display = 'block';
+            prev.src = URL.createObjectURL(file);
+            prev.style.display = 'block';
 
             try {
-                // 2. 로그인 확인 (RLS 통과를 위해 필수)
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) {
-                    showStatus("로그인이 필요합니다. 다시 로그인해 주세요.", true);
+                // 2. 로그인 세션 강제 확인 (스크린샷의 'authenticated' 정책 때문)
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) {
+                    msg("로그인이 필요합니다. login.html로 이동하세요.", true);
                     return;
                 }
+                const uid = session.user.id;
 
-                showStatus("사진을 최적화하는 중입니다...");
-                
-                // 3. 이미지 압축 (Vercel 4.5MB 제한 및 10초 타임아웃 방지)
-                const compressedBlob = await compressImage(file);
+                msg("사진 압축 및 최적화 중...");
+                const blob = await resizeImg(file);
 
-                showStatus("서랍에 사진을 저장하는 중...");
-                
-                // 4. Supabase Storage 업로드 (USER_UPLOADS 버킷)
-                const filePath = `${user.id}/${Date.now()}.jpg`; // 사용자 전용 경로 설정
-                const { data: uploadData, error: uploadError } = await supabase.storage
+                msg("서랍 저장소 업로드 중...");
+                // 3. 스크린샷 정책에 맞는 경로: USER_UPLOADS 버킷 / 유저ID 폴더
+                const path = `${uid}/${Date.now()}.jpg`;
+                const { error: upErr } = await supabase.storage
                     .from('USER_UPLOADS') 
-                    .upload(filePath, compressedBlob, {
-                        contentType: 'image/jpeg',
-                        upsert: true
-                    });
+                    .upload(path, blob, { contentType: 'image/jpeg' });
 
-                if (uploadError) throw uploadError;
+                if (upErr) throw upErr;
 
-                // 5. 공개 URL 가져오기
-                const { data: { publicUrl } } = supabase.storage.from('USER_UPLOADS').getPublicUrl(filePath);
+                // 4. 공개 URL 생성
+                const { data: { publicUrl } } = supabase.storage.from('USER_UPLOADS').getPublicUrl(path);
 
-                showStatus("지능형 비서 '결'이 물건을 분석 중입니다...");
-
-                // 6. Gemini API 분석 요청 (api/analyze.js 호출)
-                const response = await fetch('/api/analyze', {
+                msg("비서 '결'이 물건 파악 중...");
+                // 5. Vercel API 호출
+                const res = await fetch('/api/analyze', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ imageUrl: publicUrl })
                 });
 
-                const analysis = await response.json();
-                
-                if (analysis.items) {
-                    displayItems(analysis.items);
-                    showStatus("분석이 완료되었습니다!");
+                const data = await res.json();
+                if (data.items) {
+                    showItems(data.items);
+                    msg("등록 완료!");
                 } else {
-                    throw new Error(analysis.error || "분석 실패");
+                    throw new Error(data.error || "분석 실패");
                 }
 
             } catch (err) {
                 console.error(err);
-                showStatus(`에러 발생: ${err.message}`, true);
+                msg(`오류: ${err.message}`, true);
             }
         });
 
-        // 이미지 압축 로직 (가로 700px 기준)
-        function compressImage(file) {
-            return new Promise((resolve) => {
+        // Vercel 10초 제한 돌파용 압축 (가로 700px)
+        function resizeImg(file) {
+            return new Promise((res) => {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
-                reader.onload = (event) => {
+                reader.onload = (e) => {
                     const img = new Image();
-                    img.src = event.target.result;
+                    img.src = e.target.result;
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 700;
-                        const scaleSize = MAX_WIDTH / img.width;
-                        canvas.width = MAX_WIDTH;
-                        canvas.height = img.height * scaleSize;
-
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        
-                        canvas.toBlob((blob) => {
-                            resolve(blob);
-                        }, 'image/jpeg', 0.7); // 화질 70% 수준으로 압축
+                        const w = 700;
+                        const h = img.height * (w / img.width);
+                        canvas.width = w; canvas.height = h;
+                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                        canvas.toBlob((b) => res(b), 'image/jpeg', 0.8);
                     };
                 };
             });
         }
 
-        // 결과 목록 출력
-        function displayItems(itemsString) {
-            itemsUl.innerHTML = '';
-            const items = itemsString.split(',');
-            items.forEach(item => {
-                const li = document.createElement('li');
-                li.innerText = item.trim();
-                itemsUl.appendChild(li);
-            });
+        function showItems(str) {
+            list.innerHTML = str.split(',').map(i => `<li>${i.trim()}</li>`).join('');
         }
     </script>
 </body>
