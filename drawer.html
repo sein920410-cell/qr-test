@@ -29,12 +29,10 @@
         .item-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: var(--item-bg); border-radius: 14px; margin-bottom: 8px; }
         .item-name { font-size: 15px; font-weight: 700; color: #334155; flex: 1; }
         
-        /* 수량 입력 칸 수정 */
         .qty-controls { display: flex; align-items: center; gap: 8px; background: #fff; padding: 5px 8px; border-radius: 10px; border: 1px solid #d1e9ff; }
         .btn-qty { border: none; background: #e0f0ff; color: var(--primary); width: 26px; height: 26px; border-radius: 6px; font-weight: 900; cursor: pointer; }
         .qty-input { width: 45px; border: none; text-align: center; font-size: 14px; font-weight: 800; outline: none; background: transparent; }
 
-        /* 채팅 UI */
         .chat-btn { position: fixed; bottom: 20px; right: 20px; background: #000; color: #fff; border: none; border-radius: 50px; padding: 16px 26px; font-weight: 800; font-size: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 1000; }
         .chat-window { display: none; position: fixed; bottom: 90px; right: 20px; width: 320px; height: 400px; background: #fff; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); flex-direction: column; overflow: hidden; z-index: 1001; }
         .chat-header { background: #000; color: #fff; padding: 15px; font-weight: 800; font-size: 14px; display: flex; justify-content: space-between; }
@@ -80,7 +78,7 @@
         <span style="cursor:pointer" onclick="toggleChat()">✕</span>
     </div>
     <div class="chat-messages" id="chat-messages">
-        <div class="msg bot">안녕하세요 세인님! 어떤 물건을 찾아드릴까요?</div>
+        <div class="msg bot">안녕하세요! 어떤 물건을 찾아드릴까요?</div>
     </div>
     <div class="chat-input-area">
         <input type="text" class="chat-input" placeholder="메시지 입력..." onkeydown="if(event.key==='Enter') sendMsg(this)">
@@ -95,8 +93,8 @@
     const params = new URLSearchParams(window.location.search);
     const tag = (params.get('tag') || 'DRAWER001').toUpperCase();
     let isAllOpen = false;
+    let openCats = {}; // 카테고리 열림 상태 저장 객체
 
-    // 초기 데이터
     const db = {
         "DRAWER001": {
             title: "서랍 1번",
@@ -125,15 +123,11 @@
 
     let active = db[tag] || db["DRAWER001"];
 
-    // [중요] 저장된 데이터 불러오기
     function loadSavedData() {
         const saved = localStorage.getItem('gonggan_gyeol_' + tag);
-        if (saved) {
-            active.items = JSON.parse(saved);
-        }
+        if (saved) active.items = JSON.parse(saved);
     }
 
-    // [중요] 데이터 저장하기
     function saveData() {
         localStorage.setItem('gonggan_gyeol_' + tag, JSON.stringify(active.items));
     }
@@ -162,12 +156,16 @@
             const list = filtered.filter(i => i.cat === c);
             const div = document.createElement('div');
             div.className = 'cat-group';
+            
+            // 상태 기억 로직 반영
+            const isOpen = word || isAllOpen || openCats[c];
+            
             div.innerHTML = `
-                <div class="cat-head" onclick="toggle(this)">
+                <div class="cat-head" onclick="toggle('${c}', this)">
                     <span>${c} (${list.length})</span>
-                    <span class="arr" style="transform: rotate(${word || isAllOpen ? '90deg' : '0deg'})">〉</span>
+                    <span class="arr" style="transform: rotate(${isOpen ? '90deg' : '0deg'})">〉</span>
                 </div>
-                <div class="cat-body" style="display: ${word || isAllOpen ? 'block' : 'none'}">
+                <div class="cat-body" style="display: ${isOpen ? 'block' : 'none'}">
                     ${list.map(item => {
                         const idx = active.items.indexOf(item);
                         return `
@@ -189,13 +187,13 @@
     function changeQty(idx, val, e) {
         e.stopPropagation();
         active.items[idx].q = Math.max(0, active.items[idx].q + val);
-        saveData(); // 변경 즉시 저장
-        updateList();
+        saveData();
+        updateList(); // 이제 openCats 덕분에 목록이 유지됩니다.
     }
 
     function inputQty(idx, val) {
         active.items[idx].q = Math.max(0, parseInt(val) || 0);
-        saveData(); // 변경 즉시 저장
+        saveData();
         updateList();
     }
 
@@ -209,9 +207,9 @@
         const msgs = document.getElementById('chat-messages');
         msgs.innerHTML += `<div class="msg user" style="background:#007bff; color:#fff; align-self:flex-end; margin-left:auto;">${input.value}</div>`;
         
-        // 간단한 응답 로직 (나중에 API 연결 가능)
         setTimeout(() => {
-            msgs.innerHTML += `<div class="msg bot">네, 세인님. 해당 물건의 위치와 수량을 확인 중입니다...</div>`;
+            // 이름 없는 자연스러운 응답
+            msgs.innerHTML += `<div class="msg bot">네, 말씀하신 물건의 위치와 수량을 확인해 드릴게요!</div>`;
             msgs.scrollTop = msgs.scrollHeight;
         }, 500);
         
@@ -221,16 +219,23 @@
 
     function toggleAll() {
         isAllOpen = !isAllOpen;
+        // 개별 열림 상태 초기화
+        openCats = {};
         document.getElementById('all-arr').innerText = isAllOpen ? '전체 접기 ▲' : '전체 펼치기 ▼';
         updateList();
     }
 
-    function toggle(h) {
+    // 카테고리 개별 열림 상태 저장용 함수 수정
+    function toggle(catName, h) {
         const b = h.nextElementSibling;
         const a = h.querySelector('.arr');
         const show = b.style.display === 'none' || b.style.display === '';
+        
         b.style.display = show ? 'block' : 'none';
         a.style.transform = show ? 'rotate(90deg)' : 'rotate(0deg)';
+        
+        // 현재 상태를 openCats에 저장
+        openCats[catName] = show;
     }
 
     function openFull() {
