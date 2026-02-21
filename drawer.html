@@ -51,25 +51,20 @@
     const filePath = upData?.path || fName;
     console.log("업로드 성공:", filePath);
 
-    // 서버에 filePath 전송
-    try {
-      const r = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ filePath })
-      });
-      const json = await r.json();
-      if (json.items) {
-        alert("✅ 인식완료: " + json.items.join(", "));
-      } else {
-        alert("❌ 인식 실패: " + (json.error || JSON.stringify(json)));
-      }
-    } catch (e) {
-      console.error(e);
-      alert("서버 호출 실패");
-    }
-    input.value = '';
-  }
+   // 사진 업로드 시
+async function analyzeImage(file) {
+  const formData = new FormData();
+  formData.append('image', file);
+
+  const response = await fetch('/api/analyze', {
+    method: 'POST',
+    body: formData
+  });
+  
+  const result = await response.json();
+  addItemsToList(result.items);
+}
+
 
   async function setupChatSubscription() {
     if (chatSubscribed) return;
