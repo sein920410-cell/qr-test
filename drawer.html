@@ -1,118 +1,187 @@
-<!doctype html>
-<html lang="ko">
+<!DOCTYPE html>
+<html>
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>공간:결 - 관리</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="utf-8">
+  <title>QR 물품 관리</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container { max-width: 500px; margin: 0 auto; }
+    .upload-area {
+      border: 3px dashed #fff;
+      border-radius: 20px;
+      padding: 60px 20px;
+      text-align: center;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      margin-bottom: 30px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .upload-area:hover { background: rgba(255,255,255,0.2); transform: scale(1.02); }
+    .upload-area.dragover { border-color: #ffd700; background: rgba(255,215,0,0.1); }
+    input[type=file] { display: none; }
+    .items-list {
+      background: rgba(255,255,255,0.95);
+      border-radius: 20px;
+      padding: 20px;
+      max-height: 400px;
+      overflow-y: auto;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+    .item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      border-radius: 15px;
+    }
+    .btn { 
+      background: #ff6b6b; 
+      color: white; 
+      border: none; 
+      padding: 8px 16px; 
+      border-radius: 20px; 
+      cursor: pointer; 
+      font-size: 12px;
+    }
+    .btn:hover { background: #ff5252; }
+    .empty { text-align: center; color: #666; padding: 40px; }
+    .chat-btn { 
+      position: fixed; 
+      bottom: 30px; 
+      right: 30px; 
+      width: 60px; 
+      height: 60px; 
+      background: #4ecdc4; 
+      border-radius: 50%; 
+      border: none; 
+      font-size: 24px; 
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-  <div id="app">
-    <h3 id="disp-id">서랍 확인 중...</h3>
-    <input type="file" id="camera-input" accept="image/*" capture="environment" onchange="handleFile(this)">
-    <button onclick="document.getElementById('camera-input').click()">사진 업로드</button>
-
-    <button onclick="toggleChat()">결에게 묻기</button>
-    <div id="chat-window" style="display:none">
-      <div id="chat-messages"></div>
-      <input id="chat-field" placeholder="메시지 입력..." onkeydown="if(event.key==='Enter') sendMsg()">
-      <button onclick="sendMsg()">전송</button>
+  <div class="container">
+    <h1 style="color: white; text-align: center; margin-bottom: 30px;">📦 QR 물품 관리</h1>
+    
+    <div class="upload-area" onclick="document.getElementById('imageInput').click()">
+      <h3>📸 사진 업로드</h3>
+      <p>여기에 사진을 드롭하거나 클릭하세요</p>
+    </div>
+    <input type="file" id="imageInput" accept="image/*" capture="environment">
+    
+    <div id="itemsList" class="items-list">
+      <div class="empty">📷 사진을 업로드하면 물품이 자동 분석됩니다!</div>
     </div>
   </div>
 
-<script>
-  // 🔥 수정된 핵심 부분들 (여기!)
-  const SUPABASE_URL = 'https://tqhtggusphhcsygiitrv.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_lJeKpO0aRv9mTBE1qnbkow_JqTmhnHQ';
-  const BUCKET = 'user_uploads';  // ← 이거 추가!
-  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  <button class="chat-btn" onclick="toggleChat()">💬</button>
 
-  const tag = (new URLSearchParams(window.location.search).get('tag') || 'DRAWER001').toUpperCase();
-  let chatSubscribed = false;
+  <script>
+    const itemsList = document.getElementById('itemsList');
+    const imageInput = document.getElementById('imageInput');
+    let items = JSON.parse(localStorage.getItem('items')) || [];
 
-  async function handleFile(input) {
-    const file = input.files[0];
-    if (!file) return alert("파일을 선택하세요");
-    
-    // 🔥 안전한 파일명 생성
-    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const fName = `photos/${Date.now()}_${safeName}`;  // ← photos/ 폴더 추가!
-    
-    console.log("업로드 중:", fName);
-    const { data: upData, error: upErr } = await supabaseClient.storage
-      .from(BUCKET)
-      .upload(fName, file, { upsert: true });
-      
-    if (upErr) { 
-      console.error("업로드 에러:", upErr); 
-      return alert("업로드 실패: " + upErr.message); 
+    // 로컬스토리지에서 목록 로드
+    function renderItems() {
+      itemsList.innerHTML = items.length ? 
+        items.map((item, i) => `
+          <div class="item">
+            <div>
+              <strong>${item.name}</strong> 
+              <span style="color: #666; margin-left: 10px;">${item.quantity}개</span>
+            </div>
+            <div>
+              <button class="btn" onclick="editItem(${i})">수정</button>
+              <button class="btn" onclick="deleteItem(${i})" style="background: #ff6b6b;">삭제</button>
+            </div>
+          </div>
+        `).join('') : 
+        '<div class="empty">📷 사진을 업로드하면 물품이 자동 분석됩니다!</div>';
     }
-    
-    const filePath = upData?.path || fName;
-    console.log("업로드 성공:", filePath);
 
-   // 사진 업로드 시
-async function analyzeImage(file) {
-  const formData = new FormData();
-  formData.append('image', file);
+    // 사진 업로드 처리
+    imageInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
 
-  const response = await fetch('/api/analyze', {
-    method: 'POST',
-    body: formData
-  });
-  
-  const result = await response.json();
-  addItemsToList(result.items);
-}
+      const formData = new FormData();
+      formData.append('image', file);
 
+      try {
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          body: formData
+        });
+        const result = await response.json();
 
-  async function setupChatSubscription() {
-    if (chatSubscribed) return;
-    if (typeof supabaseClient.channel !== 'function') {
-      chatSubscribed = true;
-      return;
+        if (result.success && result.items) {
+          result.items.forEach(item => {
+            items.push({ ...item, id: Date.now() });
+          });
+          localStorage.setItem('items', JSON.stringify(items));
+          renderItems();
+        }
+      } catch (error) {
+        alert('분석 실패: ' + error.message);
+      }
+    });
+
+    // 드래그 앤 드롭
+    const uploadArea = document.querySelector('.upload-area');
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      uploadArea.addEventListener(eventName, preventDefaults, false);
+    });
+    ['dragenter', 'dragover'].forEach(eventName => {
+      uploadArea.addEventListener(eventName, highlight, false);
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+      uploadArea.addEventListener(eventName, unhighlight, false);
+    });
+    uploadArea.addEventListener('drop', handleDrop, false);
+
+    function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+    function highlight(e) { uploadArea.classList.add('dragover'); }
+    function unhighlight(e) { uploadArea.classList.remove('dragover'); }
+    async function handleDrop(e) {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      imageInput.files = files;
+      imageInput.dispatchEvent(new Event('change'));
     }
-    await supabaseClient.channel('public:chat_messages')
-      .on('postgres_changes', { event:'INSERT', schema:'public', table:'chat_messages', filter:`tag=eq.${tag}` }, payload => {
-        const m = payload.new;
-        addMsg(m.sender === 'bot' ? 'bot' : 'user', m.content);
-      }).subscribe();
-    const { data } = await supabaseClient.from('chat_messages').select('*').eq('tag', tag).order('created_at', {ascending:true}).limit(200);
-    if (data) data.forEach(d => addMsg(d.sender === 'bot' ? 'bot' : 'user', d.content));
-    chatSubscribed = true;
-  }
 
-  function toggleChat(){
-    const w = document.getElementById('chat-window');
-    const show = w.style.display !== 'flex';
-    w.style.display = show ? 'flex' : 'none';
-    if (show) setupChatSubscription();
-  }
-
-  function addMsg(type, text){
-    const box = document.getElementById('chat-messages');
-    const el = document.createElement('div'); 
-    el.innerText = (type==='bot' ? '결: ' : '나: ') + text;
-    box.appendChild(el);
-    box.scrollTop = box.scrollHeight;
-  }
-
-  async function sendMsg(){
-    const f = document.getElementById('chat-field'); 
-    const txt = f.value.trim(); 
-    if(!txt) return;
-    try {
-      await fetch('/api/chat', { 
-        method:'POST', 
-        headers:{'Content-Type':'application/json'}, 
-        body: JSON.stringify({ message: txt, inventory: "[]", tag }) 
-      });
-      f.value = '';
-    } catch(e) { 
-      console.error(e); 
-      alert("메시지 전송 실패"); 
+    // 목록 관리
+    function addItem(item) {
+      items.push({ ...item, id: Date.now() });
+      localStorage.setItem('items', JSON.stringify(items));
+      renderItems();
     }
-  }
-</script>
+
+    function deleteItem(index) {
+      items.splice(index, 1);
+      localStorage.setItem('items', JSON.stringify(items));
+      renderItems();
+    }
+
+    function editItem(index) {
+      const newName = prompt('새 이름:', items[index].name);
+      const newQty = prompt('새 수량:', items[index].quantity);
+      if (newName) items[index].name = newName;
+      if (newQty) items[index].quantity = parseInt(newQty);
+      localStorage.setItem('items', JSON.stringify(items));
+      renderItems();
+    }
+
+    // 초기 렌더링
+    renderItems();
+  </script>
 </body>
 </html>
