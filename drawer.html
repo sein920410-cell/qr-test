@@ -2,26 +2,29 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>공간:결 - 리포트</title>
+    <title>공간:결 - 인벤토리</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #007bff; --bg: #f8fafc; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; }
-        #status-bar { display: none; background: #000; color: #fff; text-align: center; padding: 12px; border-radius: 12px; margin-bottom: 10px; font-size: 13px; font-weight: bold; }
-        .main-card { background: #fff; border-radius: 28px; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); }
+        :root { --primary: #007bff; --bg: #f8fafc; --card: #ffffff; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; padding-bottom: 100px; }
+        .container { max-width: 500px; margin: 0 auto; }
+        #status-bar { display: none; background: #000; color: #fff; text-align: center; padding: 12px; border-radius: 12px; margin-bottom: 15px; font-size: 13px; font-weight: bold; position: sticky; top: 10px; z-index: 1000; }
+        .main-card { background: var(--card); border-radius: 28px; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.05); }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .title-badge { background: #0f172a; color: #fff; padding: 8px 16px; border-radius: 100px; font-size: 13px; font-weight: 700; }
         .upload-tools { display: flex; gap: 8px; margin-bottom: 15px; }
-        .btn-upload { flex: 1; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; font-size: 13px; font-weight: 800; cursor: pointer; }
+        .btn-upload { flex: 1; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; font-size: 13px; color: #475569; font-weight: 800; cursor: pointer; text-align: center; }
         .btn-upload.primary { background: var(--primary); color: #fff; border: none; }
-        .search-input { width: 100%; padding: 15px; border: 2.5px solid var(--primary); border-radius: 12px; box-sizing: border-box; font-size: 16px; margin-bottom: 15px; }
-        .item-row { background: #f0f7ff; border-radius: 14px; margin-bottom: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: center; }
-        /* 채팅창 스타일 */
+        .search-input { width: 100%; padding: 15px; border: 2.5px solid var(--primary); border-radius: 12px; box-sizing: border-box; font-size: 16px; margin-bottom: 15px; outline: none; }
+        .add-area { display: flex; justify-content: flex-end; margin-bottom: 10px; }
+        .btn-add { background: #fff; color: var(--primary); border: 1.5px solid var(--primary); border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 800; cursor: pointer; }
+        .item-row { background: #f0f7ff; border-radius: 14px; margin-bottom: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e0f0ff; }
+        /* 채팅 UI */
         .chat-btn { position: fixed; bottom: 20px; right: 20px; background: #000; color: #fff; border: none; border-radius: 50px; padding: 16px 26px; font-weight: 800; z-index: 1000; }
-        .chat-window { display: none; position: fixed; bottom: 90px; right: 20px; width: 320px; height: 450px; background: #fff; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); flex-direction: column; overflow: hidden; z-index: 1001; }
+        .chat-window { display: none; position: fixed; bottom: 85px; right: 20px; width: 320px; height: 480px; background: #fff; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); flex-direction: column; overflow: hidden; z-index: 1001; }
         .chat-header { background: #000; color: #fff; padding: 18px; font-weight: 800; display: flex; justify-content: space-between; }
-        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; font-size: 14px; background: #f8fafc; }
+        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; font-size: 14px; display: flex; flex-direction: column; background: #f8fafc; }
         .msg { margin-bottom: 10px; padding: 12px; border-radius: 14px; max-width: 85%; }
         .msg.bot { background: #e2e8f0; align-self: flex-start; }
         .msg.user { background: var(--primary); color: #fff; align-self: flex-end; margin-left: auto; }
@@ -32,9 +35,9 @@
 </head>
 <body>
 <div class="container">
-    <div id="status-bar">알림</div>
+    <div id="status-bar"></div>
     <div class="main-card">
-        <div class="header"><div class="title-badge" id="disp-id">서랍 정보 확인 중...</div></div>
+        <div class="header"><div class="title-badge" id="disp-id">서랍 1번</div></div>
         <div class="upload-tools">
             <button class="btn-upload primary" onclick="document.getElementById('camera-input').click()">📸 즉시 촬영</button>
             <button class="btn-upload" onclick="document.getElementById('album-input').click()">🖼 앨범 선택</button>
@@ -42,15 +45,16 @@
         <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;" onchange="handleFile(this)">
         <input type="file" id="album-input" accept="image/*" style="display: none;" onchange="handleFile(this)">
         <input type="text" id="find-box" class="search-input" placeholder="무엇을 찾으시나요?" oninput="updateList()">
+        <div class="add-area"><button class="btn-add" onclick="addItem()">+ 물품 직접 추가</button></div>
         <div id="list-container"></div>
     </div>
 </div>
 <button class="chat-btn" onclick="toggleChat()">✨ 결에게 묻기</button>
 <div id="chat-window" class="chat-window">
-    <div class="chat-header"><span>비서 '결'</span><span style="cursor:pointer" onclick="toggleChat()">✕</span></div>
-    <div class="chat-messages" id="chat-messages"><div class="msg bot">안녕하세요! 보관 물건에 대해 물어보세요.</div></div>
+    <div class="chat-header"><span>비서 '결'</span><span onclick="toggleChat()" style="cursor:pointer">✕</span></div>
+    <div id="chat-messages" class="chat-messages"><div class="msg bot">반가워요! 무엇을 찾아드릴까요?</div></div>
     <div class="chat-input-area">
-        <input type="text" id="chat-field" class="chat-input" placeholder="메시지..." onkeydown="if(event.key==='Enter') sendMsg()">
+        <input type="text" id="chat-field" class="chat-input" placeholder="메시지 입력..." onkeydown="if(event.key==='Enter') sendMsg()">
         <button class="btn-send" onclick="sendMsg()">전송</button>
     </div>
 </div>
@@ -59,10 +63,10 @@
     const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc';
     const supabaseClient = supabase.createClient(S_URL, S_KEY);
     const tag = (new URLSearchParams(window.location.search).get('tag') || 'DRAWER001').toUpperCase();
-    let active = { title: (tag === 'DRAWER002' ? "서랍 2번" : "서랍 1번"), items: [] };
+    let active = { items: [] };
 
     window.onload = () => {
-        document.getElementById('disp-id').innerText = active.title; // 제목 즉시 로드
+        document.getElementById('disp-id').innerText = (tag === 'DRAWER002' ? "서랍 2번" : "서랍 1번");
         const saved = localStorage.getItem('gonggan_gyeol_' + tag);
         if (saved) active.items = JSON.parse(saved);
         updateList();
@@ -74,7 +78,11 @@
         active.items.forEach((item, idx) => {
             const div = document.createElement('div');
             div.className = 'item-row';
-            div.innerHTML = `<span>${item.n}</span><span>${item.q} EA</span>`;
+            div.innerHTML = `<span><strong>${item.n}</strong></span>
+                <div>
+                    <span style="margin-right:15px;">${item.q} EA</span>
+                    <button style="color:red; border:none; background:none; font-size:12px;" onclick="deleteItem(${idx})">삭제</button>
+                </div>`;
             container.appendChild(div);
         });
     }
@@ -82,43 +90,35 @@
     async function handleFile(input) {
         const file = input.files[0]; if(!file) return;
         const bar = document.getElementById('status-bar');
-        bar.style.display = 'block'; bar.innerText = "분석 시작...";
+        bar.style.display = 'block'; bar.style.background = '#000'; bar.innerText = "분석 중...";
         try {
             const path = `uploads/${Date.now()}.jpg`;
-            const { error } = await supabaseClient.storage.from('USER_UPLOADS').upload(path, file);
-            if(error) throw error;
+            const { error: upErr } = await supabaseClient.storage.from('USER_UPLOADS').upload(path, file);
+            if(upErr) throw upErr;
             const { data: { publicUrl } } = supabaseClient.storage.from('USER_UPLOADS').getPublicUrl(path);
-            const res = await fetch('/api/analyze', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ imageUrl: publicUrl })
-            });
+            const res = await fetch('/api/analyze', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ imageUrl: publicUrl }) });
             const data = await res.json();
             if(data.items) {
-                data.items.split(',').forEach(n => active.items.push({ n: n.trim(), q: 1 }));
-                localStorage.setItem('gonggan_gyeol_' + tag, JSON.stringify(active.items));
-                updateList(); bar.innerText = "분석 완료!";
+                data.items.split(',').forEach(n => { if(n.trim()) active.items.push({ n: n.trim(), q: 1 }); });
+                saveData(); updateList(); bar.innerText = "분석 완료!";
             }
         } catch(e) { bar.innerText = "오류: " + e.message; bar.style.background = 'red'; }
+        setTimeout(() => bar.style.display = 'none', 3000);
     }
 
     function toggleChat() { const w = document.getElementById('chat-window'); w.style.display = (w.style.display === 'flex' ? 'none' : 'flex'); }
     async function sendMsg() {
-        const f = document.getElementById('chat-field');
-        const txt = f.value.trim(); if(!txt) return;
-        const m = document.getElementById('chat-messages');
-        m.innerHTML += `<div class="msg user">${txt}</div>`; f.value = '';
+        const f = document.getElementById('chat-field'); const txt = f.value.trim(); if(!txt) return;
+        const m = document.getElementById('chat-messages'); m.innerHTML += `<div class="msg user">${txt}</div>`; f.value = ''; m.scrollTop = m.scrollHeight;
         try {
-            const res = await fetch('/api/chat', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ message: txt, inventory: JSON.stringify(active.items) })
-            });
-            const data = await res.json();
-            m.innerHTML += `<div class="msg bot">${data.reply || "응답이 없어요."}</div>`;
-        } catch(e) { m.innerHTML += `<div class="msg bot">에러: ${e.message}</div>`; }
+            const res = await fetch('/api/chat', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ message: txt, inventory: JSON.stringify(active.items) }) });
+            const data = await res.json(); m.innerHTML += `<div class="msg bot">${data.reply || "이해하지 못했습니다."}</div>`;
+        } catch(e) { m.innerHTML += `<div class="msg bot">연결 실패</div>`; }
         m.scrollTop = m.scrollHeight;
     }
+    function addItem() { const n = prompt("물품 이름"); if(n) { active.items.push({ n: n, q: 1 }); saveData(); updateList(); } }
+    function deleteItem(idx) { if(confirm("삭제할까요?")) { active.items.splice(idx, 1); saveData(); updateList(); } }
+    function saveData() { localStorage.setItem('gonggan_gyeol_' + tag, JSON.stringify(active.items)); }
 </script>
 </body>
 </html>
