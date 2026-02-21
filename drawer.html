@@ -1,188 +1,38 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <title>공간:결 - 관리</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    :root { --primary:#007bff; --bg:#f8fafc; --card:#fff; }
-    body{font-family:-apple-system, sans-serif;background:var(--bg);margin:0;padding:12px;padding-bottom:100px;}
-    .main-card{background:var(--card);border-radius:20px;padding:20px;box-shadow:0 8px 20px rgba(0,0,0,0.06);}
-    .upload-tools{display:flex;gap:8px;margin-bottom:12px;}
-    .btn-upload{flex:1;padding:12px;border-radius:12px;border:1px solid #e6eefc;cursor:pointer;}
-    .btn-upload.primary{background:var(--primary);color:#fff;border:none;}
-    .search-input{width:100%;padding:12px;border-radius:10px;border:2px solid var(--primary);margin-bottom:12px;}
-    .cat-group{margin-bottom:10px;border-radius:12px;background:#fff;padding:10px;border:1px solid #eef6ff;}
-    .item-row{background:#f0f7ff;padding:12px;border-radius:10px;margin-bottom:8px;position:relative;}
-    .qty-badge{position:absolute;right:12px;top:12px;background:var(--primary);color:#fff;padding:4px 8px;border-radius:8px;}
-    .chat-btn{position:fixed;bottom:20px;right:20px;background:#000;color:#fff;padding:14px 18px;border-radius:50px;cursor:pointer;}
-    .chat-window{display:none;position:fixed;bottom:85px;right:20px;width:320px;height:420px;background:#fff;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,0.2);overflow:hidden;z-index:1001;flex-direction:column;}
-    .chat-messages{flex:1;padding:12px;overflow:auto;background:#f8fafc;display:flex;flex-direction:column;gap:8px;}
-    .msg{padding:10px;border-radius:12px;max-width:80%;}
-    .msg.bot{background:#e2e8f0;align-self:flex-start;}
-    .msg.user{background:var(--primary);color:#fff;align-self:flex-end;}
-    .chat-input-area{padding:10px;border-top:1px solid #eee;display:flex;gap:8px;}
-    .chat-input{flex:1;padding:10px;border-radius:10px;border:1px solid #ddd;}
-  </style>
-</head>
-<body>
-  <div class="main-card">
-    <div style="font-weight:800;margin-bottom:12px;" id="disp-id">서랍 정보 확인 중...</div>
-    <div class="upload-tools">
-      <button class="btn-upload primary" onclick="document.getElementById('camera-input').click()">📸 즉시 촬영</button>
-      <button class="btn-upload" onclick="document.getElementById('album-input').click()">🖼 앨범 선택</button>
-    </div>
+// drawer.html: handleFile 대체
+async function handleFile(input){
+  const file = input.files[0];
+  if(!file) return;
+  const status = document.getElementById('disp-id');
+  status.innerText = '업로드 중...';
 
-    <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="handleFile(this)">
-    <input type="file" id="album-input" accept="image/*" style="display:none" onchange="handleFile(this)">
-    <input type="text" id="find-box" class="search-input" placeholder="검색 후 엔터를 누르세요.">
-    <div id="list-container"></div>
-  </div>
+  try {
+    const fName = `${Date.now()}_${file.name}`;
+    // 1) 업로드 (클라이언트는 anon key로 업로드만 함)
+    const { data: upData, error: upErr } = await supabaseClient.storage.from(BUCKET).upload(fName, file, { upsert: true });
+    if (upErr) throw upErr;
 
-  <button class="chat-btn" onclick="toggleChat()">✨ 결에게 묻기</button>
-
-  <div id="chat-window" class="chat-window" style="display:flex;flex-direction:column;">
-    <div style="background:#000;color:#fff;padding:12px;display:flex;justify-content:space-between;align-items:center;">
-      <span>비서 '결'</span><span style="cursor:pointer" onclick="toggleChat()">✕</span>
-    </div>
-    <div id="chat-messages" class="chat-messages"></div>
-    <div class="chat-input-area">
-      <input type="text" id="chat-field" class="chat-input" placeholder="메시지 입력..." onkeydown="if(event.key==='Enter') sendMsg()">
-      <button style="background:var(--primary);color:#fff;border:none;padding:8px 12px;border-radius:8px;" onclick="sendMsg()">전송</button>
-    </div>
-  </div>
-
-<script>
-  // === 설정값 (프로덕션 전에 환경변수로 대체 권장) ===
-  const SUPABASE_URL = 'https://tqhtggusphhcsygiitrv.supabase.co'; // 변경하지 마세요 (콘솔 값)
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdX...'; // 기존 익명키(임시)
-  const BUCKET = 'user_uploads'; // **중요**: Supabase 콘솔에 만든 버킷명과 동일해야 함
-
-  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  const tag = (new URLSearchParams(window.location.search).get('tag') || 'DRAWER001').toUpperCase();
-  let activeItems = [];
-
-  // 초기 데이터 로드
-  window.onload = async () => {
-    document.getElementById('disp-id').innerText = (tag === 'DRAWER002') ? '서랍 2번' : '서랍 1번';
-    const s = localStorage.getItem('gonggan_gyeol_'+tag);
-    activeItems = s ? JSON.parse(s) : [{cat:'기타', n:'샘플물품', q:1}];
-    render();
-    setupChatSubscription();
-  };
-
-  function render() {
-    const container = document.getElementById('list-container');
-    container.innerHTML = '';
-    const cats = [...new Set(activeItems.map(i=>i.cat))];
-    cats.forEach(c=>{
-      const list = activeItems.filter(i=>i.cat===c);
-      const div = document.createElement('div'); div.className='cat-group';
-      div.innerHTML = `<div style="font-weight:800;margin-bottom:8px;">${c} (${list.length})</div>
-        <div>${list.map(it=>`<div class="item-row"><div style="font-weight:800">${it.n}</div><div class="qty-badge">${it.q} EA</div>
-        <div style="font-size:12px;margin-top:6px;"><button onclick="editItem(${activeItems.indexOf(it)})">이름 수정</button> | <button onclick="deleteItem(${activeItems.indexOf(it)})">삭제</button></div></div>`).join('')}</div>`;
-      container.appendChild(div);
+    // 2) 서버에 filePath(경로)만 보냄 — 서버가 signed URL 생성 후 Gemini 호출
+    const filePath = upData?.path || fName; // supabase 업로드 응답에서 path 확인
+    const res = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ filePath })
     });
-  }
 
-  function saveAndRender(){ localStorage.setItem('gonggan_gyeol_'+tag, JSON.stringify(activeItems)); render(); }
-
-  // 수정/삭제
-  function editItem(idx){
-    const item = activeItems[idx];
-    const newName = prompt('새 이름:', item.n); if (!newName) return;
-    const newCat = prompt('카테고리:', item.cat) || item.cat;
-    item.n = newName; item.cat = newCat;
-    saveAndRender();
-  }
-  function deleteItem(idx){ if(confirm('삭제할까요?')){ activeItems.splice(idx,1); saveAndRender(); } }
-
-  // 파일 업로드 핸들러
-  async function handleFile(input){
-    const file = input.files[0]; if(!file) return;
-    const status = document.getElementById('disp-id');
-    status.innerText = '분석 중...'; status.style.opacity = 0.7;
-    try {
-      const fName = `${Date.now()}_${file.name}`;
-      const { data: upData, error: upErr } = await supabaseClient.storage.from(BUCKET).upload(fName, file, { upsert: true });
-      if (upErr) throw upErr;
-
-      // public URL 시도
-      const { data: p } = supabaseClient.storage.from(BUCKET).getPublicUrl(fName);
-      let publicUrl = p?.publicUrl || '';
-
-      // publicUrl 유효하지 않으면 signed url 생성
-      if (!publicUrl || publicUrl.includes('null')) {
-        const { data: sdata, error: signErr } = await supabaseClient.storage.from(BUCKET).createSignedUrl(fName, 60);
-        if (signErr) throw signErr;
-        publicUrl = sdata?.signedUrl;
-      }
-
-      // 분석 API 호출
-      const res = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ imageUrl: publicUrl })
-      });
-      const json = await res.json();
-      if (json.items && Array.isArray(json.items)) {
-        json.items.forEach(n => activeItems.push({ cat: '신규 인식', n: n, q: 1 }));
-        saveAndRender();
-        status.innerText = '분석 완료';
-      } else {
-        throw new Error(json.error || '인식 결과 없음');
-      }
-    } catch (e) {
-      status.innerText = '에러: ' + (e.message || e);
-      status.style.color = 'red';
-      console.error(e);
-    } finally {
-      setTimeout(()=>{ document.getElementById('disp-id').innerText = (tag==='DRAWER002')?'서랍 2번':'서랍 1번'; }, 1500);
+    const json = await res.json();
+    if (json.items && Array.isArray(json.items)) {
+      json.items.forEach(n => activeItems.push({ cat: '신규 인식', n, q: 1 }));
+      localStorage.setItem('gonggan_gyeol_' + tag, JSON.stringify(activeItems));
+      render();
+      status.innerText = '분석 완료';
+    } else {
+      throw new Error(json.error || '인식 실패');
     }
+  } catch (e) {
+    console.error(e);
+    status.innerText = '에러: ' + (e.message || e);
+    status.style.color = 'red';
+  } finally {
+    setTimeout(()=>{ document.getElementById('disp-id').innerText = (tag==='DRAWER002')?'서랍 2번':'서랍 1번'; }, 1500);
   }
-
-  // 채팅: 클라이언트에서 user 메시지를 chat_messages 테이블에 삽입하고, /api/chat 호출로 bot 응답을 서버가 삽입하게 함.
-  async function sendMsg(){
-    const f = document.getElementById('chat-field'); const txt = f.value.trim(); if(!txt) return;
-    // 1) 클라이언트에서 user 메시지 DB에 넣기
-    await supabaseClient.from('chat_messages').insert([{ tag, sender:'user', content: txt }]);
-    f.value = '';
-    // 2) 서버에 요청 -> 서버가 bot 메시지 DB에 넣음 (클라이언트는 구독으로 받음)
-    try {
-      await fetch('/api/chat', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ message: txt, inventory: JSON.stringify(activeItems), tag })
-      });
-    } catch(e){
-      console.error('chat send error', e);
-    }
-  }
-
-  function toggleChat(){ const w = document.getElementById('chat-window'); w.style.display = (w.style.display==='flex')?'none':'flex'; }
-
-  // 실시간 구독 설정
-  function setupChatSubscription(){
-    // 서버에서 Postgres change feed를 사용하여 chat_messages INSERT를 받음
-    const channel = supabaseClient.channel('public:chat_messages')
-      .on('postgres_changes', { event:'INSERT', schema:'public', table:'chat_messages', filter:`tag=eq.${tag}` }, payload => {
-        const m = payload.new;
-        addMsg(m.sender === 'bot' ? 'bot' : 'user', m.content);
-      }).subscribe();
-
-    // 초기 로드: 최근 50개
-    (async ()=>{
-      const { data, error } = await supabaseClient.from('chat_messages').select('*').eq('tag', tag).order('created_at', { ascending: true }).limit(200);
-      if (data) data.forEach(d => addMsg(d.sender === 'bot' ? 'bot' : 'user', d.content));
-    })();
-  }
-
-  function addMsg(type, text){
-    const box = document.getElementById('chat-messages');
-    const el = document.createElement('div'); el.className = 'msg ' + (type==='bot' ? 'bot' : 'user'); el.innerText = text;
-    box.appendChild(el);
-    box.scrollTop = box.scrollHeight;
-  }
-</script>
-</body>
-</html>
+}
