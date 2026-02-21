@@ -2,46 +2,39 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>공간:결 - 인벤토리 리포트</title>
+    <title>공간:결 - 리포트</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #007bff; --bg: #f8fafc; --card: #ffffff; --item-bg: #f0f7ff; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; color: #1e293b; padding-bottom: 100px; }
-        .container { max-width: 500px; margin: 0 auto; }
-        #status-bar { display: none; background: #000; color: #fff; text-align: center; padding: 14px; border-radius: 12px; margin-bottom: 15px; font-size: 14px; font-weight: bold; position: sticky; top: 10px; z-index: 2000; }
-        .main-card { background: var(--card); border-radius: 28px; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.05); }
+        :root { --primary: #007bff; --bg: #f8fafc; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; }
+        #status-bar { display: none; background: #000; color: #fff; text-align: center; padding: 12px; border-radius: 12px; margin-bottom: 10px; font-size: 13px; font-weight: bold; }
+        .main-card { background: #fff; border-radius: 28px; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .title-badge { background: #0f172a; color: #fff; padding: 8px 16px; border-radius: 100px; font-size: 13px; font-weight: 700; }
         .upload-tools { display: flex; gap: 8px; margin-bottom: 15px; }
-        .btn-upload { flex: 1; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; font-size: 13px; color: #475569; font-weight: 800; cursor: pointer; }
+        .btn-upload { flex: 1; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; font-size: 13px; font-weight: 800; cursor: pointer; }
         .btn-upload.primary { background: var(--primary); color: #fff; border: none; }
-        .search-input { width: 100%; padding: 15px; border: 2.5px solid var(--primary); border-radius: 12px; box-sizing: border-box; font-size: 16px; margin-bottom: 15px; outline: none; }
-        .item-row { background: var(--item-bg); border-radius: 14px; margin-bottom: 8px; padding: 12px; border: 1px solid #e0f0ff; }
-        .item-name { font-size: 15px; font-weight: 700; color: #334155; display: block; margin-bottom: 10px; }
-        .item-footer { display: flex; justify-content: space-between; align-items: center; }
-        .qty-controls { display: flex; align-items: center; gap: 6px; background: #fff; padding: 4px 6px; border-radius: 10px; border: 1px solid #d1e9ff; }
-        .btn-qty { border: none; background: #e0f0ff; color: var(--primary); width: 24px; height: 24px; border-radius: 6px; font-weight: 900; }
-        
-        /* 채팅창 전송 버튼 추가 및 레이아웃 수정 */
-        .chat-btn { position: fixed; bottom: 20px; right: 20px; background: #000; color: #fff; border: none; border-radius: 50px; padding: 16px 26px; font-weight: 800; font-size: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1000; }
+        .search-input { width: 100%; padding: 15px; border: 2.5px solid var(--primary); border-radius: 12px; box-sizing: border-box; font-size: 16px; margin-bottom: 15px; }
+        .item-row { background: #f0f7ff; border-radius: 14px; margin-bottom: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: center; }
+        /* 채팅창 스타일 */
+        .chat-btn { position: fixed; bottom: 20px; right: 20px; background: #000; color: #fff; border: none; border-radius: 50px; padding: 16px 26px; font-weight: 800; z-index: 1000; }
         .chat-window { display: none; position: fixed; bottom: 90px; right: 20px; width: 320px; height: 450px; background: #fff; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); flex-direction: column; overflow: hidden; z-index: 1001; }
         .chat-header { background: #000; color: #fff; padding: 18px; font-weight: 800; display: flex; justify-content: space-between; }
-        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; font-size: 14px; display: flex; flex-direction: column; }
-        .msg { margin-bottom: 10px; padding: 12px; border-radius: 14px; max-width: 85%; line-height: 1.4; }
+        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; font-size: 14px; background: #f8fafc; }
+        .msg { margin-bottom: 10px; padding: 12px; border-radius: 14px; max-width: 85%; }
         .msg.bot { background: #e2e8f0; align-self: flex-start; }
-        .msg.user { background: var(--primary); color: #fff; align-self: flex-end; }
+        .msg.user { background: var(--primary); color: #fff; align-self: flex-end; margin-left: auto; }
         .chat-input-area { padding: 12px; border-top: 1px solid #eee; display: flex; gap: 8px; background: #fff; }
-        .chat-input { flex: 1; border: 1px solid #ddd; padding: 10px; border-radius: 10px; outline: none; font-size: 14px; }
-        .btn-send { background: var(--primary); color: #fff; border: none; border-radius: 10px; padding: 0 15px; font-weight: bold; font-size: 13px; }
+        .chat-input { flex: 1; border: 1px solid #ddd; padding: 10px; border-radius: 10px; outline: none; }
+        .btn-send { background: var(--primary); color: #fff; border: none; border-radius: 10px; padding: 0 15px; font-weight: bold; }
     </style>
 </head>
 <body>
-
 <div class="container">
-    <div id="status-bar"></div>
+    <div id="status-bar">알림</div>
     <div class="main-card">
-        <div class="header"><div class="title-badge" id="disp-id">서랍 1번</div></div>
+        <div class="header"><div class="title-badge" id="disp-id">서랍 정보 확인 중...</div></div>
         <div class="upload-tools">
             <button class="btn-upload primary" onclick="document.getElementById('camera-input').click()">📸 즉시 촬영</button>
             <button class="btn-upload" onclick="document.getElementById('album-input').click()">🖼 앨범 선택</button>
@@ -52,17 +45,15 @@
         <div id="list-container"></div>
     </div>
 </div>
-
 <button class="chat-btn" onclick="toggleChat()">✨ 결에게 묻기</button>
 <div id="chat-window" class="chat-window">
     <div class="chat-header"><span>비서 '결'</span><span style="cursor:pointer" onclick="toggleChat()">✕</span></div>
-    <div class="chat-messages" id="chat-messages"></div>
+    <div class="chat-messages" id="chat-messages"><div class="msg bot">안녕하세요! 보관 물건에 대해 물어보세요.</div></div>
     <div class="chat-input-area">
-        <input type="text" id="chat-field" class="chat-input" placeholder="질문을 입력하세요..." onkeydown="if(event.key==='Enter') sendMsg()">
+        <input type="text" id="chat-field" class="chat-input" placeholder="메시지..." onkeydown="if(event.key==='Enter') sendMsg()">
         <button class="btn-send" onclick="sendMsg()">전송</button>
     </div>
 </div>
-
 <script>
     const S_URL = 'https://tqhtggusphhcsygiitrv.supabase.co';
     const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc';
@@ -71,26 +62,19 @@
     let active = { title: (tag === 'DRAWER002' ? "서랍 2번" : "서랍 1번"), items: [] };
 
     window.onload = () => {
-        document.getElementById('disp-id').innerText = active.title;
+        document.getElementById('disp-id').innerText = active.title; // 제목 즉시 로드
         const saved = localStorage.getItem('gonggan_gyeol_' + tag);
         if (saved) active.items = JSON.parse(saved);
         updateList();
-        addMsg("bot", `안녕하세요! ${active.title}에 보관된 물건을 찾아드릴까요?`);
     };
 
     function updateList() {
-        const word = document.getElementById('find-box').value.trim().toLowerCase();
         const container = document.getElementById('list-container');
         container.innerHTML = '';
-        active.items.filter(i => i.n.toLowerCase().includes(word)).forEach((item, idx) => {
+        active.items.forEach((item, idx) => {
             const div = document.createElement('div');
             div.className = 'item-row';
-            div.innerHTML = `<span class="item-name">${item.n}</span>
-                <div class="item-footer">
-                    <button class="btn-qty" onclick="changeQty(${idx}, -1)">-</button>
-                    <span style="font-weight:bold;">${item.q} EA</span>
-                    <button class="btn-qty" onclick="changeQty(${idx}, 1)">+</button>
-                </div>`;
+            div.innerHTML = `<span>${item.n}</span><span>${item.q} EA</span>`;
             container.appendChild(div);
         });
     }
@@ -98,14 +82,12 @@
     async function handleFile(input) {
         const file = input.files[0]; if(!file) return;
         const bar = document.getElementById('status-bar');
-        bar.style.display = 'block'; bar.innerText = "비서 '결'이 분석 중...";
-        
+        bar.style.display = 'block'; bar.innerText = "분석 시작...";
         try {
-            const fName = `${Date.now()}_${file.name}`;
-            const { error } = await supabaseClient.storage.from('USER_UPLOADS').upload(fName, file);
+            const path = `uploads/${Date.now()}.jpg`;
+            const { error } = await supabaseClient.storage.from('USER_UPLOADS').upload(path, file);
             if(error) throw error;
-
-            const { data: { publicUrl } } = supabaseClient.storage.from('USER_UPLOADS').getPublicUrl(fName);
+            const { data: { publicUrl } } = supabaseClient.storage.from('USER_UPLOADS').getPublicUrl(path);
             const res = await fetch('/api/analyze', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -113,22 +95,19 @@
             });
             const data = await res.json();
             if(data.items) {
-                data.items.split(',').forEach(n => active.items.push({ cat: '인식', n: n.trim(), q: 1 }));
+                data.items.split(',').forEach(n => active.items.push({ n: n.trim(), q: 1 }));
                 localStorage.setItem('gonggan_gyeol_' + tag, JSON.stringify(active.items));
-                updateList();
-                bar.innerText = "분석 완료!";
-                setTimeout(() => bar.style.display = 'none', 2000);
+                updateList(); bar.innerText = "분석 완료!";
             }
         } catch(e) { bar.innerText = "오류: " + e.message; bar.style.background = 'red'; }
     }
 
     function toggleChat() { const w = document.getElementById('chat-window'); w.style.display = (w.style.display === 'flex' ? 'none' : 'flex'); }
-    function addMsg(type, text) { const m = document.getElementById('chat-messages'); m.innerHTML += `<div class="msg ${type}">${text}</div>`; m.scrollTop = m.scrollHeight; }
-
     async function sendMsg() {
         const f = document.getElementById('chat-field');
         const txt = f.value.trim(); if(!txt) return;
-        addMsg("user", txt); f.value = '';
+        const m = document.getElementById('chat-messages');
+        m.innerHTML += `<div class="msg user">${txt}</div>`; f.value = '';
         try {
             const res = await fetch('/api/chat', {
                 method: 'POST',
@@ -136,11 +115,10 @@
                 body: JSON.stringify({ message: txt, inventory: JSON.stringify(active.items) })
             });
             const data = await res.json();
-            addMsg("bot", data.reply);
-        } catch(e) { addMsg("bot", "지금은 대화가 어렵습니다."); }
+            m.innerHTML += `<div class="msg bot">${data.reply || "응답이 없어요."}</div>`;
+        } catch(e) { m.innerHTML += `<div class="msg bot">에러: ${e.message}</div>`; }
+        m.scrollTop = m.scrollHeight;
     }
-
-    function changeQty(idx, v) { active.items[idx].q = Math.max(0, active.items[idx].q + v); localStorage.setItem('gonggan_gyeol_' + tag, JSON.stringify(active.items)); updateList(); }
 </script>
 </body>
 </html>
