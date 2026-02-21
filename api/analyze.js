@@ -1,3 +1,7 @@
+export default async function handler(req, res) {
+  // 기존 코드...
+}
+
 // api/analyze.js
 import { createClient } from "@supabase/supabase-js";
 import fetch from "node-fetch";
