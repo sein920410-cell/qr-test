@@ -1,22 +1,19 @@
 {
-  "functions": {
-    "api/analyze.js": {
-      "runtime": "nodejs18.x",
-      "maxDuration": 30
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
     },
-    "api/chat.js": {
-      "runtime": "nodejs18.x", 
-      "maxDuration": 30
+    {
+      "src": "**/*.html",
+      "use": "@vercel/static"
     }
-  },
+  ],
   "routes": [
     {
-      "src": "/api/analyze",
-      "dest": "/api/analyze.js"
-    },
-    {
-      "src": "/api/chat", 
-      "dest": "/api/chat.js"
+      "src": "/api/(.*)",
+      "dest": "/api/$1.js"
     },
     {
       "src": "/(.*)",
