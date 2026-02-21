@@ -3,115 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>(주)현세인 웹 기반 시스템</title>
+    <title>공간:결 - 인벤토리 리포트</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: -apple-system, sans-serif; margin: 0; padding: 0; background: #F5F5F7; color: #1D1D1F; }
-        #status-bar { position: fixed; top: 0; width: 100%; padding: 12px; background: #007AFF; color: white; text-align: center; font-weight: 600; display: none; z-index: 9999; }
-        .container { padding: 20px; max-width: 500px; margin: 40px auto; }
-        .upload-card { background: white; border-radius: 20px; padding: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.08); text-align: center; }
-        .btn-main { background: #007AFF; color: white; border: none; border-radius: 12px; padding: 18px; width: 100%; font-size: 17px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-        #preview { width: 100%; border-radius: 12px; margin-top: 20px; display: none; }
-        .result-area { margin-top: 30px; text-align: left; }
-        .category-tag { background: #E8E8ED; padding: 4px 10px; border-radius: 6px; font-size: 13px; color: #86868B; }
-        ul { list-style: none; padding: 0; }
-        li { padding: 15px 0; border-bottom: 1px solid #F2F2F7; font-size: 16px; display: flex; justify-content: space-between; }
+        /* 세인 님의 오리지널 UI (image_234c7d.png) 복구 */
+        body { font-family: -apple-system, sans-serif; margin: 0; padding: 0; background: #F8F9FB; color: #333; }
+        #status-bar { position: fixed; top: 0; width: 100%; padding: 10px; background: #000; color: #FFF; text-align: center; font-size: 13px; display: none; z-index: 10000; }
+        .container { padding: 15px; max-width: 500px; margin: 0 auto; }
+        .search-box { background: white; border: 1.5px solid #007AFF; border-radius: 8px; padding: 12px; margin-bottom: 20px; color: #999; }
+        .upload-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); text-align: center; margin-bottom: 20px; }
+        .btn-upload { background: #4A90E2; color: white; border: none; border-radius: 8px; padding: 14px; width: 100%; font-size: 15px; font-weight: bold; cursor: pointer; }
+        .inventory-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: bold; }
+        .category-group { background: white; border-radius: 12px; margin-bottom: 15px; border: 1px solid #EEE; }
+        .category-header { padding: 15px; background: #FDFDFD; border-bottom: 1px solid #F5F5F5; display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; }
+        .item-row { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #F9F9F9; }
+        .btn-qty { border: 1px solid #DDD; background: #FFF; border-radius: 4px; width: 24px; height: 24px; color: #007AFF; cursor: pointer; }
+        .ask-btn { position: fixed; bottom: 20px; right: 20px; background: #000; color: white; padding: 12px 20px; border-radius: 30px; font-size: 14px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div id="status-bar">준비 중...</div>
+<div id="status-bar"></div>
 
 <div class="container">
+    <div class="search-box">무엇을 찾으시나요?</div>
+
     <div class="upload-card">
-        <h2 style="margin-top:0;">📦 서랍 아이템 등록</h2>
-        <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
-        <button class="btn-main" onclick="document.getElementById('camera-input').click()">📷 사진 찍기</button>
-        <img id="preview" alt="선택한 이미지">
+        <h2 style="font-size: 20px; margin-bottom: 15px;">서랍 아이템 등록</h2>
+        <input type="file" id="file-selector" accept="image/*" style="display: none;">
+        <button class="btn-upload" onclick="document.getElementById('file-selector').click()">📷 사진 찍어서 등록하기</button>
     </div>
 
-    <div class="result-area">
-        <h3 style="font-size: 20px;">📋 분석된 물건 목록</h3>
-        <ul id="item-list">
-            <li style="color: #86868B;">사진을 찍으면 '결'이 분석을 시작합니다.</li>
-        </ul>
+    <div class="inventory-header">
+        <span>📦 보관 물품 전체 목록</span>
+        <span style="font-size: 12px; color: #888;">전체 접기 ▲</span>
     </div>
+
+    <div id="category-container">
+        </div>
 </div>
 
+<div class="ask-btn">✨ 결에게 묻기</div>
+
 <script>
-    // 1. 초기화 (세인 님 프로젝트 정보)
-    const SB_URL = 'https://tqhtggusphhcsygiitrv.supabase.co';
-    const SB_KEY = 'YOUR_ANON_KEY'; // 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc'여기에 ANON KEY를 꼭 넣어주세요.
-    const supabase = lib.supabase.createClient(SB_URL, SB_KEY);
+    // 1. Supabase 설정 유지
+    const S_URL = 'https://tqhtggusphhcsygiitrv.supabase.co';
+    const S_KEY = 'YOUR_ANON_KEY'; // 세인님의 ANON KEY
+    const supabase = lib.supabase.createClient(S_URL, S_KEY);
 
-    const cameraInput = document.getElementById('camera-input');
+    const fileSelector = document.getElementById('file-selector');
     const statusBar = document.getElementById('status-bar');
-    const itemList = document.getElementById('item-list');
-    const preview = document.getElementById('preview');
+    const categoryContainer = document.getElementById('category-container');
 
-    function updateStatus(text, isError = false) {
+    function showMsg(text, isErr = false) {
         statusBar.innerText = text;
         statusBar.style.display = 'block';
-        statusBar.style.background = isError ? '#FF3B30' : '#007AFF';
+        statusBar.style.background = isErr ? '#FF3B30' : '#000';
     }
 
-    cameraInput.addEventListener('change', async (e) => {
+    fileSelector.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        preview.src = URL.createObjectURL(file);
-        preview.style.display = 'block';
-
         try {
-            // 2. 로그인 세션 확인 (없으면 업로드 불가)
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) {
-                updateStatus("로그인이 필요합니다. login.html로 이동하세요.", true);
+                showMsg("로그인이 필요합니다.", true);
                 return;
             }
             const uid = session.user.id;
 
-            updateStatus("이미지 최적화 중...");
-            const blob = await resizeImage(file);
+            showMsg("이미지 최적화 중...");
+            const blob = await compress(file);
 
-            updateStatus("서랍(USER_UPLOADS)에 저장 중...");
-            // 3. 파일 경로: 유저ID/파일명 (RLS 정책 준수)
-            const fileName = `${Date.now()}.jpg`;
-            const filePath = `${uid}/${fileName}`;
-
+            showMsg("서랍 저장소(USER_UPLOADS)에 저장 중...");
+            const path = `${uid}/${Date.now()}.jpg`;
             const { error: upError } = await supabase.storage
                 .from('USER_UPLOADS')
-                .upload(filePath, blob, { contentType: 'image/jpeg', upsert: true });
+                .upload(path, blob, { contentType: 'image/jpeg' });
 
             if (upError) throw upError;
 
-            // 4. 공개 URL 획득 및 AI 분석
-            const { data: { publicUrl } } = supabase.storage.from('USER_UPLOADS').getPublicUrl(filePath);
+            const { data: { publicUrl } } = supabase.storage.from('USER_UPLOADS').getPublicUrl(path);
 
-            updateStatus("비서 '결'이 물건을 분류하고 있습니다...");
-            const response = await fetch('/api/analyze', {
+            showMsg("비서 '결'이 리포트를 작성 중입니다...");
+            const res = await fetch('/api/analyze', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ imageUrl: publicUrl })
             });
 
-            const data = await response.json();
+            const data = await res.json();
             if (data.items) {
-                renderItems(data.items);
-                updateStatus("분석 및 등록 완료!");
-            } else {
-                throw new Error(data.error || "분석 실패");
+                renderList(data.items);
+                showMsg("인벤토리 업데이트 완료!");
             }
-
         } catch (err) {
-            console.error(err);
-            updateStatus(`오류: ${err.message}`, true);
+            showMsg(`오류: ${err.message}`, true);
         }
     });
 
-    // Vercel 10초 타임아웃 방지 로직 (가로 700px 압축)
-    function resizeImage(file) {
-        return new Promise((res) => {
+    // 10초 타임아웃 방지용 압축 로직
+    function compress(file) {
+        return new Promise((resolve) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = (e) => {
@@ -120,24 +114,33 @@
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     const width = 700;
-                    const scale = width / img.width;
                     canvas.width = width;
-                    canvas.height = img.height * scale;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    canvas.toBlob((b) => res(b), 'image/jpeg', 0.8);
+                    canvas.height = img.height * (width / img.width);
+                    canvas.getContext('2d').drawImage(img, 0, 0, width, canvas.height);
+                    canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.8);
                 };
             };
         });
     }
 
-    function renderItems(itemsStr) {
-        itemList.innerHTML = '';
-        itemsStr.split(',').forEach(item => {
-            const li = document.createElement('li');
-            li.innerHTML = `<span>${item.trim()}</span> <span class="category-tag">자동분류</span>`;
-            itemList.appendChild(li);
+    function renderList(itemsStr) {
+        categoryContainer.innerHTML = '';
+        const items = itemsStr.split(',');
+        const group = document.createElement('div');
+        group.className = 'category-group';
+        group.innerHTML = `<div class="category-header">신규 분석 항목 (${items.length}) <span>⌵</span></div>`;
+        
+        items.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'item-row';
+            row.innerHTML = `
+                <div class="item-name">${item.trim()}</div>
+                <div class="item-ctrl">
+                    <button class="btn-qty">-</button> 1 <span style="font-size: 11px; color: #999;">EA</span> <button class="btn-qty">+</button>
+                </div>`;
+            group.appendChild(row);
         });
+        categoryContainer.appendChild(group);
     }
 </script>
 </body>
