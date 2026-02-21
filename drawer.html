@@ -1,4 +1,3 @@
-<!-- drawer.html (client) -->
 <!doctype html>
 <html lang="ko">
 <head>
@@ -22,10 +21,10 @@
   </div>
 
 <script>
-  // 환경값
+  // 🔥 수정된 핵심 부분들 (여기!)
   const SUPABASE_URL = 'https://tqhtggusphhcsygiitrv.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_lJeKpO0aRv9mTBE1qnbkow_JqTmhnHQ';
-  const BUCKET = 'user_uploads';  // 🔥 BUCKET 변수 추가 (Supabase 버킷명)
+  const BUCKET = 'user_uploads';  // ← 이거 추가!
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const tag = (new URLSearchParams(window.location.search).get('tag') || 'DRAWER001').toUpperCase();
@@ -35,12 +34,11 @@
     const file = input.files[0];
     if (!file) return alert("파일을 선택하세요");
     
-    // 🔥 안전한 파일명 생성 (공백→_, 특수문자 제거)
+    // 🔥 안전한 파일명 생성
     const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const fName = `photos/${Date.now()}_${safeName}`;
+    const fName = `photos/${Date.now()}_${safeName}`;  // ← photos/ 폴더 추가!
     
-    // 1) 브라우저에서 업로드 (anon 키로)
-    console.log("업로드 중:", fName);  // 디버깅용
+    console.log("업로드 중:", fName);
     const { data: upData, error: upErr } = await supabaseClient.storage
       .from(BUCKET)
       .upload(fName, file, { upsert: true });
@@ -51,9 +49,9 @@
     }
     
     const filePath = upData?.path || fName;
-    console.log("업로드 성공:", filePath);  // 디버깅용
+    console.log("업로드 성공:", filePath);
 
-    // 2) 서버에 filePath만 전송
+    // 서버에 filePath 전송
     try {
       const r = await fetch('/api/analyze', {
         method: 'POST',
@@ -70,7 +68,7 @@
       console.error(e);
       alert("서버 호출 실패");
     }
-    input.value = '';  // 입력 초기화
+    input.value = '';
   }
 
   async function setupChatSubscription() {
