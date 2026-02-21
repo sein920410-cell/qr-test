@@ -4,8 +4,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { message } = req.body;
-    
+    const { message } = await req.json();
+
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL });
