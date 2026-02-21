@@ -1,6 +1,26 @@
 {
   "functions": {
-    "api/analyze.js": { "runtime": "nodejs18.x" },
-    "api/chat.js": { "runtime": "nodejs18.x" }
-  }
+    "api/analyze.js": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 30
+    },
+    "api/chat.js": {
+      "runtime": "nodejs18.x", 
+      "maxDuration": 30
+    }
+  },
+  "routes": [
+    {
+      "src": "/api/analyze",
+      "dest": "/api/analyze.js"
+    },
+    {
+      "src": "/api/chat", 
+      "dest": "/api/chat.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
 }
