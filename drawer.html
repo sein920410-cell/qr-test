@@ -25,7 +25,7 @@
   // 환경값(로컬에 하드코딩하지 말고 배포 시 환경/빌드 프로세스에서 치환 권장)
   const SUPABASE_URL = 'https://tqhtggusphhcsygiitrv.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_lJeKpO0aRv9mTBE1qnbkow_JqTmhnHQ';
-  const BUCKET = 'user_uploads';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   const tag = (new URLSearchParams(window.location.search).get('tag') || 'DRAWER001').toUpperCase();
