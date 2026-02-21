@@ -1,0 +1,104 @@
+<!-- drawer.html (client) -->
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>공간:결 - 관리</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div id="app">
+    <h3 id="disp-id">서랍 확인 중...</h3>
+    <input type="file" id="camera-input" accept="image/*" capture="environment" onchange="handleFile(this)">
+    <button onclick="document.getElementById('camera-input').click()">사진 업로드</button>
+
+    <button onclick="toggleChat()">결에게 묻기</button>
+    <div id="chat-window" style="display:none">
+      <div id="chat-messages"></div>
+      <input id="chat-field" placeholder="메시지 입력..." onkeydown="if(event.key==='Enter') sendMsg()">
+      <button onclick="sendMsg()">전송</button>
+    </div>
+  </div>
+
+<script>
+  // 환경값(로컬에 하드코딩하지 말고 배포 시 환경/빌드 프로세스에서 치환 권장)
+  const SUPABASE_URL = 'https://tqhtggusphhcsygiitrv.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_lJeKpO0aRv9mTBE1qnbkow_JqTmhnHQ';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const tag = (new URLSearchParams(window.location.search).get('tag') || 'DRAWER001').toUpperCase();
+  let chatSubscribed = false;
+
+  async function handleFile(input) {
+    const file = input.files[0];
+    if (!file) return alert("파일을 선택하세요");
+    const fName = `${Date.now()}_${file.name.replace(/\s+/g,'_')}`;
+    // 1) 브라우저에서 업로드 (anon 키로)
+    const { data: upData, error: upErr } = await supabaseClient.storage.from(BUCKET).upload(fName, file, { upsert: true });
+    if (upErr) { console.error(upErr); return alert("업로드 실패"); }
+    const filePath = upData?.path || fName;
+
+    // 2) 서버에 filePath만 전송
+    try {
+      const r = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ filePath })
+      });
+      const json = await r.json();
+      if (json.items) {
+        alert("인식완료: " + json.items.join(", "));
+      } else {
+        alert("인식 실패: " + (json.error || JSON.stringify(json)));
+      }
+    } catch (e) {
+      console.error(e);
+      alert("서버 호출 실패");
+    }
+  }
+
+  async function setupChatSubscription() {
+    if (chatSubscribed) return;
+    if (typeof supabaseClient.channel !== 'function') {
+      // 폴링 대체 (간단 구현) — 권장: supabase realtime 사용
+      chatSubscribed = true;
+      return;
+    }
+    await supabaseClient.channel('public:chat_messages')
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'chat_messages', filter:`tag=eq.${tag}` }, payload => {
+        const m = payload.new;
+        addMsg(m.sender === 'bot' ? 'bot' : 'user', m.content);
+      }).subscribe();
+    const { data } = await supabaseClient.from('chat_messages').select('*').eq('tag', tag).order('created_at', {ascending:true}).limit(200);
+    if (data) data.forEach(d => addMsg(d.sender === 'bot' ? 'bot' : 'user', d.content));
+    chatSubscribed = true;
+  }
+
+  function toggleChat(){
+    const w = document.getElementById('chat-window');
+    const show = w.style.display !== 'flex';
+    w.style.display = show ? 'flex' : 'none';
+    if (show) setupChatSubscription();
+  }
+
+  function addMsg(type, text){
+    const box = document.getElementById('chat-messages');
+    const el = document.createElement('div'); el.innerText = (type==='bot' ? '결: ' : '나: ') + text;
+    box.appendChild(el);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  async function sendMsg(){
+    const f = document.getElementById('chat-field'); const txt = f.value.trim(); if(!txt) return;
+    // 클라이언트는 DB 삽입 대신 서버 호출(서버가 DB에 bot 메시지 삽입하도록)
+    try {
+      await fetch('/api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: txt, inventory: "[]", tag }) });
+      // user 메시지는 DB에 넣는건 RLS 정책에 따라 클라이언트에서 해도 되고, 여기서는 생략
+      f.value = '';
+    } catch(e) { console.error(e); alert("메시지 전송 실패"); }
+  }
+</script>
+</body>
+</html>
