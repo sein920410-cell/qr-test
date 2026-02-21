@@ -1,38 +1,181 @@
-// drawer.html: handleFile 대체
-async function handleFile(input){
-  const file = input.files[0];
-  if(!file) return;
-  const status = document.getElementById('disp-id');
-  status.innerText = '업로드 중...';
+<!-- drawer.html -->
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>공간:결 - 관리</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  /* 최소 스타일 — 필요하면 기존 스타일 붙여넣어도 됨 */
+  body{font-family:-apple-system, sans-serif;background:#f8fafc;margin:0;padding:16px}
+  .card{background:#fff;padding:18px;border-radius:16px;box-shadow:0 8px 20px rgba(0,0,0,.06);max-width:540px;margin:0 auto}
+  .upload-tools{display:flex;gap:8px;margin-bottom:12px}
+  .btn{padding:12px;border-radius:12px;border:none;cursor:pointer}
+  .primary{background:#0b79ff;color:#fff}
+  .chat-btn{position:fixed;right:20px;bottom:20px;background:#000;color:#fff;padding:12px 18px;border-radius:28px}
+  .chat-window{display:none;position:fixed;right:20px;bottom:90px;width:320px;height:420px;background:#fff;border-radius:12px;padding:0;box-shadow:0 10px 30px rgba(0,0,0,.15);overflow:hidden;flex-direction:column}
+  .chat-header{background:#000;color:#fff;padding:12px;font-weight:800;display:flex;justify-content:space-between}
+  .chat-messages{padding:12px;overflow:auto;height:320px;display:flex;flex-direction:column;gap:8px;background:#f8fafc}
+  .chat-input-area{display:flex;padding:10px;border-top:1px solid #eee}
+  .chat-input{flex:1;padding:8px;border-radius:10px;border:1px solid #ddd}
+  .msg{padding:10px;border-radius:12px;max-width:80%}
+  .bot{background:#eef3fb;align-self:flex-start}
+  .user{background:#0b79ff;color:#fff;align-self:flex-end}
+</style>
+</head>
+<body>
+<div class="card">
+  <h3 id="disp-id">서랍 확인 중...</h3>
+  <div class="upload-tools">
+    <button class="btn primary" onclick="document.getElementById('camera-input').click()">📸 즉시 촬영</button>
+    <button class="btn" onclick="document.getElementById('album-input').click()">🖼 앨범 선택</button>
+  </div>
 
-  try {
-    const fName = `${Date.now()}_${file.name}`;
-    // 1) 업로드 (클라이언트는 anon key로 업로드만 함)
-    const { data: upData, error: upErr } = await supabaseClient.storage.from(BUCKET).upload(fName, file, { upsert: true });
-    if (upErr) throw upErr;
+  <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="handleFile(this)">
+  <input type="file" id="album-input" accept="image/*" style="display:none" onchange="handleFile(this)">
 
-    // 2) 서버에 filePath(경로)만 보냄 — 서버가 signed URL 생성 후 Gemini 호출
-    const filePath = upData?.path || fName; // supabase 업로드 응답에서 path 확인
-    const res = await fetch('/api/analyze', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ filePath })
+  <input id="find-box" placeholder="검색 후 엔터" style="width:100%;padding:12px;border-radius:10px;border:2px solid #dfefff;margin-top:8px">
+  <div id="list-container" style="margin-top:12px"></div>
+</div>
+
+<button class="chat-btn" onclick="toggleChat()">✨ 결에게 묻기</button>
+
+<div id="chat-window" class="chat-window" style="display:flex;flex-direction:column">
+  <div class="chat-header"><span>비서 '결'</span><span style="cursor:pointer" onclick="toggleChat()">✕</span></div>
+  <div id="chat-messages" class="chat-messages"></div>
+  <div class="chat-input-area">
+    <input id="chat-field" class="chat-input" placeholder="메시지 입력..." onkeydown="if(event.key==='Enter') sendMsg()">
+    <button style="margin-left:8px" onclick="sendMsg()">전송</button>
+  </div>
+</div>
+
+<script>
+  // ============= 설정값(수정 필요) =============
+  const SUPABASE_URL = 'https://tqhtggusphhcsygiitrv.supabase.co'; // 네 값
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc'; // Supabase 공개(anon)키 (브라우저에 사용)
+  const BUCKET = 'user_uploads';
+
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const tag = (new URLSearchParams(window.location.search).get('tag') || 'DRAWER001').toUpperCase();
+  let activeItems = [];
+  let chatSubscribed = false;
+
+  window.onload = async () => {
+    document.getElementById('disp-id').innerText = (tag==='DRAWER002') ? '서랍 2번' : '서랍 1번';
+    const s = localStorage.getItem('gonggan_gyeol_'+tag);
+    activeItems = s ? JSON.parse(s) : [{cat:'기타',n:'샘플',q:1}];
+    render();
+  };
+
+  function render(){
+    const cont = document.getElementById('list-container');
+    cont.innerHTML = '';
+    const cats = [...new Set(activeItems.map(i=>i.cat))];
+    cats.forEach(c=>{
+      const list = activeItems.filter(i=>i.cat===c);
+      const el = document.createElement('div');
+      el.style.marginBottom='10px';
+      el.innerHTML = `<div style="font-weight:800">${c} (${list.length})</div>` + list.map(it=>`<div style="background:#f0f7ff;padding:12px;border-radius:10px;margin-top:8px;position:relative;"><div style="font-weight:800">${it.n}</div><div style="position:absolute;right:12px;top:12px;background:#0b79ff;color:#fff;padding:4px 8px;border-radius:8px">${it.q} EA</div></div>`).join('');
+      cont.appendChild(el);
     });
-
-    const json = await res.json();
-    if (json.items && Array.isArray(json.items)) {
-      json.items.forEach(n => activeItems.push({ cat: '신규 인식', n, q: 1 }));
-      localStorage.setItem('gonggan_gyeol_' + tag, JSON.stringify(activeItems));
-      render();
-      status.innerText = '분석 완료';
-    } else {
-      throw new Error(json.error || '인식 실패');
-    }
-  } catch (e) {
-    console.error(e);
-    status.innerText = '에러: ' + (e.message || e);
-    status.style.color = 'red';
-  } finally {
-    setTimeout(()=>{ document.getElementById('disp-id').innerText = (tag==='DRAWER002')?'서랍 2번':'서랍 1번'; }, 1500);
   }
-}
+
+  function saveAndRender(){ localStorage.setItem('gonggan_gyeol_'+tag, JSON.stringify(activeItems)); render(); }
+
+  // =========== 파일 업로드 & 분석 (핵심 변경) ===========
+  async function handleFile(input){
+    const file = input.files[0]; if(!file) return;
+    const status = document.getElementById('disp-id');
+    status.innerText = '업로드 중...';
+
+    try {
+      const fName = `${Date.now()}_${file.name}`;
+      // 1) 업로드 (브라우저는 anon key로 업로드만)
+      const { data: upData, error: upErr } = await supabaseClient.storage.from(BUCKET).upload(fName, file, { upsert: true });
+      if (upErr) throw upErr;
+
+      // upData.path 또는 fName 전달
+      const filePath = upData?.path || fName;
+
+      // 2) 서버에 filePath만 전달 -> 서버가 signedUrl 생성 + Gemini 호출
+      const r = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ filePath })
+      });
+
+      const json = await r.json();
+      if (json.items && Array.isArray(json.items)) {
+        json.items.forEach(n => activeItems.push({ cat:'신규 인식', n, q:1 }));
+        saveAndRender();
+        status.innerText = '분석 완료';
+      } else {
+        throw new Error(json.error || '인식 실패');
+      }
+    } catch (e) {
+      console.error(e);
+      status.innerText = '에러: ' + (e.message || e);
+      status.style.color = 'red';
+    } finally {
+      setTimeout(()=>{ document.getElementById('disp-id').innerText = (tag==='DRAWER002')?'서랍 2번':'서랍 1번'; }, 1200);
+    }
+  }
+
+  // =========== 채팅 (구독은 토글로 시작) ===========
+  async function sendMsg(){
+    const f = document.getElementById('chat-field'); const txt = f.value.trim(); if(!txt) return;
+    // 1) 클라이언트에서 user 메시지 DB에 넣기 (optional - anon 키로 직접 삽입하려면 RLS 정책 필요)
+    try {
+      await supabaseClient.from('chat_messages').insert([{ tag, sender:'user', content: txt }]);
+    } catch(e){
+      console.warn('user insert failed', e);
+    }
+    f.value = '';
+
+    // 2) 서버에 질문 요청 -> 서버가 bot 메시지 삽입(클라이언트는 구독으로 받음)
+    try {
+      await fetch('/api/chat', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ message: txt, inventory: JSON.stringify(activeItems), tag })
+      });
+    } catch(e){
+      console.error('chat send failed', e);
+      addMsg('bot', '연결 실패');
+    }
+  }
+
+  function addMsg(type, text){
+    const box = document.getElementById('chat-messages');
+    const el = document.createElement('div'); el.className = 'msg ' + (type==='bot' ? 'bot' : 'user'); el.innerText = text;
+    box.appendChild(el); box.scrollTop = box.scrollHeight;
+  }
+
+  async function setupChatSubscription(){
+    if (typeof supabaseClient.channel !== 'function') {
+      // fallback: poll every 2s (최악의 경우)
+      console.warn('Realtime 채널 함수 미지원 - 폴링 모드');
+      return;
+    }
+    supabaseClient.channel('public:chat_messages')
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'chat_messages', filter:`tag=eq.${tag}` }, payload => {
+        const m = payload.new; addMsg(m.sender === 'bot' ? 'bot' : 'user', m.content);
+      }).subscribe();
+
+    // 초기 로드: 최근 메시지
+    const { data } = await supabaseClient.from('chat_messages').select('*').eq('tag', tag).order('created_at', { ascending: true }).limit(200);
+    if (data) data.forEach(d => addMsg(d.sender === 'bot' ? 'bot' : 'user', d.content));
+  }
+
+  function toggleChat(){
+    const w = document.getElementById('chat-window');
+    const showing = (w.style.display === 'flex');
+    w.style.display = showing ? 'none' : 'flex';
+    if (!chatSubscribed && !showing) {
+      chatSubscribed = true;
+      setupChatSubscription();
+    }
+  }
+</script>
+</body>
+</html>
