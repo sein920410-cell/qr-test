@@ -1,0 +1,6 @@
+{
+  "functions": {
+    "api/analyze.js": { "runtime": "nodejs18.x" },
+    "api/chat.js": { "runtime": "nodejs18.x" }
+  }
+}
