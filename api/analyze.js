@@ -1,65 +1,73 @@
-// Vercel 환경에서 실행되는 서버리스 함수입니다.
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
 export default async function handler(req, res) {
-  // 1. POST 요청만 허용
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   const { imageUrl } = req.body;
+  if (!imageUrl) return res.status(400).json({ error: '이미지 경로가 없습니다.' });
 
-  // 2. 이미지 URL이 없는 경우 에러 반환
-  if (!imageUrl) {
-    return res.status(400).json({ error: '이미지 경로가 없습니다.' });
+  if (!process.env.GEMINI_API_KEY) {
+    return res.status(500).json({ error: '서버 환경변수 GEMINI_API_KEY가 설정되지 않았습니다.' });
   }
 
   try {
-    // 3. Gemini API 초기화 (환경변수 GEMINI_API_KEY 필수)
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    
-    // 분석 속도가 가장 빠른 flash 모델을 사용합니다.
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // 1) 이미지 fetch
+    const imgResp = await fetch(imageUrl);
+    if (!imgResp.ok) throw new Error(`이미지 다운로드 실패: ${imgResp.status} ${imgResp.statusText}`);
+    const arrayBuffer = await imgResp.arrayBuffer();
+    const b64 = Buffer.from(arrayBuffer).toString('base64');
 
-    // 4. 안전 설정 해제 (분석 중 멈추는 현상 방지)
-    const safetySettings = [
-      { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-      { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-      { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-      { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
-    ];
+    // 2) REST 요청 바디 (inline image + prompt)
+    const body = {
+      contents: [
+        {
+          parts: [
+            { inline_data: { mime_type: 'image/jpeg', data: b64 } }, // mime_type은 실제에 맞게 조정 (image/png 등)
+            { text: "이 이미지에 보이는 물품의 이름만 콤마(,)로 구분하여 한국어로 출력하세요. 항목 외 설명 금지." }
+          ]
+        }
+      ]
+    };
 
-    // 5. 이미지를 읽어오기 위한 fetch
-    const imageResp = await fetch(imageUrl);
-    const buffer = await imageResp.arrayBuffer();
-
-    // 6. 비서 '결'에게 내리는 직답형 명령 (10초 타임아웃 방지 핵심)
-    const prompt = "List the items in this image separated by commas only. No descriptions. Answer in Korean.";
-
-    const result = await model.generateContent([
-      prompt,
-      {
-        inlineData: {
-          data: Buffer.from(buffer).toString("base64"),
-          mimeType: "image/jpeg",
-        },
+    const endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent';
+    const resp = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': process.env.GEMINI_API_KEY
       },
-      { safetySettings }
-    ]);
-
-    const response = await result.response;
-    const text = response.text();
-
-    // 7. 성공 응답 전송
-    return res.status(200).json({ items: text });
-
-  } catch (error) {
-    console.error("Gemini 분석 에러:", error);
-    
-    // "자리를 비웠어요" 대신 구체적인 에러 메시지 반환
-    return res.status(500).json({ 
-      error: `비서 '결'이 응답하지 못했습니다: ${error.message}`,
-      details: error.stack 
+      body: JSON.stringify(body)
     });
+
+    const data = await resp.json();
+    // 안전하게 응답 텍스트 추출 (REST 응답 포맷은 variants 있음)
+    let text = null;
+    if (data && data.candidates && data.candidates.length) {
+      // older/alternate
+      text = (data.candidates[0].content && data.candidates[0].content[0] && data.candidates[0].content[0].text) || null;
+    }
+    // new style: data.output or data.response?.text 혹은 top-level 대체
+    if (!text && data?.output?.[0]?.content) {
+      // try find text inside
+      const c = data.output[0].content.find(p => p?.parts?.length);
+      if (c) text = c.parts.map(p => p.text || '').join(' ');
+    }
+    // fallback: 전체 JSON stringify (디버그용)
+    if (!text && data?.candidates) {
+      text = JSON.stringify(data.candidates);
+    }
+    if (!text && data?.response) {
+      text = data.response?.text || JSON.stringify(data);
+    }
+
+    // 최종 안전 처리
+    if (!text) return res.status(500).json({ error: 'AI 응답을 파싱하지 못했습니다.', raw: data });
+
+    // items: "사과,바나나,..." 형태 가정 -> 배열로 변환
+    const items = text.split(',').map(s => s.trim()).filter(Boolean);
+
+    return res.status(200).json({ items, rawText: text, debug: data });
+
+  } catch (err) {
+    console.error('analyze error:', err);
+    return res.status(500).json({ error: '분석 실패', message: err.message, stack: err.stack });
   }
 }
