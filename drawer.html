@@ -14,24 +14,24 @@
         .btn-upload { flex: 1; padding: 14px; border-radius: 12px; font-weight: bold; cursor: pointer; border: 1px solid #e2e8f0; font-size: 13px; }
         .primary { background: var(--primary); color: #fff; border: none; }
         .search-input { width: 100%; padding: 15px; border: 2.5px solid var(--primary); border-radius: 12px; margin: 15px 0; outline: none; box-sizing: border-box; }
-        .item-row { background: #f0f7ff; padding: 15px; border-radius: 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-        /* 채팅창 전송 버튼 */
+        .item-row { background: #f0f7ff; padding: 15px; border-radius: 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e0f0ff; }
+        /* 채팅창 레이아웃 */
         .chat-btn { position: fixed; bottom: 20px; right: 20px; background: #000; color: #fff; border-radius: 50px; padding: 15px 25px; border: none; font-weight: bold; z-index: 1000; }
         .chat-window { display: none; position: fixed; bottom: 85px; right: 20px; width: 320px; height: 450px; background: #fff; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); flex-direction: column; overflow: hidden; z-index: 1001; }
         .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; background: #f8fafc; font-size: 14px; }
-        .msg { margin-bottom: 10px; padding: 10px; border-radius: 12px; max-width: 80%; line-height: 1.4; }
+        .msg { margin-bottom: 10px; padding: 12px; border-radius: 14px; max-width: 85%; line-height: 1.4; }
         .msg.bot { background: #e2e8f0; align-self: flex-start; }
         .msg.user { background: var(--primary); color: #fff; align-self: flex-end; }
-        .chat-input-area { padding: 10px; border-top: 1px solid #eee; display: flex; gap: 5px; }
-        .chat-input { flex: 1; border: 1px solid #ddd; padding: 10px; border-radius: 10px; outline: none; }
+        .chat-input-area { padding: 12px; border-top: 1px solid #eee; display: flex; gap: 8px; background: #fff; }
+        .chat-input { flex: 1; border: 1px solid #ddd; padding: 10px; border-radius: 10px; outline: none; font-size: 14px; }
         .btn-send { background: var(--primary); color: #fff; border: none; border-radius: 10px; padding: 0 15px; font-weight: bold; }
     </style>
 </head>
 <body>
 <div class="container">
-    <div id="status-bar" style="display:none; background:red; color:white; padding:10px; border-radius:8px; margin-bottom:10px; font-size:12px;"></div>
+    <div id="status-bar" style="display:none; background:red; color:white; padding:12px; border-radius:8px; margin-bottom:15px; font-size:13px; text-align:center;"></div>
     <div class="main-card">
-        <div class="header"><div class="title-badge" id="disp-id">정보 확인 중...</div></div>
+        <div class="header"><div class="title-badge" id="disp-id">서랍 정보 로딩...</div></div>
         <div style="display:flex; gap:8px;">
             <button class="btn-upload primary" onclick="document.getElementById('camera-input').click()">📸 즉시 촬영</button>
             <button class="btn-upload" onclick="document.getElementById('album-input').click()">🖼 앨범 선택</button>
@@ -44,10 +44,12 @@
 </div>
 <button class="chat-btn" onclick="toggleChat()">✨ 결에게 묻기</button>
 <div id="chat-window" class="chat-window">
-    <div style="background:#000; color:#fff; padding:15px; font-weight:bold; display:flex; justify-content:space-between;"><span>비서 '결'</span><span onclick="toggleChat()" style="cursor:pointer">✕</span></div>
+    <div style="background:#000; color:#fff; padding:18px; font-weight:bold; display:flex; justify-content:space-between; align-items:center;">
+        <span>비서 '결'</span><span onclick="toggleChat()" style="cursor:pointer; font-size:20px;">✕</span>
+    </div>
     <div id="chat-messages" class="chat-messages"></div>
     <div class="chat-input-area">
-        <input type="text" id="chat-field" class="chat-input" placeholder="질문하세요...">
+        <input type="text" id="chat-field" class="chat-input" placeholder="질문하세요..." onkeydown="if(event.key==='Enter') sendMsg()">
         <button class="btn-send" onclick="sendMsg()">전송</button>
     </div>
 </div>
@@ -55,10 +57,11 @@
     const S_URL = 'https://tqhtggusphhcsygiitrv.supabase.co';
     const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc';
     let supabaseClient;
-    const tag = (new URLSearchParams(window.location.search).get('tag') || 'DRAWER001').toUpperCase();
+    const params = new URLSearchParams(window.location.search);
+    const tag = (params.get('tag') || 'DRAWER001').toUpperCase();
     let activeItems = [];
 
-    // 1. 이름부터 즉시 띄우기 (멈춤 방지)
+    // 1. UI 초기화 (에러 상관없이 실행)
     document.getElementById('disp-id').innerText = (tag === 'DRAWER002' ? "서랍 2번" : "서랍 1번");
 
     window.onload = () => {
@@ -68,48 +71,88 @@
             if (saved) activeItems = JSON.parse(saved);
             render();
             addMsg("bot", "안녕하세요! 어떤 물건을 찾아드릴까요?");
-        } catch(e) { console.error(e); }
+        } catch(e) { 
+            console.error("초기 로딩 에러:", e);
+            document.getElementById('status-bar').style.display = 'block';
+            document.getElementById('status-bar').innerText = "시스템 초기화 오류";
+        }
     };
 
     function render() {
         const container = document.getElementById('list-container');
-        container.innerHTML = activeItems.length ? '' : '<div style="text-align:center; padding:20px; color:#999;">보관된 물건이 없습니다.</div>';
+        if (activeItems.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding:30px; color:#999; font-size:14px;">보관된 물건이 없습니다.</div>';
+            return;
+        }
+        container.innerHTML = '';
         activeItems.forEach((it, idx) => {
-            container.innerHTML += `<div class="item-row"><span><strong>${it.n}</strong></span><span>${it.q} EA</span></div>`;
+            const row = document.createElement('div');
+            row.className = 'item-row';
+            row.innerHTML = `<span><strong>${it.n}</strong></span><span>${it.q} EA</span>`;
+            container.appendChild(row);
         });
     }
 
     async function handleFile(input) {
         const file = input.files[0]; if(!file) return;
         const bar = document.getElementById('status-bar');
-        bar.style.display = 'block'; bar.style.background = '#000'; bar.innerText = "사진 분석 중...";
+        bar.style.display = 'block'; bar.style.background = '#000'; bar.innerText = "사진 전송 중...";
         try {
-            const path = `uploads/${Date.now()}.jpg`;
-            const { error } = await supabaseClient.storage.from('USER_UPLOADS').upload(path, file);
-            if(error) throw error;
-            const { data: { publicUrl } } = supabaseClient.storage.from('USER_UPLOADS').getPublicUrl(path);
-            const res = await fetch('/api/analyze', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({imageUrl:publicUrl}) });
+            const fName = `${Date.now()}_${file.name}`;
+            const { error: upErr } = await supabaseClient.storage.from('USER_UPLOADS').upload(fName, file);
+            if(upErr) throw upErr;
+
+            bar.innerText = "비서 '결'이 분석 중...";
+            const { data: { publicUrl } } = supabaseClient.storage.from('USER_UPLOADS').getPublicUrl(fName);
+            
+            const res = await fetch('/api/analyze', { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({ imageUrl: publicUrl }) 
+            });
             const data = await res.json();
+            
             if(data.items) {
-                data.items.split(',').forEach(n => activeItems.push({ n: n.trim(), q: 1 }));
+                data.items.split(',').forEach(n => { if(n.trim()) activeItems.push({ n: n.trim(), q: 1 }); });
                 localStorage.setItem('gonggan_gyeol_' + tag, JSON.stringify(activeItems));
-                render(); bar.innerText = "분석 완료!";
+                render(); 
+                bar.innerText = "분석 완료!";
+            } else {
+                throw new Error(data.error || "분석 실패");
             }
-        } catch(e) { bar.innerText = "에러: " + e.message; bar.style.background = 'red'; }
-        setTimeout(() => bar.style.display = 'none', 3000);
+        } catch(e) { 
+            bar.innerText = "오류: " + e.message; 
+            bar.style.background = 'red'; 
+        }
+        setTimeout(() => { if(bar.style.background !== 'red') bar.style.display = 'none'; }, 4000);
     }
 
-    function toggleChat() { const w = document.getElementById('chat-window'); w.style.display = (w.style.display === 'flex' ? 'none' : 'flex'); }
-    function addMsg(type, text) { const m = document.getElementById('chat-messages'); m.innerHTML += `<div class="msg ${type}">${text}</div>`; m.scrollTop = m.scrollHeight; }
+    function toggleChat() { 
+        const w = document.getElementById('chat-window'); 
+        w.style.display = (w.style.display === 'flex' ? 'none' : 'flex'); 
+    }
+
+    function addMsg(type, text) { 
+        const m = document.getElementById('chat-messages'); 
+        m.innerHTML += `<div class="msg ${type}">${text}</div>`; 
+        m.scrollTop = m.scrollHeight; 
+    }
 
     async function sendMsg() {
-        const f = document.getElementById('chat-field'); const txt = f.value.trim(); if(!txt) return;
+        const f = document.getElementById('chat-field'); 
+        const txt = f.value.trim(); if(!txt) return;
         addMsg("user", txt); f.value = '';
         try {
-            const res = await fetch('/api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message:txt, inventory:JSON.stringify(activeItems)}) });
+            const res = await fetch('/api/chat', { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({ message: txt, inventory: JSON.stringify(activeItems) }) 
+            });
             const data = await res.json();
             addMsg("bot", data.reply || "결이가 이해하지 못했어요.");
-        } catch(e) { addMsg("bot", "지금은 연결이 어려워요."); }
+        } catch(e) { 
+            addMsg("bot", "지금은 연결이 어렵습니다."); 
+        }
     }
 </script>
 </body>
