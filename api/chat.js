@@ -4,9 +4,16 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 여기에 당신의 기존 제미나이 분석 코드 넣기
-    const result = { message: 'API 작동 중!' }; // 테스트용
-    res.status(200).json(result);
+    const { message } = req.body;
+    
+    const { GoogleGenerativeAI } = await import('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL });
+
+    const result = await model.generateContent(message);
+    const response = await result.response;
+    
+    res.status(200).json({ success: true, reply: response.text() });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
