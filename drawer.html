@@ -22,23 +22,36 @@
   </div>
 
 <script>
-  // 환경값(로컬에 하드코딩하지 말고 배포 시 환경/빌드 프로세스에서 치환 권장)
+  // 환경값
   const SUPABASE_URL = 'https://tqhtggusphhcsygiitrv.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_lJeKpO0aRv9mTBE1qnbkow_JqTmhnHQ';
+  const BUCKET = 'user_uploads';  // 🔥 BUCKET 변수 추가 (Supabase 버킷명)
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   const tag = (new URLSearchParams(window.location.search).get('tag') || 'DRAWER001').toUpperCase();
   let chatSubscribed = false;
 
   async function handleFile(input) {
     const file = input.files[0];
     if (!file) return alert("파일을 선택하세요");
-    const fName = `${Date.now()}_${file.name.replace(/\s+/g,'_')}`;
+    
+    // 🔥 안전한 파일명 생성 (공백→_, 특수문자 제거)
+    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const fName = `photos/${Date.now()}_${safeName}`;
+    
     // 1) 브라우저에서 업로드 (anon 키로)
-    const { data: upData, error: upErr } = await supabaseClient.storage.from(BUCKET).upload(fName, file, { upsert: true });
-    if (upErr) { console.error(upErr); return alert("업로드 실패"); }
+    console.log("업로드 중:", fName);  // 디버깅용
+    const { data: upData, error: upErr } = await supabaseClient.storage
+      .from(BUCKET)
+      .upload(fName, file, { upsert: true });
+      
+    if (upErr) { 
+      console.error("업로드 에러:", upErr); 
+      return alert("업로드 실패: " + upErr.message); 
+    }
+    
     const filePath = upData?.path || fName;
+    console.log("업로드 성공:", filePath);  // 디버깅용
 
     // 2) 서버에 filePath만 전송
     try {
@@ -49,20 +62,20 @@
       });
       const json = await r.json();
       if (json.items) {
-        alert("인식완료: " + json.items.join(", "));
+        alert("✅ 인식완료: " + json.items.join(", "));
       } else {
-        alert("인식 실패: " + (json.error || JSON.stringify(json)));
+        alert("❌ 인식 실패: " + (json.error || JSON.stringify(json)));
       }
     } catch (e) {
       console.error(e);
       alert("서버 호출 실패");
     }
+    input.value = '';  // 입력 초기화
   }
 
   async function setupChatSubscription() {
     if (chatSubscribed) return;
     if (typeof supabaseClient.channel !== 'function') {
-      // 폴링 대체 (간단 구현) — 권장: supabase realtime 사용
       chatSubscribed = true;
       return;
     }
@@ -85,19 +98,27 @@
 
   function addMsg(type, text){
     const box = document.getElementById('chat-messages');
-    const el = document.createElement('div'); el.innerText = (type==='bot' ? '결: ' : '나: ') + text;
+    const el = document.createElement('div'); 
+    el.innerText = (type==='bot' ? '결: ' : '나: ') + text;
     box.appendChild(el);
     box.scrollTop = box.scrollHeight;
   }
 
   async function sendMsg(){
-    const f = document.getElementById('chat-field'); const txt = f.value.trim(); if(!txt) return;
-    // 클라이언트는 DB 삽입 대신 서버 호출(서버가 DB에 bot 메시지 삽입하도록)
+    const f = document.getElementById('chat-field'); 
+    const txt = f.value.trim(); 
+    if(!txt) return;
     try {
-      await fetch('/api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: txt, inventory: "[]", tag }) });
-      // user 메시지는 DB에 넣는건 RLS 정책에 따라 클라이언트에서 해도 되고, 여기서는 생략
+      await fetch('/api/chat', { 
+        method:'POST', 
+        headers:{'Content-Type':'application/json'}, 
+        body: JSON.stringify({ message: txt, inventory: "[]", tag }) 
+      });
       f.value = '';
-    } catch(e) { console.error(e); alert("메시지 전송 실패"); }
+    } catch(e) { 
+      console.error(e); 
+      alert("메시지 전송 실패"); 
+    }
   }
 </script>
 </body>
