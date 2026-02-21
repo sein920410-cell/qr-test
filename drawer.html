@@ -2,91 +2,254 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>공간:결 - 인벤토리 리포트</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* 세인 님의 오리지널 UI (image_234c7d.png) 복구 */
-        body { font-family: -apple-system, sans-serif; margin: 0; padding: 0; background: #F8F9FB; color: #333; }
-        #status-bar { position: fixed; top: 0; width: 100%; padding: 10px; background: #000; color: #FFF; text-align: center; font-size: 13px; display: none; z-index: 10000; }
-        .container { padding: 15px; max-width: 500px; margin: 0 auto; }
-        .search-box { background: white; border: 1.5px solid #007AFF; border-radius: 8px; padding: 12px; margin-bottom: 20px; color: #999; }
-        .upload-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); text-align: center; margin-bottom: 20px; }
-        .btn-upload { background: #4A90E2; color: white; border: none; border-radius: 8px; padding: 14px; width: 100%; font-size: 15px; font-weight: bold; cursor: pointer; }
-        .inventory-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: bold; }
-        .category-group { background: white; border-radius: 12px; margin-bottom: 15px; border: 1px solid #EEE; }
-        .category-header { padding: 15px; background: #FDFDFD; border-bottom: 1px solid #F5F5F5; display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; }
-        .item-row { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #F9F9F9; }
-        .btn-qty { border: 1px solid #DDD; background: #FFF; border-radius: 4px; width: 24px; height: 24px; color: #007AFF; cursor: pointer; }
-        .ask-btn { position: fixed; bottom: 20px; right: 20px; background: #000; color: white; padding: 12px 20px; border-radius: 30px; font-size: 14px; font-weight: bold; }
+        :root { --primary: #007bff; --bg: #f8fafc; --card: #ffffff; --item-bg: #f0f7ff; --danger: #ff4d4d; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; color: #1e293b; padding-bottom: 100px; font-size: 16px; }
+        .container { max-width: 500px; margin: 0 auto; }
+        
+        /* 상태 알림창 */
+        #status-bar { display: none; background: #000; color: #fff; text-align: center; padding: 10px; border-radius: 12px; margin-bottom: 15px; font-size: 13px; font-weight: bold; }
+
+        .main-card { background: var(--card); border-radius: 28px; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.05); margin-bottom: 15px; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .title-badge { background: #0f172a; color: #fff; padding: 8px 16px; border-radius: 100px; font-size: 13px; font-weight: 700; }
+        
+        /* 카메라/앨범 버튼 영역 */
+        .upload-tools { display: flex; gap: 8px; margin-bottom: 15px; }
+        .btn-upload { flex: 1; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; font-size: 13px; color: #475569; font-weight: 800; cursor: pointer; text-align: center; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .btn-upload.primary { background: var(--primary); color: #fff; border: none; }
+
+        .search-input { width: 100%; padding: 15px; border: 2px solid var(--primary); border-radius: 12px; box-sizing: border-box; font-size: 16px; margin-bottom: 15px; outline: none; }
+        
+        .add-area { display: flex; justify-content: flex-end; margin-bottom: 10px; padding-right: 5px; }
+        .btn-add { background: #fff; color: var(--primary); border: 1px solid var(--primary); border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 800; cursor: pointer; }
+
+        .list-header { background: #f1f5f9; border-radius: 14px; margin-bottom: 12px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .list-header span { font-size: 14px; font-weight: 800; color: #475569; }
+
+        .cat-group { background: var(--card); border-radius: 16px; margin-bottom: 10px; border: 1px solid #e2e8f0; overflow: hidden; }
+        .cat-head { padding: 18px; display: flex; justify-content: space-between; font-weight: 800; font-size: 16px; cursor: pointer; align-items: center; }
+        .cat-body { display: none; padding: 10px; background: #fafafa; border-top: 1px solid #f1f5f9; }
+        
+        .arr { font-size: 18px; color: #64748b; transition: transform 0.3s; display: inline-block; font-weight: bold; }
+
+        .item-row { background: var(--item-bg); border-radius: 14px; margin-bottom: 8px; padding: 12px; border: 1px solid #e0f0ff; }
+        .item-name { font-size: 15px; font-weight: 700; color: #334155; display: block; margin-bottom: 12px; }
+        
+        .item-footer { display: flex; justify-content: space-between; align-items: center; }
+        .item-tools { display: flex; gap: 6px; }
+        .btn-tool { background: #fff; border: 1px solid #d1e9ff; border-radius: 6px; padding: 6px 10px; font-size: 11px; font-weight: 700; color: #64748b; cursor: pointer; }
+        .btn-delete { color: var(--danger); border-color: #ffdada; }
+
+        .qty-controls { display: flex; align-items: center; gap: 6px; background: #fff; padding: 4px 6px; border-radius: 10px; border: 1px solid #d1e9ff; }
+        .btn-qty { border: none; background: #e0f0ff; color: var(--primary); width: 24px; height: 24px; border-radius: 6px; font-weight: 900; cursor: pointer; }
+        .qty-input { width: 35px; border: none; text-align: center; font-size: 13px; font-weight: 800; outline: none; background: transparent; }
+
+        /* 채팅 UI */
+        .chat-btn { position: fixed; bottom: 20px; right: 20px; background: #000; color: #fff; border: none; border-radius: 50px; padding: 16px 26px; font-weight: 800; font-size: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 1000; }
+        .chat-window { display: none; position: fixed; bottom: 90px; right: 20px; width: 320px; height: 400px; background: #fff; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); flex-direction: column; overflow: hidden; z-index: 1001; }
+        .chat-header { background: #000; color: #fff; padding: 15px; font-weight: 800; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; font-size: 14px; background: #f8fafc; }
+        .msg { margin-bottom: 10px; padding: 10px; border-radius: 12px; max-width: 80%; line-height: 1.4; }
+        .msg.bot { background: #e2e8f0; align-self: flex-start; color: #333; }
+        .msg.user { background: var(--primary); color: #fff; align-self: flex-end; margin-left: auto; }
+        .chat-input-area { padding: 10px; border-top: 1px solid #eee; display: flex; background: #fff; }
+        .chat-input { flex: 1; border: 1px solid #ddd; padding: 10px; border-radius: 8px; outline: none; font-size: 14px; }
     </style>
 </head>
 <body>
 
-<div id="status-bar"></div>
-
 <div class="container">
-    <div class="search-box">무엇을 찾으시나요?</div>
+    <div id="status-bar"></div>
 
-    <div class="upload-card">
-        <h2 style="font-size: 20px; margin-bottom: 15px;">서랍 아이템 등록</h2>
-        <input type="file" id="file-selector" accept="image/*" style="display: none;">
-        <button class="btn-upload" onclick="document.getElementById('file-selector').click()">📷 사진 찍어서 등록하기</button>
-    </div>
-
-    <div class="inventory-header">
-        <span>📦 보관 물품 전체 목록</span>
-        <span style="font-size: 12px; color: #888;">전체 접기 ▲</span>
-    </div>
-
-    <div id="category-container">
+    <div class="main-card">
+        <div class="header">
+            <div class="title-badge" id="disp-id">불러오는 중...</div>
         </div>
+
+        <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
+        <input type="file" id="album-input" accept="image/*" style="display: none;">
+
+        <div class="upload-tools">
+            <button class="btn-upload primary" onclick="document.getElementById('camera-input').click()">📸 즉시 촬영</button>
+            <button class="btn-upload" onclick="document.getElementById('album-input').click()">🖼 앨범에서 가져오기</button>
+        </div>
+
+        <input type="text" id="find-box" class="search-input" placeholder="무엇을 찾으시나요?" oninput="updateList()">
+        
+        <div class="add-area">
+            <button class="btn-add" onclick="addItem()">+ 수동 물품 추가</button>
+        </div>
+
+        <div class="list-header" onclick="toggleAll()">
+            <span>📦 보관 물품 전체 목록</span>
+            <span id="all-arr-icon" class="arr">›</span>
+        </div>
+
+        <div id="list-container"></div>
+    </div>
 </div>
 
-<div class="ask-btn">✨ 결에게 묻기</div>
+<button class="chat-btn" onclick="toggleChat()">✨ 결에게 묻기</button>
+
+<div id="chat-window" class="chat-window">
+    <div class="chat-header"><span>비서 '결'</span><span style="cursor:pointer; font-size: 18px;" onclick="toggleChat()">✕</span></div>
+    <div class="chat-messages" id="chat-messages">
+        <div class="msg bot">안녕하세요! 보관된 물건에 대해 무엇이든 물어보세요.</div>
+    </div>
+    <div class="chat-input-area">
+        <input type="text" class="chat-input" id="chat-input-field" placeholder="메시지 입력 후 엔터..." onkeydown="if(event.key==='Enter') sendMsg()">
+    </div>
+</div>
 
 <script>
-    // 1. Supabase 설정 유지
+    // --- 1. Supabase 초기화 및 기본 설정 ---
     const S_URL = 'https://tqhtggusphhcsygiitrv.supabase.co';
-    const S_KEY = 'YOUR_ANON_KEY'; // 세인님의 ANON KEY
-    const supabase = lib.supabase.createClient(S_URL, S_KEY);
+    const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxaHRnZ3VzcGhoY3N5Z2lpdHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwNDMxMTMsImV4cCI6MjA4NjYxOTExM30.HXA2GbucJPkt3LFl9_JpLiwUQvI95QNEDeQWzQ9i-pc';
+    const supabase = window.supabase.createClient(S_URL, S_KEY);
 
-    const fileSelector = document.getElementById('file-selector');
+    const params = new URLSearchParams(window.location.search);
+    const tag = (params.get('tag') || 'DRAWER001').toUpperCase();
+    let isAllOpen = true; // 기본적으로 펼쳐두기
+    let openCats = {};
+
+    let active = { title: tag === 'DRAWER002' ? "서랍 2번" : "서랍 1번", items: [] };
+
+    // --- 2. 로컬 데이터 불러오기 및 렌더링 ---
+    function loadSavedData() {
+        const saved = localStorage.getItem('gonggan_gyeol_' + tag);
+        if (saved) active.items = JSON.parse(saved);
+        else active.items = []; // 초기 빈 상태
+        document.getElementById('disp-id').innerText = active.title;
+        updateList();
+    }
+    window.onload = loadSavedData;
+
+    function saveData() { localStorage.setItem('gonggan_gyeol_' + tag, JSON.stringify(active.items)); }
+
+    // --- 3. UI 업데이트 및 목록 생성 (CRUD 연결) ---
+    function updateList() {
+        const word = document.getElementById('find-box').value.trim().toLowerCase();
+        const container = document.getElementById('list-container');
+        container.innerHTML = '';
+
+        const filtered = active.items.filter(i => i.n.toLowerCase().includes(word));
+        const cats = [...new Set(filtered.map(i => i.cat))];
+
+        if(cats.length === 0) {
+            container.innerHTML = `<div style="text-align:center; padding: 20px; color: #94a3b8; font-size: 14px;">보관된 물품이 없습니다.</div>`;
+            return;
+        }
+
+        cats.forEach(c => {
+            const list = filtered.filter(i => i.cat === c);
+            const div = document.createElement('div');
+            div.className = 'cat-group';
+            const isOpen = word || isAllOpen || openCats[c];
+            
+            div.innerHTML = `
+                <div class="cat-head" onclick="toggle('${c}', this)">
+                    <span>${c} (${list.length})</span>
+                    <span class="arr" style="transform: rotate(${isOpen ? '90deg' : '0deg'})">›</span>
+                </div>
+                <div class="cat-body" style="display: ${isOpen ? 'block' : 'none'}">
+                    ${list.map(item => {
+                        const globalIdx = active.items.indexOf(item);
+                        return `
+                        <div class="item-row">
+                            <span class="item-name">${item.n}</span>
+                            <div class="item-footer">
+                                <div class="item-tools">
+                                    <button class="btn-tool" onclick="editItem(${globalIdx})">수정</button>
+                                    <button class="btn-tool btn-delete" onclick="deleteItem(${globalIdx})">삭제</button>
+                                </div>
+                                <div class="qty-controls">
+                                    <button class="btn-qty" onclick="changeQty(${globalIdx}, -1, event)">-</button>
+                                    <input type="number" class="qty-input" value="${item.q}" onchange="inputQty(${globalIdx}, this.value)">
+                                    <span style="font-size:11px; font-weight:800; color:#94a3b8;">EA</span>
+                                    <button class="btn-qty" onclick="changeQty(${globalIdx}, 1, event)">+</button>
+                                </div>
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>`;
+            container.appendChild(div);
+        });
+        document.getElementById('all-arr-icon').style.transform = isAllOpen ? 'rotate(90deg)' : 'rotate(0deg)';
+    }
+
+    // --- 4. 개별 아이템 제어 로직 ---
+    function toggleAll() { isAllOpen = !isAllOpen; openCats = {}; updateList(); }
+    function toggle(catName, h) {
+        const b = h.nextElementSibling;
+        const a = h.querySelector('.arr');
+        const show = b.style.display === 'none' || b.style.display === '';
+        b.style.display = show ? 'block' : 'none';
+        a.style.transform = show ? 'rotate(90deg)' : 'rotate(0deg)';
+        openCats[catName] = show;
+    }
+    function addItem() {
+        const name = prompt("추가할 물품 이름을 입력하세요."); if (!name) return;
+        const cat = prompt("카테고리를 입력하세요.", "기타"); if (!cat) return;
+        active.items.push({ cat: cat, n: name, q: 1 });
+        openCats[cat] = true; saveData(); updateList();
+    }
+    function editItem(idx) {
+        const item = active.items[idx];
+        const newName = prompt("새로운 물품 이름을 입력하세요.", item.n); if (!newName) return;
+        const newCat = prompt("카테고리를 수정하시겠습니까?", item.cat); if (!newCat) return;
+        item.n = newName; item.cat = newCat;
+        openCats[newCat] = true; saveData(); updateList();
+    }
+    function deleteItem(idx) {
+        if (confirm(`'${active.items[idx].n}' 물품을 삭제하시겠습니까?`)) {
+            active.items.splice(idx, 1); saveData(); updateList();
+        }
+    }
+    function changeQty(idx, val, e) {
+        e.stopPropagation(); active.items[idx].q = Math.max(0, active.items[idx].q + val);
+        saveData(); updateList();
+    }
+    function inputQty(idx, val) {
+        active.items[idx].q = Math.max(0, parseInt(val) || 0);
+        saveData(); updateList();
+    }
+
+    // --- 5. 이미지 업로드 및 AI 분석 로직 완벽 통합 ---
     const statusBar = document.getElementById('status-bar');
-    const categoryContainer = document.getElementById('category-container');
-
     function showMsg(text, isErr = false) {
         statusBar.innerText = text;
         statusBar.style.display = 'block';
-        statusBar.style.background = isErr ? '#FF3B30' : '#000';
+        statusBar.style.background = isErr ? '#ff4d4d' : '#000';
+        if(!isErr) setTimeout(() => { statusBar.style.display = 'none'; }, 5000);
     }
 
-    fileSelector.addEventListener('change', async (e) => {
+    async function handleFileUpload(e) {
         const file = e.target.files[0];
         if (!file) return;
 
         try {
+            // 사용자 세션 확인 (없어도 동작하도록 익명키 허용 설정에 따름)
             const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
-                showMsg("로그인이 필요합니다.", true);
-                return;
-            }
-            const uid = session.user.id;
+            const uid = session ? session.user.id : 'guest';
 
-            showMsg("이미지 최적화 중...");
+            showMsg("이미지 처리 중...");
             const blob = await compress(file);
 
-            showMsg("서랍 저장소(USER_UPLOADS)에 저장 중...");
+            showMsg("클라우드 저장소 전송 중...");
             const path = `${uid}/${Date.now()}.jpg`;
             const { error: upError } = await supabase.storage
                 .from('USER_UPLOADS')
                 .upload(path, blob, { contentType: 'image/jpeg' });
 
             if (upError) throw upError;
-
             const { data: { publicUrl } } = supabase.storage.from('USER_UPLOADS').getPublicUrl(path);
 
-            showMsg("비서 '결'이 리포트를 작성 중입니다...");
+            showMsg("비서 '결'이 사물을 분석 중입니다...");
             const res = await fetch('/api/analyze', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -95,15 +258,30 @@
 
             const data = await res.json();
             if (data.items) {
-                renderList(data.items);
-                showMsg("인벤토리 업데이트 완료!");
+                // 핵심: 콤마로 분리된 AI 결과값을 기존 배열 로직에 밀어넣기
+                const newItems = data.items.split(',');
+                newItems.forEach(itemName => {
+                    const cleanedName = itemName.trim();
+                    if(cleanedName) {
+                        active.items.push({ cat: '신규 분석(분류필요)', n: cleanedName, q: 1 });
+                        openCats['신규 분석(분류필요)'] = true;
+                    }
+                });
+                saveData();
+                updateList();
+                showMsg("AI 분석 완료! 목록에 자동 추가되었습니다.");
+            } else {
+                throw new Error("분석 결과가 없습니다.");
             }
         } catch (err) {
-            showMsg(`오류: ${err.message}`, true);
+            showMsg(`오류 발생: ${err.message}`, true);
         }
-    });
+    }
 
-    // 10초 타임아웃 방지용 압축 로직
+    document.getElementById('camera-input').addEventListener('change', handleFileUpload);
+    document.getElementById('album-input').addEventListener('change', handleFileUpload);
+
+    // 이미지 리사이즈 로직 유지 (서버리스 10초 타임아웃 방지용)
     function compress(file) {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -123,24 +301,35 @@
         });
     }
 
-    function renderList(itemsStr) {
-        categoryContainer.innerHTML = '';
-        const items = itemsStr.split(',');
-        const group = document.createElement('div');
-        group.className = 'category-group';
-        group.innerHTML = `<div class="category-header">신규 분석 항목 (${items.length}) <span>⌵</span></div>`;
-        
-        items.forEach(item => {
-            const row = document.createElement('div');
-            row.className = 'item-row';
-            row.innerHTML = `
-                <div class="item-name">${item.trim()}</div>
-                <div class="item-ctrl">
-                    <button class="btn-qty">-</button> 1 <span style="font-size: 11px; color: #999;">EA</span> <button class="btn-qty">+</button>
-                </div>`;
-            group.appendChild(row);
-        });
-        categoryContainer.appendChild(group);
+    // --- 6. 채팅 모달 및 Vercel API 연결 복구 ---
+    function toggleChat() {
+        const win = document.getElementById('chat-window');
+        win.style.display = (win.style.display === 'flex') ? 'none' : 'flex';
+    }
+
+    async function sendMsg() {
+        const input = document.getElementById('chat-input-field');
+        const userText = input.value.trim();
+        if(!userText) return;
+
+        const msgs = document.getElementById('chat-messages');
+        msgs.innerHTML += `<div class="msg user">${userText}</div>`;
+        input.value = '';
+        msgs.scrollTop = msgs.scrollHeight;
+
+        try {
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                // 현재 active.items(목록) 데이터를 AI에게 함께 전송
+                body: JSON.stringify({ message: userText, inventory: JSON.stringify(active.items) })
+            });
+            const data = await res.json();
+            msgs.innerHTML += `<div class="msg bot">${data.reply}</div>`;
+        } catch (err) {
+            msgs.innerHTML += `<div class="msg bot" style="color:red;">네트워크 오류가 발생했습니다.</div>`;
+        }
+        msgs.scrollTop = msgs.scrollHeight;
     }
 </script>
 </body>
