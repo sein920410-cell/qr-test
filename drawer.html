@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>공간:결 - 스마트 인벤토리</title>
+    <title>공간:결 - 스마트 리포트</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -12,47 +12,50 @@
         /* 헤더 & 메인 카드 */
         .main-card { background: var(--card); padding: 20px; border-radius: 0 0 30px 30px; box-shadow: 0 4px 25px rgba(0,0,0,0.05); flex-shrink: 0; }
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .title-badge { background: #0f172a; color: #fff; padding: 8px 18px; border-radius: 100px; font-weight: 700; font-size: 14px; }
-        .btn-analyze { background: var(--primary); color: #fff; border: none; padding: 10px 18px; border-radius: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(0,123,255,0.2); }
         
-        /* 미디어 박스 & 분석 상태 */
+        /* 메인 이동 버튼 */
+        .btn-home { background: #f1f5f9; border: 1px solid #e2e8f0; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; color: #64748b; text-decoration: none; }
+        
+        /* 클릭 가능한 제목 */
+        .title-badge { background: #0f172a; color: #fff; padding: 8px 18px; border-radius: 100px; font-weight: 700; font-size: 14px; cursor: pointer; }
+        .btn-analyze { background: var(--primary); color: #fff; border: none; padding: 10px 18px; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        
         .media-box { width: 100%; height: 230px; background: #f1f5f9; border-radius: 20px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; border: 1px solid #e2e8f0; }
         .media-box img { width: 100%; height: 100%; object-fit: contain; }
-        .status-overlay { position: absolute; background: rgba(255,255,255,0.8); width: 100%; height: 100%; display: none; align-items: center; justify-content: center; flex-direction: column; font-weight: bold; color: var(--primary); }
+        .status-overlay { position: absolute; background: rgba(255,255,255,0.8); width: 100%; height: 100%; display: none; align-items: center; justify-content: center; flex-direction: column; font-weight: bold; color: var(--primary); z-index: 10; }
         
-        /* 목록 컨트롤 헤더 */
+        /* 목록 컨트롤 */
         .list-controls { display: flex; justify-content: space-between; padding: 15px 20px 5px; align-items: center; }
         .btn-add { background: #f1f5f9; border: 1px solid #ddd; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 800; cursor: pointer; }
-        .collapse-toggle { font-size: 20px; cursor: pointer; color: #64748b; }
+        .collapse-toggle { font-size: 16px; cursor: pointer; color: #64748b; font-weight: bold; padding: 5px; }
 
-        /* 목록 아이템 디자인 (프리미엄) */
+        /* 목록 아이템 */
         .list-container { flex: 1; overflow-y: auto; padding: 10px 20px 100px; }
-        .item-row { background: var(--card); padding: 18px; border-radius: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        .item-row { background: var(--card); padding: 18px; border-radius: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(0,0,0,0.03); }
         .item-name { font-weight: 700; font-size: 16px; color: #1e293b; margin-bottom: 6px; display: block; }
         .item-tools { font-size: 12px; color: #94a3b8; font-weight: bold; }
-        .btn-tool { cursor: pointer; color: #64748b; margin-right: 10px; }
-        .btn-tool.delete { color: #ff4d4d; }
+        .btn-tool { cursor: pointer; margin-right: 10px; }
         
-        /* 수량 버튼 */
+        /* 수량 조절 */
         .qty-controls { display: flex; align-items: center; gap: 12px; background: #f8fafc; padding: 5px 10px; border-radius: 10px; border: 1px solid #e2e8f0; }
-        .btn-qty { border: none; background: #fff; width: 28px; height: 28px; border-radius: 6px; font-weight: 900; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: pointer; }
-        .qty-val { font-weight: 800; font-size: 15px; color: #1e293b; min-width: 20px; text-align: center; }
+        .btn-qty { border: none; background: #fff; width: 28px; height: 28px; border-radius: 6px; font-weight: 900; color: var(--primary); cursor: pointer; }
+        .qty-val { font-weight: 800; font-size: 15px; }
 
-        /* 채팅창 레이아웃 */
+        /* 채팅창 */
         .chat-window { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 9999; flex-direction: column; }
         .chat-header { background: #000; color: #fff; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
         .chat-messages { flex: 1; padding: 20px; overflow-y: auto; background: #f8fafc; }
-        .chat-input-area { padding: 15px; display: flex; gap: 10px; border-top: 1px solid #eee; background: #fff; }
-        .chat-input { flex: 1; padding: 14px; border: 1px solid #ddd; border-radius: 12px; font-size: 16px; outline: none; }
-        .btn-send { background: #000; color: #fff; border: none; padding: 0 20px; border-radius: 12px; font-weight: bold; cursor: pointer; }
-        .floating-btn { position: fixed; bottom: 25px; right: 25px; background: #000; color: #fff; border: none; border-radius: 50px; padding: 16px 30px; font-weight: 800; box-shadow: 0 10px 30px rgba(0,0,0,0.2); cursor: pointer; }
+        .chat-input-area { padding: 15px; display: flex; gap: 10px; border-top: 1px solid #eee; }
+        .chat-input { flex: 1; padding: 14px; border: 1px solid #ddd; border-radius: 12px; font-size: 16px; }
+        .floating-btn { position: fixed; bottom: 25px; right: 25px; background: #000; color: #fff; border: none; border-radius: 50px; padding: 16px 30px; font-weight: 800; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
     <div class="main-card">
         <div class="header-row">
-            <div id="disp-id" class="title-badge">서랍</div>
-            <button class="btn-analyze" onclick="analyzeImage()">📸 AI 분석 시작</button>
+            <a href="index.html" class="btn-home">🔍 검색창 이동</a>
+            <div id="disp-id" class="title-badge" onclick="editTitle()">불러오는 중...</div>
+            <button class="btn-analyze" onclick="analyzeImage()">📸 사진 촬영/변경</button>
         </div>
         <div class="media-box" id="media-wrap">
             <div id="status-overlay" class="status-overlay">
@@ -60,12 +63,12 @@
             </div>
             <div id="img-placeholder" style="color:#94a3b8;">분석할 사진을 촬영해주세요</div>
         </div>
-        <input type="text" style="width:100%; padding:15px; border:1px solid #e2e8f0; border-radius:15px; box-sizing:border-box; margin-top:15px; font-size:15px;" placeholder="무엇을 찾으시나요?" oninput="updateList(this.value)">
+        <input type="text" style="width:100%; padding:15px; border:1px solid #e2e8f0; border-radius:15px; box-sizing:border-box; margin-top:15px;" placeholder="물건 찾기..." oninput="updateList(this.value)">
     </div>
 
     <div class="list-controls">
         <button class="btn-add" onclick="addItem()">+ 물품 직접 추가</button>
-        <div class="collapse-toggle" id="toggle-icon" onclick="toggleAll()">↕</div>
+        <div class="collapse-toggle" id="toggle-icon" onclick="toggleAll()">Λ</div>
     </div>
 
     <div class="list-container" id="list-container"></div>
@@ -73,14 +76,11 @@
     <button class="floating-btn" onclick="toggleChat()">✨ 결에게 묻기</button>
 
     <div id="chat-window" class="chat-window">
-        <div class="chat-header">
-            <span style="font-weight:bold; font-size:18px;">비서 '결'</span>
-            <span onclick="toggleChat()" style="font-size:28px; cursor:pointer;">✕</span>
-        </div>
+        <div class="chat-header"><strong>비서 '결'</strong><span onclick="toggleChat()" style="font-size:28px; cursor:pointer;">✕</span></div>
         <div class="chat-messages" id="chat-messages"></div>
         <div class="chat-input-area">
-            <input type="text" id="chat-input" class="chat-input" placeholder="메시지를 입력하세요...">
-            <button class="btn-send" onclick="sendMsg()">전송</button>
+            <input type="text" id="chat-input" class="chat-input" placeholder="질문하세요...">
+            <button onclick="sendMsg()" style="background:#000; color:#fff; border:none; padding:0 20px; border-radius:12px; font-weight:bold;">전송</button>
         </div>
     </div>
 
@@ -91,13 +91,31 @@
 
         const params = new URLSearchParams(window.location.search);
         const tag = (params.get('tag') || 'DRAWER001').toUpperCase();
-        let items = JSON.parse(localStorage.getItem('gyeol_' + tag) || '[]');
+        
+        // 데이터 초기화: 이름 관리 포함
+        let storageKey = 'gyeol_data_' + tag;
+        let localData = JSON.parse(localStorage.getItem(storageKey) || '{"name": "", "items": []}');
+        
+        if (!localData.name) {
+            localData.name = (tag === 'DRAWER002') ? "서랍 2" : "서랍 1"; //
+        }
+        let items = localData.items;
         let isCollapsed = false;
 
         function setStatus(show, text = '처리 중...') {
             const overlay = document.getElementById('status-overlay');
             document.getElementById('status-text').innerText = text;
             overlay.style.display = show ? 'flex' : 'none';
+        }
+
+        // 제목 클릭 시 수정 함수
+        function editTitle() {
+            const newName = prompt("서랍 이름을 수정하세요.", localData.name);
+            if (newName && newName.trim()) {
+                localData.name = newName.trim();
+                saveData();
+                document.getElementById('disp-id').innerText = localData.name;
+            }
         }
 
         async function analyzeImage() {
@@ -114,7 +132,7 @@
                 setStatus(true, 'AI 분석 중... 🤖');
                 const { data: sign } = await _supa.storage.from('user_uploads').createSignedUrl(path, 3600);
                 document.getElementById('media-wrap').innerHTML = `<img src="${sign.signedUrl}">`;
-                localStorage.setItem('last_img_' + tag, sign.signedUrl);
+                localStorage.setItem('last_img_' + tag, sign.signedUrl); //
 
                 const res = await fetch('/api/analyze', {
                     method: 'POST',
@@ -133,8 +151,15 @@
 
         function updateList(filter = '') {
             const container = document.getElementById('list-container');
-            if (isCollapsed) { container.innerHTML = '<div style="text-align:center; color:#94a3b8; padding-top:20px;">목록이 접혀있습니다.</div>'; return; }
+            const toggleIcon = document.getElementById('toggle-icon');
             
+            if (isCollapsed) {
+                container.innerHTML = '<div style="text-align:center; color:#94a3b8; padding-top:20px;">목록이 접혀있습니다.</div>';
+                toggleIcon.innerText = 'V'; //
+                return;
+            }
+            
+            toggleIcon.innerText = 'Λ'; //
             const filtered = items.filter(it => it.n.toLowerCase().includes(filter.toLowerCase()));
             container.innerHTML = filtered.map((it, idx) => `
                 <div class="item-row">
@@ -142,7 +167,7 @@
                         <span class="item-name">${it.n}</span>
                         <div class="item-tools">
                             <span class="btn-tool" onclick="editItem(${idx})">편집</span>
-                            <span class="btn-tool delete" onclick="deleteItem(${idx})">삭제</span>
+                            <span class="btn-tool" style="color:#ff4d4d;" onclick="deleteItem(${idx})">삭제</span>
                         </div>
                     </div>
                     <div class="qty-controls">
@@ -157,7 +182,13 @@
         function editItem(idx) { const n = prompt("이름 수정", items[idx].n); if(n) { items[idx].n = n; saveAndRefresh(); } }
         function deleteItem(idx) { if(confirm('삭제할까요?')) { items.splice(idx, 1); saveAndRefresh(); } }
         function changeQty(idx, val) { items[idx].q = Math.max(0, items[idx].q + val); saveAndRefresh(); }
-        function saveAndRefresh() { localStorage.setItem('gyeol_' + tag, JSON.stringify(items)); updateList(); }
+        
+        function saveData() { 
+            localData.items = items;
+            localStorage.setItem(storageKey, JSON.stringify(localData)); 
+        }
+        function saveAndRefresh() { saveData(); updateList(); }
+        
         function toggleAll() { isCollapsed = !isCollapsed; updateList(); }
         function toggleChat() { const w = document.getElementById('chat-window'); w.style.display = (w.style.display === 'flex') ? 'none' : 'flex'; }
 
@@ -165,24 +196,23 @@
             const input = document.getElementById('chat-input');
             const text = input.value.trim(); if(!text) return;
             const box = document.getElementById('chat-messages');
-            box.innerHTML += `<div style="text-align:right; margin-bottom:15px;"><span style="background:var(--primary); color:#fff; padding:12px 18px; border-radius:18px; font-size:14px; box-shadow: 0 4px 10px rgba(0,123,255,0.1);">${text}</span></div>`;
+            box.innerHTML += `<div style="text-align:right; margin-bottom:15px;"><span style="background:var(--primary); color:#fff; padding:12px 18px; border-radius:18px;">${text}</span></div>`;
             input.value = '';
-            
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ message: text, tag: tag, inventory: JSON.stringify(items) })
             });
             const data = await res.json();
-            box.innerHTML += `<div style="margin-bottom:15px;"><span style="background:#e2e8f0; padding:12px 18px; border-radius:18px; font-size:14px; color:#1e293b; display:inline-block;">${data.reply}</span></div>`;
+            box.innerHTML += `<div style="margin-bottom:15px;"><span style="background:#e2e8f0; padding:12px 18px; border-radius:18px;">${data.reply}</span></div>`;
             box.scrollTop = box.scrollHeight;
         }
 
         window.onload = () => {
-            updateList();
-            document.getElementById('disp-id').innerText = tag;
+            document.getElementById('disp-id').innerText = localData.name;
             const lastImg = localStorage.getItem('last_img_' + tag);
             if(lastImg) document.getElementById('media-wrap').innerHTML = `<img src="${lastImg}">`;
+            updateList();
         };
     </script>
 </body>
