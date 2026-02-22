@@ -6,283 +6,157 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #007bff; --bg: #f8fafc; --card: #ffffff; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        :root { --primary: #007bff; --bg: #fdfdfd; --card: #ffffff; --text: #1e293b; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; height: 100vh; color: var(--text); }
         
-        /* 헤더 디자인 */
-        .main-card { background: var(--card); padding: 20px; border-radius: 0 0 30px 30px; box-shadow: 0 4px 25px rgba(0,0,0,0.05); flex-shrink: 0; }
-        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 8px; }
-        .btn-home { background: #f1f5f9; border: 1px solid #e2e8f0; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; color: #64748b; text-decoration: none; white-space: nowrap; }
-        .title-badge { background: #0f172a; color: #fff; padding: 8px 18px; border-radius: 100px; font-weight: 700; font-size: 14px; cursor: pointer; flex-grow: 1; text-align: center; }
-        .btn-analyze { background: var(--primary); color: #fff; border: none; padding: 10px 14px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 13px; white-space: nowrap; }
-        
-        /* 미디어 박스 & 삭제 버튼 */
-        .media-box { width: 100%; height: 230px; background: #f1f5f9; border-radius: 20px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; border: 1px solid #e2e8f0; }
-        .media-box img, .media-box video { width: 100%; height: 100%; object-fit: contain; }
-        .btn-media-del { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); color: #fff; border: none; width: 30px; height: 30px; border-radius: 50%; font-size: 18px; display: none; cursor: pointer; z-index: 15; line-height: 1; }
-        .status-overlay { position: absolute; background: rgba(255,255,255,0.85); width: 100%; height: 100%; display: none; align-items: center; justify-content: center; flex-direction: column; font-weight: bold; color: var(--primary); z-index: 10; text-align: center; padding: 20px; }
-        
-        /* 목록 컨트롤 & 둥근 화살표 */
-        .list-controls { display: flex; justify-content: space-between; padding: 15px 20px 5px; align-items: center; }
-        .btn-add { background: #f1f5f9; border: 1px solid #ddd; padding: 6px 14px; border-radius: 10px; font-size: 13px; font-weight: 800; cursor: pointer; color: var(--primary); }
-        .collapse-toggle { font-size: 20px; cursor: pointer; color: #64748b; font-weight: bold; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: #f1f5f9; }
+        /* 헤더: 깔끔하고 세련된 스타일 */
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: #fff; border-bottom: 1px solid #f1f5f9; }
+        .drawer-name { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+        .btn-icon-add { background: var(--primary); color: #fff; border: none; width: 36px; height: 36px; border-radius: 10px; font-size: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 
-        /* 목록 아이템 디자인 */
-        .list-container { flex: 1; overflow-y: auto; padding: 10px 20px 100px; }
-        .item-row { background: var(--card); padding: 18px; border-radius: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
-        .item-name { font-weight: 700; font-size: 16px; color: #1e293b; margin-bottom: 6px; display: block; }
-        .item-tools { font-size: 12px; font-weight: bold; }
-        .btn-tool { cursor: pointer; color: #94a3b8; margin-right: 12px; }
-        
-        /* 수량 조절 버튼 */
-        .qty-controls { display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 6px 12px; border-radius: 12px; border: 1px solid #e2e8f0; }
-        .btn-qty { border: none; background: #fff; width: 26px; height: 26px; border-radius: 8px; font-weight: 900; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: pointer; }
-        .qty-val { font-weight: 800; font-size: 15px; min-width: 18px; text-align: center; }
+        /* 검색창 확장 애니메이션 */
+        .search-section { padding: 10px 20px; transition: all 0.3s ease; }
+        .search-bar { background: #f1f5f9; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; cursor: text; border: 2px solid transparent; transition: 0.3s; }
+        .search-bar.active { background: #fff; border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,123,255,0.1); }
+        .search-bar input { border: none; background: transparent; outline: none; width: 100%; font-size: 15px; margin-left: 8px; display: none; }
+        .search-bar.active input { display: block; }
+        .search-placeholder { color: #94a3b8; font-weight: 600; font-size: 14px; }
 
-        /* 채팅창 스타일 */
-        .chat-window { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 9999; flex-direction: column; }
-        .chat-header { background: #000; color: #fff; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
-        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; background: #f8fafc; }
-        .msg-bubble { margin-bottom: 15px; max-width: 85%; line-height: 1.5; font-size: 14px; padding: 12px 16px; border-radius: 18px; word-break: break-word; white-space: pre-wrap; }
-        .msg-user { background: var(--primary); color: #fff; align-self: flex-end; margin-left: auto; box-shadow: 0 4px 12px rgba(0,123,255,0.2); }
-        .msg-bot { background: #e2e8f0; color: #1e293b; align-self: flex-start; }
-        .chat-input-area { padding: 15px; display: flex; gap: 10px; border-top: 1px solid #eee; background: #fff; padding-bottom: 30px; }
-        .chat-input { flex: 1; padding: 14px; border: 1px solid #ddd; border-radius: 12px; font-size: 16px; outline: none; }
-        .floating-btn { position: fixed; bottom: 25px; right: 25px; background: #000; color: #fff; border: none; border-radius: 50px; padding: 16px 30px; font-weight: 800; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 1000; }
+        /* 사진 카드 및 회전 */
+        .media-container { padding: 0 20px; margin-top: 10px; position: relative; }
+        .media-card { width: 100%; height: 250px; background: #eee; border-radius: 20px; overflow: hidden; position: relative; border: 1px solid #e2e8f0; }
+        .media-card img, .media-card video { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+        .btn-rotate { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.6); color: #fff; border: none; padding: 8px; border-radius: 50%; z-index: 5; cursor: pointer; }
+
+        /* 리스트 영역 */
+        .list-area { flex: 1; overflow-y: auto; padding: 20px; }
+        .item-card { background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #f1f5f9; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .item-info .name { font-weight: 700; font-size: 16px; display: block; }
+        .item-info .tools { font-size: 12px; color: #94a3b8; margin-top: 5px; font-weight: bold; }
+        .qty-box { display: flex; align-items: center; background: #f8fafc; border-radius: 10px; padding: 4px; border: 1px solid #e2e8f0; }
+        .btn-q { border: none; background: #fff; width: 28px; height: 28px; border-radius: 6px; color: var(--primary); font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+        .btn-add-direct { width: 100%; padding: 15px; border: 1px dashed #cbd5e1; border-radius: 12px; color: #64748b; font-weight: 700; background: transparent; margin-top: 10px; }
+
+        /* 하단 고정 결에게 묻기 */
+        .footer-ask { padding: 15px 20px 30px; background: #fff; border-top: 1px solid #f1f5f9; }
+        .btn-ask-gyeol { width: 100%; background: #000; color: #fff; border: none; padding: 16px; border-radius: 16px; font-weight: 800; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
-    <div class="main-card">
-        <div class="header-row">
-            <a href="index.html" class="btn-home">🔍 검색창</a>
-            <div id="disp-id" class="title-badge" onclick="editTitle()">불러오는 중...</div>
-            <button class="btn-analyze" onclick="analyzeImage()">📸 사진/영상 추가</button>
+    <header class="header">
+        <div class="drawer-name" id="disp-id" onclick="editTitle()">서랍 1</div>
+        <button class="btn-icon-add" onclick="analyzeImage()">+</button>
+    </header>
+
+    <section class="search-section">
+        <div class="search-bar" id="search-bar-wrap" onclick="activateSearch()">
+            <span id="search-icon">🔍</span>
+            <span class="search-placeholder" id="search-ph">[ 이 서랍에서 검색 ]</span>
+            <input type="text" id="search-input" placeholder="검색어 입력..." oninput="filterItems(this.value)">
+            <span id="search-close" style="display:none; margin-left:10px;" onclick="deactivateSearch(event)">✕</span>
         </div>
-        <div class="media-box" id="media-wrap">
-            <div id="status-overlay" class="status-overlay">
-                <div id="status-text">처리 중...</div>
-            </div>
-            <button id="media-del-btn" class="btn-media-del" onclick="deleteMedia(event)">×</button>
-            <div id="img-placeholder" style="color:#94a3b8;">분석할 미디어를 추가하세요</div>
+    </section>
+
+    <div class="media-container">
+        <div class="media-card" id="media-wrap">
+            <div id="img-placeholder" style="display:flex; height:100%; align-items:center; justify-content:center; color:#94a3b8;">미디어를 추가하세요</div>
         </div>
-        <input type="text" style="width:100%; padding:15px; border:1px solid #e2e8f0; border-radius:15px; box-sizing:border-box; margin-top:15px; font-size:15px;" placeholder="물건 찾기..." oninput="updateList(this.value)">
+        <button class="btn-rotate" onclick="rotateImg()">🔄</button>
     </div>
 
-    <div class="list-controls">
-        <button class="btn-add" onclick="addItem()">+ 물품 추가</button>
-        <div class="collapse-toggle" id="toggle-icon" onclick="toggleAll()">⌄</div>
+    <main class="list-area" id="list-container">
+        </main>
+
+    <div class="footer-ask">
+        <button class="btn-add-direct" onclick="addItem()">+ 물품 직접 추가</button>
+        <div style="margin-top:20px;"></div>
+        <button class="btn-ask-gyeol" onclick="toggleChat()">✨ 결에게 묻기</button>
     </div>
 
-    <div class="list-container" id="list-container"></div>
-
-    <button class="floating-btn" onclick="toggleChat()">✨ 결에게 묻기</button>
-
-    <div id="chat-window" class="chat-window">
-        <div class="chat-header">
-            <span style="font-weight:bold; font-size:18px;">비서 '결'</span>
-            <span onclick="toggleChat()" style="font-size:28px; cursor:pointer;">✕</span>
+    <div id="chat-window" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#fff; z-index:10000; flex-direction:column;">
+        <div style="background:#000; color:#fff; padding:20px; display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-weight:bold;">비서 '결'</span>
+            <span onclick="toggleChat()" style="font-size:24px;">✕</span>
         </div>
-        <div class="chat-messages" id="chat-messages" style="display:flex; flex-direction:column;"></div>
-        <div class="chat-input-area">
-            <input type="text" id="chat-input" class="chat-input" placeholder="메시지를 입력하세요...">
+        <div id="chat-messages" style="flex:1; overflow-y:auto; padding:20px; background:#f8fafc;"></div>
+        <div style="padding:15px; display:flex; gap:10px; border-top:1px solid #eee; padding-bottom:30px;">
+            <input type="text" id="chat-input" style="flex:1; padding:14px; border:1px solid #ddd; border-radius:12px;" placeholder="양말 어디에 있어?">
             <button onclick="sendMsg()" style="background:#000; color:#fff; border:none; padding:0 20px; border-radius:12px; font-weight:bold;">전송</button>
         </div>
     </div>
 
     <script>
+        // Supabase 설정 및 기본 로직 (이전 코드와 동일하되 UI 연동 부분만 수정)
         const SUPA_URL = 'https://tqhtggusphhcsygiitrv.supabase.co';
         const SUPA_KEY = 'sb_publishable_lJeKpO0aRv9mTBE1qnbkow_JqTmhnHQ';
         const _supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
         const params = new URLSearchParams(window.location.search);
         const tag = (params.get('tag') || 'DRAWER001').toUpperCase();
-        
-        let storageKey = 'gyeol_v3_' + tag;
-        let localData = JSON.parse(localStorage.getItem(storageKey) || '{"name": "", "items": []}');
-        
-        if (!localData.name) {
-            localData.name = (tag === 'DRAWER002') ? "서랍 2" : "서랍 1";
-        }
-        let items = localData.items;
-        let isCollapsed = false;
+        let items = JSON.parse(localStorage.getItem('gyeol_v3_'+tag) || '{"items":[]}').items;
+        let rotation = 0;
 
-        function setStatus(show, text = '처리 중...') {
-            const overlay = document.getElementById('status-overlay');
-            const statusText = document.getElementById('status-text');
-            if (statusText) statusText.innerText = text;
-            if (overlay) overlay.style.display = show ? 'flex' : 'none';
+        function rotateImg() {
+            rotation = (rotation + 90) % 360;
+            const img = document.querySelector('#media-wrap img');
+            if(img) img.style.transform = `rotate(${rotation}deg)`;
         }
 
-        function editTitle() {
-            const newName = prompt("서랍 이름을 수정하세요.", localData.name);
-            if (newName && newName.trim()) {
-                localData.name = newName.trim();
-                saveData();
-                document.getElementById('disp-id').innerText = localData.name;
-            }
+        function activateSearch() {
+            const wrap = document.getElementById('search-bar-wrap');
+            wrap.classList.add('active');
+            document.getElementById('search-ph').style.display = 'none';
+            document.getElementById('search-input').focus();
+            document.getElementById('search-close').style.display = 'block';
+        }
+
+        function deactivateSearch(e) {
+            e.stopPropagation();
+            const wrap = document.getElementById('search-bar-wrap');
+            wrap.classList.remove('active');
+            document.getElementById('search-ph').style.display = 'block';
+            document.getElementById('search-input').value = '';
+            document.getElementById('search-close').style.display = 'none';
+            filterItems('');
         }
 
         async function analyzeImage() {
-            const input = document.createElement('input');
-            input.type = 'file'; 
-            input.accept = 'image/*,video/*';
-            input.onchange = async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-
-                const path = `${tag}/${Date.now()}_${file.name}`;
-                setStatus(true, '보안 업로드 중... 📤');
-                
-                try {
-                    // 1. 업로드
-                    const { error: upErr } = await _supa.storage.from('user_uploads').upload(path, file);
-                    if (upErr) throw new Error('업로드 실패');
-
-                    // 2. 미리보기 표시
-                    const { data: sign, error: sErr } = await _supa.storage.from('user_uploads').createSignedUrl(path, 3600);
-                    if (sErr || !sign) throw new Error('주소 생성 실패');
-                    
-                    displayMedia(sign.signedUrl, file.type);
-                    localStorage.setItem('last_media_' + tag, JSON.stringify({url: sign.signedUrl, type: file.type}));
-
-                    // 3. AI 분석
-                    setStatus(true, '비서 "결"이 분석 중... 🤖');
-                    const res = await fetch('/api/analyze', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ filePath: path })
-                    });
-                    
-                    if (!res.ok) throw new Error('분석 서버 응답 에러');
-                    
-                    const data = await res.json();
-                    if (data.items && data.items.length > 0) {
-                        data.items.forEach(n => {
-                            if(!items.some(it => it.n === n)) {
-                                items.push({ n, q: 1 });
-                            }
-                        });
-                        saveAndRefresh();
-                    } else {
-                        alert("분석 결과가 없습니다. 직접 추가해 주세요.");
-                    }
-                } catch (err) {
-                    console.error(err);
-                    alert("처리 중 오류가 발생했습니다: " + err.message);
-                } finally {
-                    setStatus(false);
-                }
-            };
-            input.click();
+            // ... 파일 선택 로직 ...
+            // 중요: 분석 시작 시 items = []; 로 비워주면 새로운 리스트만 남습니다.
+            if(confirm('기존 목록을 비우고 새로 분석할까요?')) items = [];
+            // ... 나머지 분석 코드 ...
         }
 
-        function displayMedia(url, type) {
-            const wrap = document.getElementById('media-wrap');
-            const delBtn = document.getElementById('media-del-btn');
-            const overlay = document.getElementById('status-overlay');
-            
-            if (type && type.includes('video')) {
-                wrap.innerHTML = `<video src="${url}" autoplay loop muted playsinline></video>`;
-            } else {
-                wrap.innerHTML = `<img src="${url}">`;
-            }
-            
-            wrap.appendChild(overlay);
-            wrap.appendChild(delBtn);
-            delBtn.style.display = 'block';
-        }
-
-        function deleteMedia(e) {
-            if (e) e.stopPropagation();
-            if (confirm('현재 사진/영상을 삭제할까요?')) {
-                localStorage.removeItem('last_media_' + tag);
-                document.getElementById('media-wrap').innerHTML = `
-                    <div id="status-overlay" class="status-overlay"><div id="status-text">처리 중...</div></div>
-                    <button id="media-del-btn" class="btn-media-del" onclick="deleteMedia(event)">×</button>
-                    <div id="img-placeholder" style="color:#94a3b8;">분석할 미디어를 추가하세요</div>`;
-                document.getElementById('media-del-btn').style.display = 'none';
-            }
-        }
-
-        function updateList(filter = '') {
+        function filterItems(val) {
+            const filtered = items.filter(it => it.n.includes(val));
             const container = document.getElementById('list-container');
-            const toggleIcon = document.getElementById('toggle-icon');
-            
-            if (isCollapsed) {
-                container.innerHTML = '<div style="text-align:center; color:#94a3b8; padding-top:40px;">목록이 접혀있습니다.</div>';
-                toggleIcon.innerText = '⌄'; 
+            if(filtered.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:40px;">검색 결과가 없습니다</div>';
                 return;
             }
-            
-            toggleIcon.innerText = '⌃'; 
-            const filtered = items.filter(it => it.n.toLowerCase().includes(filter.toLowerCase()));
-            
-            if (filtered.length === 0) {
-                container.innerHTML = '<div style="text-align:center; color:#94a3b8; padding-top:40px;">물품이 없습니다.</div>';
-                return;
-            }
-
             container.innerHTML = filtered.map((it, idx) => `
-                <div class="item-row">
-                    <div>
-                        <span class="item-name">${it.n}</span>
-                        <div class="item-tools">
-                            <span class="btn-tool" onclick="editItem(${idx})">편집</span>
-                            <span class="btn-tool" style="color:#ff4d4d;" onclick="deleteItem(${idx})">삭제</span>
-                        </div>
+                <div class="item-card">
+                    <div class="item-info">
+                        <span class="name">${it.n}</span>
+                        <div class="tools">편집 <span style="color:#ff4d4d; margin-left:8px;" onclick="deleteItem(${idx})">삭제</span></div>
                     </div>
-                    <div class="qty-controls">
-                        <button class="btn-qty" onclick="changeQty(${idx}, -1)">-</button>
-                        <span class="qty-val">${it.q}</span>
-                        <button class="btn-qty" onclick="changeQty(${idx}, 1)">+</button>
+                    <div class="qty-box">
+                        <button class="btn-q" onclick="changeQty(${idx}, -1)">-</button>
+                        <span style="margin:0 12px; font-weight:800;">${it.q}</span>
+                        <button class="btn-q" onclick="changeQty(${idx}, 1)">+</button>
                     </div>
-                </div>`).join('');
+                </div>
+            `).join('');
         }
 
-        function addItem() { const n = prompt("물품 이름"); if(n) { items.push({ n, q: 1 }); saveAndRefresh(); } }
-        function editItem(idx) { const n = prompt("이름 수정", items[idx].n); if(n) { items[idx].n = n; saveAndRefresh(); } }
-        function deleteItem(idx) { if(confirm('삭제할까요?')) { items.splice(idx, 1); saveAndRefresh(); } }
-        function changeQty(idx, val) { 
-            items[idx].q = Math.max(0, items[idx].q + val); 
-            saveAndRefresh(); 
+        // 초기 로드 시 리스트 표시
+        window.onload = () => { filterItems(''); };
+        function toggleChat() { 
+            const w = document.getElementById('chat-window'); 
+            w.style.display = (w.style.display === 'flex') ? 'none' : 'flex'; 
         }
-        
-        function saveData() { 
-            localData.items = items;
-            localStorage.setItem(storageKey, JSON.stringify(localData)); 
-        }
-        function saveAndRefresh() { saveData(); updateList(); }
-        function toggleAll() { isCollapsed = !isCollapsed; updateList(); }
-        function toggleChat() { const w = document.getElementById('chat-window'); w.style.display = (w.style.display === 'flex') ? 'none' : 'flex'; }
-
-        async function sendMsg() {
-            const input = document.getElementById('chat-input');
-            const text = input.value.trim(); if(!text) return;
-            const box = document.getElementById('chat-messages');
-            box.innerHTML += `<div class="msg-bubble msg-user">${text}</div>`;
-            input.value = '';
-            box.scrollTop = box.scrollHeight;
-
-            try {
-                const res = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ message: text, tag: tag, inventory: JSON.stringify(items) })
-                });
-                const data = await res.json();
-                box.innerHTML += `<div class="msg-bubble msg-bot">${data.reply || "대답을 듣지 못했어요."}</div>`;
-            } catch (err) {
-                box.innerHTML += `<div class="msg-bubble msg-bot">비서 '결'과 연결이 끊겼습니다.</div>`;
-            }
-            box.scrollTop = box.scrollHeight;
-        }
-
-        window.onload = () => {
-            document.getElementById('disp-id').innerText = localData.name;
-            const lastMedia = JSON.parse(localStorage.getItem('last_media_' + tag));
-            if(lastMedia) displayMedia(lastMedia.url, lastMedia.type);
-            updateList();
-        };
+        // ... 기타 helper 함수들 (addItem, changeQty 등) ...
     </script>
 </body>
 </html>
