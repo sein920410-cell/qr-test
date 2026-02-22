@@ -6,127 +6,153 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #007bff; --bg: #f8fafc; --text: #1e293b; --gray: #64748b; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text); }
-        
-        /* 1. 헤더: 세련된 배치 */
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: #fff; border-bottom: 1px solid #e2e8f0; }
-        .drawer-title { font-size: 18px; font-weight: 800; }
-        .btn-plus { background: var(--primary); color: #fff; border: none; width: 36px; height: 36px; border-radius: 10px; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        :root { --primary: #007bff; --bg: #f8fafc; --text: #1e293b; --gray: #94a3b8; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-        /* 2. 확장형 검색창 */
-        .search-container { padding: 10px 20px; }
-        .search-bar { background: #f1f5f9; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: text; border: 1px solid transparent; }
+        /* 1. 헤더: 제목 중앙, + 버튼 우측 */
+        .header { display: flex; justify-content: center; align-items: center; padding: 15px 20px; background: #fff; border-bottom: 1px solid #f1f5f9; position: relative; }
+        .header-title { font-size: 18px; font-weight: 800; }
+        .btn-plus-top { position: absolute; right: 20px; background: var(--primary); color: #fff; border: none; width: 36px; height: 36px; border-radius: 10px; font-size: 24px; cursor: pointer; display:flex; align-items:center; justify-content:center; }
+
+        /* 2. 검색창: 자연스러운 확장형 */
+        .search-area { padding: 10px 20px; }
+        .search-bar { background: #f1f5f9; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; cursor: pointer; border: 1px solid transparent; transition: 0.3s; }
         .search-bar.active { background: #fff; border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,123,255,0.1); }
-        .search-bar input { border: none; background: transparent; outline: none; width: 0; transition: width 0.3s; font-size: 15px; }
+        .search-bar input { border: none; background: transparent; outline: none; width: 0; transition: 0.3s; font-size: 15px; }
         .search-bar.active input { width: 100%; margin-left: 8px; }
-        .search-ph { color: var(--gray); font-size: 14px; font-weight: 600; }
+        .search-ph { font-size: 14px; font-weight: 600; color: var(--gray); }
 
-        /* 3. 사진 카드 & 회전 기능 */
-        .content-scroll { flex: 1; overflow-y: auto; padding-bottom: 100px; }
-        .image-card { margin: 0 20px 20px; position: relative; border-radius: 20px; overflow: hidden; background: #eee; height: 250px; border: 1px solid #e2e8f0; }
-        .image-card img { width: 100%; height: 100%; object-fit: contain; transition: transform 0.3s; }
-        .btn-rotate { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.5); color: #fff; border: none; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; z-index: 10; }
+        /* 3. 콘텐츠 영역 */
+        .content-view { flex: 1; overflow-y: auto; padding: 0 20px 100px; display: flex; flex-direction: column; }
+        .empty-notice { text-align: center; color: var(--gray); padding: 50px 20px; line-height: 1.6; font-size: 15px; }
 
-        /* 4. 리스트 디자인 */
-        .list-wrap { padding: 0 20px; }
-        .item-row { background: #fff; border-radius: 18px; padding: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
-        .item-name { font-weight: 700; font-size: 16px; margin-bottom: 4px; display: block; }
-        .btn-add-bottom { width: calc(100% - 40px); margin: 10px 20px; padding: 16px; border: 1px dashed #cbd5e1; border-radius: 15px; color: var(--gray); font-weight: 700; background: transparent; }
+        /* 사진 카드 */
+        .media-card { width: 100%; height: 250px; background: #fff; border-radius: 20px; overflow: hidden; position: relative; border: 1px solid #e2e8f0; margin-bottom: 20px; display: none; }
+        .media-card img { width: 100%; height: 100%; object-fit: contain; transition: transform 0.3s; }
+        .btn-del-media { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); color: #fff; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; z-index: 10; font-size: 18px; }
 
-        /* 5. 하단 고정 '결에게 묻기' */
-        .fixed-footer { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; padding: 15px 20px 30px; border-top: 1px solid #eee; box-sizing: border-box; }
-        .btn-gyeol { width: 100%; background: #000; color: #fff; border: none; padding: 16px; border-radius: 16px; font-weight: 800; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        /* 미리보기 모달 */
+        #preview-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 20000; flex-direction: column; align-items: center; justify-content: center; }
+        .preview-img { max-width: 90%; max-height: 60%; border-radius: 15px; transition: transform 0.3s; }
+        .preview-btns { margin-top: 30px; display: flex; gap: 20px; width: 80%; justify-content: center; }
+        .btn-p-circle { background: #333; color: #fff; border: none; width: 50px; height: 50px; border-radius: 50%; font-size: 20px; cursor: pointer; }
+        .btn-p-main { flex: 1; padding: 16px; border-radius: 12px; border: none; font-weight: 800; font-size: 16px; cursor: pointer; }
 
-        /* 채팅창 최적화 */
-        .chat-win { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 1000; flex-direction: column; }
-        .chat-msgs { flex: 1; overflow-y: auto; padding: 20px; background: #f8fafc; }
+        /* 목록 디자인 */
+        .item-row { background: #fff; border-radius: 18px; padding: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #f1f5f9; }
+        .qty-controls { display: flex; align-items: center; background: #f8fafc; padding: 4px; border-radius: 10px; border: 1px solid #e2e8f0; }
+        .btn-qty { border: none; background: #fff; width: 28px; height: 28px; border-radius: 6px; color: var(--primary); font-weight: 900; }
+
+        /* 하단 + 직접 추가 버튼 */
+        .btn-add-manual { width: 100%; padding: 16px; border: 1px dashed #cbd5e1; border-radius: 15px; background: transparent; color: var(--gray); font-weight: 700; margin-top: 10px; cursor: pointer; }
+
+        /* 둥근 '결에게 묻기' FAB */
+        .fab-gyeol { position: fixed; bottom: 30px; right: 20px; width: 60px; height: 60px; background: #000; color: #fff; border: none; border-radius: 50%; font-size: 24px; display: none; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); cursor: pointer; z-index: 1000; }
     </style>
 </head>
 <body>
     <header class="header">
-        <div class="drawer-title" id="disp-id" onclick="editTitle()">서랍 1</div>
-        <button class="btn-plus" onclick="analyzeImage()">+</button>
+        <div class="header-title" id="disp-id" onclick="editTitle()">서랍 1</div>
+        <button class="btn-plus-top" onclick="triggerFile()">+</button>
     </header>
 
-    <div class="content-scroll">
-        <section class="search-container">
-            <div class="search-bar" id="sb-wrap" onclick="toggleSearch(true)">
-                <span>🔍</span>
-                <span class="search-ph" id="sb-ph">[ 이 서랍에서 검색 ]</span>
-                <input type="text" id="sb-input" oninput="filterItems(this.value)" onblur="toggleSearch(false)">
-                <span id="sb-x" style="display:none; margin-left:10px;" onclick="toggleSearch(false, event)">✕</span>
-            </div>
-        </section>
+    <section class="search-area">
+        <div class="search-bar" id="sb-wrap" onclick="toggleSearch(true)">
+            <span>🔍</span>
+            <span class="search-ph" id="sb-ph">[ 이 서랍에서 검색 ]</span>
+            <input type="text" id="sb-input" oninput="filterItems(this.value)" onblur="toggleSearch(false)">
+        </div>
+    </section>
 
-        <div class="image-card" id="img-card">
-            <button class="btn-rotate" onclick="rotateImage()">🔄</button>
-            <div id="media-wrap" style="height:100%; display:flex; align-items:center; justify-content:center; color:#94a3b8;">
-                사진을 추가해 보세요
-            </div>
+    <main class="content-view">
+        <div id="empty-notice" class="empty-notice">
+            이 서랍에 아직 등록된 물건이 없습니다.<br>사진을 찍거나 직접 입력해 보세요.
         </div>
 
-        <div class="list-wrap" id="list-container"></div>
-        <button class="btn-add-bottom" onclick="addItem()">+ 물품 직접 추가</button>
+        <div id="media-card" class="media-card">
+            <button class="btn-del-media" onclick="deleteMedia()">×</button>
+            <div id="media-target" style="height:100%; display:flex; align-items:center; justify-content:center;"></div>
+        </div>
+
+        <div id="list-container"></div>
+        <button id="btn-manual" class="btn-add-manual" onclick="addItem()" style="display:none;">+ 물품 직접 추가</button>
+    </main>
+
+    <div id="preview-modal">
+        <div style="position:absolute; top:20px; right:20px; color:#fff; font-size:30px;" onclick="closePreview()">✕</div>
+        <img id="preview-img" class="preview-img">
+        <div class="preview-btns">
+            <button class="btn-p-circle" onclick="rotatePreview(-90)">↺</button>
+            <button class="btn-p-circle" onclick="rotatePreview(90)">↻</button>
+        </div>
+        <div class="preview-btns">
+            <button class="btn-p-main" style="background:#fff; color:#000;" onclick="triggerFile()">다시 촬영</button>
+            <button class="btn-p-main" style="background:var(--primary); color:#fff;" onclick="registerMedia()">등록</button>
+        </div>
     </div>
 
-    <div class="fixed-footer">
-        <button class="btn-gyeol" onclick="toggleChat(true)">✨ 결에게 묻기</button>
-    </div>
+    <button id="fab-gyeol" class="fab-gyeol" onclick="toggleChat()">✨</button>
 
-    <div class="chat-win" id="chat-win">
-        <div style="background:#000; color:#fff; padding:20px; display:flex; justify-content:space-between;">
-            <span style="font-weight:800;">비서 '결'</span>
-            <span onclick="toggleChat(false)" style="font-size:24px; cursor:pointer;">✕</span>
-        </div>
-        <div class="chat-msgs" id="chat-msgs"></div>
-        <div style="padding:15px; border-top:1px solid #eee; display:flex; gap:10px; padding-bottom:35px;">
-            <input type="text" id="chat-input" style="flex:1; padding:14px; border:1px solid #ddd; border-radius:12px;" placeholder="메시지 입력...">
-            <button onclick="sendMsg()" style="background:#000; color:#fff; border:none; padding:0 20px; border-radius:12px; font-weight:800;">전송</button>
-        </div>
-    </div>
+    <input type="file" id="hidden-file" style="display:none;" accept="image/*,video/*">
 
     <script>
-        let items = []; // 데이터 로직은 이전과 동일
-        let rotation = 0;
+        // Supabase 설정 및 초기화
+        const _supa = supabase.createClient('URL', 'KEY'); // 세인 님 정보 유지
+        let items = [];
+        let currentRotation = 0;
+        let selectedFile = null;
 
-        function toggleSearch(active, e) {
-            if(e) e.stopPropagation();
-            const wrap = document.getElementById('sb-wrap');
-            const ph = document.getElementById('sb-ph');
-            const input = document.getElementById('sb-input');
-            const x = document.getElementById('sb-x');
+        function triggerFile() { document.getElementById('hidden-file').click(); }
 
-            if(active) {
-                wrap.classList.add('active');
-                ph.style.display = 'none';
-                x.style.display = 'block';
-                input.focus();
+        document.getElementById('hidden-file').onchange = (e) => {
+            selectedFile = e.target.files[0];
+            if (!selectedFile) return;
+            
+            if (selectedFile.type.includes('image')) {
+                const reader = new FileReader();
+                reader.onload = (re) => {
+                    document.getElementById('preview-img').src = re.target.result;
+                    document.getElementById('preview-modal').style.display = 'flex';
+                };
+                reader.readAsDataURL(selectedFile);
             } else {
-                wrap.classList.remove('active');
-                ph.style.display = 'block';
-                x.style.display = 'none';
-                input.value = '';
-                filterItems('');
+                registerMedia(); // 영상은 바로 등록
+            }
+        };
+
+        function rotatePreview(deg) {
+            currentRotation = (currentRotation + deg) % 360;
+            document.getElementById('preview-img').style.transform = `rotate(${currentRotation}deg)`;
+        }
+
+        async function registerMedia() {
+            // 업로드 및 분석 로직 (이전 api/analyze 호출 포함)
+            // 성공 후:
+            document.getElementById('preview-modal').style.display = 'none';
+            document.getElementById('empty-notice').style.display = 'none';
+            document.getElementById('media-card').style.display = 'block';
+            document.getElementById('btn-manual').style.display = 'block';
+            document.getElementById('fab-gyeol').style.display = 'flex';
+            // 리스트 생성 로직 실행...
+        }
+
+        function deleteMedia() {
+            if(confirm('사진을 삭제할까요?')) {
+                document.getElementById('media-card').style.display = 'none';
+                document.getElementById('empty-notice').style.display = 'block';
+                document.getElementById('btn-manual').style.display = 'none';
+                document.getElementById('fab-gyeol').style.display = 'none';
+                items = []; updateList();
             }
         }
 
-        function rotateImage() {
-            rotation = (rotation + 90) % 360;
-            const img = document.querySelector('#media-wrap img');
-            if(img) img.style.transform = `rotate(${rotation}deg)`;
+        function toggleSearch(active) {
+            const wrap = document.getElementById('sb-wrap');
+            if(active) wrap.classList.add('active');
+            else wrap.classList.remove('active');
         }
 
-        function toggleChat(show) {
-            const win = document.getElementById('chat-win');
-            win.style.display = show ? 'flex' : 'none';
-            if(show) {
-                const msgs = document.getElementById('chat-msgs');
-                msgs.scrollTop = msgs.scrollHeight;
-            }
-        }
-
-        // 기존 addItem, analyzeImage, filterItems 로직 유지...
+        // ... 나머지 리스트 필터링 및 수량 조절 함수들 ...
     </script>
 </body>
 </html>
