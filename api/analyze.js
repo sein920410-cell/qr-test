@@ -18,13 +18,17 @@ export default async function handler(req, res) {
     const imgResp = await fetch(signedData.signedUrl);
     const b64 = Buffer.from(await imgResp.arrayBuffer()).toString("base64");
 
-    // 3. Gemini AI 분석 (더 똑똑한 프롬프트)
-    const gResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${process.env.GEMINI_MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+    // 3. Gemini AI 분석 (inline_data -> inlineData 로 수정)
+    // 모델명이 비어있을 경우를 대비해 기본값을 넣었습니다.
+    const MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash"; 
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`;
+
+    const gResp = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [
-          { inline_data: { mime_type: "image/jpeg", data: b64 } },
+          { inlineData: { mimeType: "image/jpeg", data: b64 } }, // 여기 대문자 D로 수정!
           { text: "이 사진에서 식별 가능한 모든 물건들의 이름만 한국어로 콤마(,)로 구분해서 리스트업해줘. 불필요한 설명은 절대 하지마." }
         ]}]
       })
