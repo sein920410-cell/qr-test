@@ -1,52 +1,67 @@
+// api/chat.js
+import { createClient } from "@supabase/supabase-js";
+import fetch from "node-fetch";
+
+const SUPA_URL = process.env.SUPABASE_URL;
+const SUPA_SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const GEMINI_KEY = process.env.GEMINI_API_KEY;
+const MODEL = process.env.GEMINI_MODEL || "gemini-3-flash-preview";
+
+if (!SUPA_URL || !SUPA_SERVICE || !GEMINI_KEY) {
+console.error("Missing env vars for chat function");
+}
+
+const supa = createClient(SUPA_URL, SUPA_SERVICE);
+
+function sanitizeText(t) {
+if (!t) return "";
+return String(t).slice(0, 1500);
+}
+
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
+const { message, inventory, tag } = req.body || {};
+const userMsg = sanitizeText(message);
+const tagVal = tag ? String(tag).slice(0, 50) : "DRAWER001";
 
-  try {
-    const { message, tag = 'DRAWER001' } = req.body;
-    
-    // localStorage 시뮬레이션 (나중 Supabase로 교체)
-    const getItems = () => {
-      // Vercel에서는 localStorage 없음 → 임시 데이터 또는 DB
-      return []; // 실제로는 Supabase에서 불러오기
-    };
+if (!userMsg) return res.status(400).json({ error: "Empty message" });
 
-    const items = getItems();
-    const msgLower = message.toLowerCase();
+try {
+// 1) (선택) 서버에서 bot 답변을 직접 생성 — 여기선 Gemini REST 사용
+const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+const prompt = `당신은 비서 '결'입니다. 보관함 태그: ${tagVal}. 물품목록: ${inventory || ""}. 사용자의 질문: ${userMsg}. 짧고 친절하게 한국어로 응답하세요.`;
+const body = {
+contents: [{ parts: [{ text: prompt }] }]
+};
 
-    let reply = '현재 보관 중인 물품을 말씀해주세요!';
+const gResp = await fetch(`${endpoint}?key=${GEMINI_KEY}`, {
+method: "POST",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify(body)
+});
 
-    // 물품 검색
-    const found = items.filter(item => 
-      item.n.toLowerCase().includes(msgLower)
-    );
+const gData = await gResp.json();
+let botReply = "";
+if (gData?.candidates?.[0]?.content?.[0]?.text) botReply = gData.candidates[0].content[0].text;
+else if (gData?.response?.text) botReply = gData.response.text;
+else botReply = JSON.stringify(gData).slice(0, 1000);
+botReply = botReply.slice(0, 2000);
 
-    if (found.length > 0) {
-      reply = `${found[0].n} ${found[0].q}개 있습니다!\n`;
-      reply += `📍 위치: ${tag}\n`;
-      if (found.length > 1) reply += `다른 ${found.length-1}개도 있습니다.`;
-    } else if (msgLower.includes('몇 개') || msgLower.includes('재고')) {
-      reply = `총 ${items.length}개 물품 보관 중입니다.\n구체적인 물품 이름을 말씀해주세요!`;
-    }
+// 2) DB에 bot 메시지 삽입 (service_role 사용)
+const { error: insErr } = await supa.from("chat_messages").insert([{
+tag: tagVal,
+sender: "bot",
+content: botReply
+}]);
 
-    // Supabase 실시간 준비 (주석)
-    /*
-    const { data: realtimeItems } = await supabase
-      .from('inventory')
-      .select('*')
-      .eq('drawer_tag', tag)
-      .order('created_at', { ascending: false });
-    */
+if (insErr) {
+console.error("DB insert error", insErr);
+return res.status(500).json({ error: "DB insert failed" });
+}
 
-    res.status(200).json({ 
-      reply, 
-      success: true,
-      foundCount: found.length 
-    });
-
-  } catch (error) {
-    console.error('Chat 오류:', error);
-    res.status(500).json({ error: error.message });
-  }
+return res.status(200).json({ reply: botReply });
+} catch (err) {
+console.error("chat handler error", err);
+return res.status(500).json({ error: err.message || "chat failed" });
+}
 }
