@@ -1,10 +1,5 @@
 {
   "name": "qr-test",
   "version": "1.0.0",
-  "scripts": {
-    "dev": "vercel dev"
-  },
-  "dependencies": {
-    "@vercel/node": "^3.2.11"
-  }
+  "type": "module"
 }
