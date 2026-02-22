@@ -1,8 +1,16 @@
 {
+  "functions": {
+    "api/analyze.js": {
+      "maxDuration": 30
+    },
+    "api/chat.js": {
+      "maxDuration": 10
+    }
+  },
   "rewrites": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
     }
   ]
 }
