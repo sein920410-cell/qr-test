@@ -2,56 +2,41 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>공간:결 - 메인 검색</title>
+<title>공간:결 - 검색</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 :root { --primary: #007bff; --bg: #f8fafc; }
 body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; }
 .search-container { max-width: 600px; margin: 40px auto; background: #fff; padding: 25px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
 .search-box { width: 100%; padding: 18px; border: 2px solid var(--primary); border-radius: 14px; font-size: 18px; outline: none; box-sizing: border-box; }
-.result-item { display: flex; justify-content: space-between; align-items: center; padding: 18px; border: 1px solid #eee; border-radius: 16px; margin-top: 10px; cursor: pointer; }
-.item-info { font-weight: 800; font-size: 17px; }
+.result-item { padding: 18px; border: 1px solid #eee; border-radius: 16px; margin-top: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
 </style>
 </head>
 <body>
 <div class="search-container">
 <h2 style="margin-bottom: 20px;">🔍 무엇을 찾으시나요?</h2>
-<input type="text" id="main-search" class="search-box" placeholder="보관된 물건 이름을 입력하세요" oninput="searchItems()">
+<input type="text" id="main-search" class="search-box" placeholder="물건 이름을 입력하세요" oninput="searchItems()">
 <div id="result-list"></div>
 </div>
 <script>
 function searchItems() {
 const query = document.getElementById('main-search').value.trim().toLowerCase();
 const list = document.getElementById('result-list');
-list.innerHTML = '';
-if(!query) return;
+list.innerHTML = ''; if(!query) return;
 
-// 실제 저장된 데이터만 읽어오기
 const inventory = [];
 ['DRAWER001', 'DRAWER002'].forEach(tag => {
-const saved = localStorage.getItem('gonggan_gyeol_' + tag);
+const saved = localStorage.getItem('gyeol_' + tag);
 if (saved) {
 const items = JSON.parse(saved);
-const title = (tag === 'DRAWER002') ? "서랍 2번" : "서랍 1번";
-items.forEach(it => inventory.push({ ...it, tag, title }));
+items.forEach(it => inventory.push({ ...it, tag }));
 }
 });
 
 const results = inventory.filter(it => it.n.toLowerCase().includes(query));
-if(results.length === 0) {
-list.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8;">검색 결과가 없습니다.</div>`;
-return;
-}
-
 results.forEach(it => {
-list.innerHTML += `
-<div class="result-item" onclick="location.href='drawer.html?tag=${it.tag}'">
-<div>
-<div class="item-info">${it.n} (${it.q}개)</div>
-<div style="font-size:13px; color:#666;">${it.title} (${it.cat}) 보관 중</div>
-</div>
-<button style="background:#000; color:#fff; border:none; padding:8px 12px; border-radius:8px; font-size:12px;">상세보기</button>
-</div>`;
+list.innerHTML += `<div class="result-item" onclick="location.href='drawer.html?tag=${it.tag}'">
+<span>${it.n} (${it.tag})</span><button style="background:#000; color:#fff; border:none; padding:8px 12px; border-radius:8px;">이동</button></div>`;
 });
 }
 </script>
