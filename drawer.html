@@ -20,7 +20,7 @@
         .media-box { width: 100%; height: 230px; background: #f1f5f9; border-radius: 20px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; border: 1px solid #e2e8f0; }
         .media-box img, .media-box video { width: 100%; height: 100%; object-fit: contain; }
         .btn-media-del { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); color: #fff; border: none; width: 30px; height: 30px; border-radius: 50%; font-size: 18px; display: none; cursor: pointer; z-index: 15; line-height: 1; }
-        .status-overlay { position: absolute; background: rgba(255,255,255,0.85); width: 100%; height: 100%; display: none; align-items: center; justify-content: center; flex-direction: column; font-weight: bold; color: var(--primary); z-index: 10; }
+        .status-overlay { position: absolute; background: rgba(255,255,255,0.85); width: 100%; height: 100%; display: none; align-items: center; justify-content: center; flex-direction: column; font-weight: bold; color: var(--primary); z-index: 10; text-align: center; padding: 20px; }
         
         /* 목록 컨트롤 & 둥근 화살표 */
         .list-controls { display: flex; justify-content: space-between; padding: 15px 20px 5px; align-items: center; }
@@ -39,7 +39,7 @@
         .btn-qty { border: none; background: #fff; width: 26px; height: 26px; border-radius: 8px; font-weight: 900; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: pointer; }
         .qty-val { font-weight: 800; font-size: 15px; min-width: 18px; text-align: center; }
 
-        /* 채팅창 스타일 수정 */
+        /* 채팅창 스타일 */
         .chat-window { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 9999; flex-direction: column; }
         .chat-header { background: #000; color: #fff; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
         .chat-messages { flex: 1; padding: 20px; overflow-y: auto; background: #f8fafc; }
@@ -108,8 +108,9 @@
 
         function setStatus(show, text = '처리 중...') {
             const overlay = document.getElementById('status-overlay');
-            document.getElementById('status-text').innerText = text;
-            overlay.style.display = show ? 'flex' : 'none';
+            const statusText = document.getElementById('status-text');
+            if (statusText) statusText.innerText = text;
+            if (overlay) overlay.style.display = show ? 'flex' : 'none';
         }
 
         function editTitle() {
@@ -124,7 +125,7 @@
         async function analyzeImage() {
             const input = document.createElement('input');
             input.type = 'file'; 
-            input.accept = 'image/*,video/*'; // 영상 추가 허용
+            input.accept = 'image/*,video/*';
             input.onchange = async (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -132,25 +133,44 @@
                 const path = `${tag}/${Date.now()}_${file.name}`;
                 setStatus(true, '보안 업로드 중... 📤');
                 
-                const { error: upErr } = await _supa.storage.from('user_uploads').upload(path, file);
-                if (upErr) return alert('업로드 실패');
+                try {
+                    // 1. 업로드
+                    const { error: upErr } = await _supa.storage.from('user_uploads').upload(path, file);
+                    if (upErr) throw new Error('업로드 실패');
 
-                setStatus(true, 'AI 분석 중... 🤖');
-                const { data: sign } = await _supa.storage.from('user_uploads').createSignedUrl(path, 3600);
-                
-                displayMedia(sign.signedUrl, file.type);
-                localStorage.setItem('last_media_' + tag, JSON.stringify({url: sign.signedUrl, type: file.type}));
+                    // 2. 미리보기 표시
+                    const { data: sign, error: sErr } = await _supa.storage.from('user_uploads').createSignedUrl(path, 3600);
+                    if (sErr || !sign) throw new Error('주소 생성 실패');
+                    
+                    displayMedia(sign.signedUrl, file.type);
+                    localStorage.setItem('last_media_' + tag, JSON.stringify({url: sign.signedUrl, type: file.type}));
 
-                const res = await fetch('/api/analyze', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ filePath: path })
-                });
-                const data = await res.json();
-                setStatus(false);
-                if (data.items) {
-                    data.items.forEach(n => items.push({ n, q: 1 }));
-                    saveAndRefresh();
+                    // 3. AI 분석
+                    setStatus(true, '비서 "결"이 분석 중... 🤖');
+                    const res = await fetch('/api/analyze', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filePath: path })
+                    });
+                    
+                    if (!res.ok) throw new Error('분석 서버 응답 에러');
+                    
+                    const data = await res.json();
+                    if (data.items && data.items.length > 0) {
+                        data.items.forEach(n => {
+                            if(!items.some(it => it.n === n)) {
+                                items.push({ n, q: 1 });
+                            }
+                        });
+                        saveAndRefresh();
+                    } else {
+                        alert("분석 결과가 없습니다. 직접 추가해 주세요.");
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert("처리 중 오류가 발생했습니다: " + err.message);
+                } finally {
+                    setStatus(false);
                 }
             };
             input.click();
@@ -159,12 +179,15 @@
         function displayMedia(url, type) {
             const wrap = document.getElementById('media-wrap');
             const delBtn = document.getElementById('media-del-btn');
+            const overlay = document.getElementById('status-overlay');
+            
             if (type && type.includes('video')) {
                 wrap.innerHTML = `<video src="${url}" autoplay loop muted playsinline></video>`;
             } else {
                 wrap.innerHTML = `<img src="${url}">`;
             }
-            wrap.appendChild(document.getElementById('status-overlay'));
+            
+            wrap.appendChild(overlay);
             wrap.appendChild(delBtn);
             delBtn.style.display = 'block';
         }
@@ -193,6 +216,12 @@
             
             toggleIcon.innerText = '⌃'; 
             const filtered = items.filter(it => it.n.toLowerCase().includes(filter.toLowerCase()));
+            
+            if (filtered.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#94a3b8; padding-top:40px;">물품이 없습니다.</div>';
+                return;
+            }
+
             container.innerHTML = filtered.map((it, idx) => `
                 <div class="item-row">
                     <div>
@@ -213,7 +242,10 @@
         function addItem() { const n = prompt("물품 이름"); if(n) { items.push({ n, q: 1 }); saveAndRefresh(); } }
         function editItem(idx) { const n = prompt("이름 수정", items[idx].n); if(n) { items[idx].n = n; saveAndRefresh(); } }
         function deleteItem(idx) { if(confirm('삭제할까요?')) { items.splice(idx, 1); saveAndRefresh(); } }
-        function changeQty(idx, val) { items[idx].q = Math.max(0, items[idx].q + val); saveAndRefresh(); }
+        function changeQty(idx, val) { 
+            items[idx].q = Math.max(0, items[idx].q + val); 
+            saveAndRefresh(); 
+        }
         
         function saveData() { 
             localData.items = items;
@@ -231,13 +263,17 @@
             input.value = '';
             box.scrollTop = box.scrollHeight;
 
-            const res = await fetch('/api/chat', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ message: text, tag: tag, inventory: JSON.stringify(items) })
-            });
-            const data = await res.json();
-            box.innerHTML += `<div class="msg-bubble msg-bot">${data.reply}</div>`;
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ message: text, tag: tag, inventory: JSON.stringify(items) })
+                });
+                const data = await res.json();
+                box.innerHTML += `<div class="msg-bubble msg-bot">${data.reply || "대답을 듣지 못했어요."}</div>`;
+            } catch (err) {
+                box.innerHTML += `<div class="msg-bubble msg-bot">비서 '결'과 연결이 끊겼습니다.</div>`;
+            }
             box.scrollTop = box.scrollHeight;
         }
 
