@@ -1,88 +1,81 @@
+// api/analyze.js
+import { createClient } from "@supabase/supabase-js";
+import fetch from "node-fetch";
+import { Buffer } from "buffer";
+
+const SUPA_URL = process.env.SUPABASE_URL;
+const SUPA_SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const GEMINI_KEY = process.env.GEMINI_API_KEY;
+const MODEL = process.env.GEMINI_MODEL || "gemini-3-flash-preview";
+const BUCKET = process.env.SUPABASE_BUCKET || "user_uploads";
+
+if (!SUPA_URL || !SUPA_SERVICE || !GEMINI_KEY) {
+console.error("Missing env vars for analyze function");
+}
+
+const supa = createClient(SUPA_URL, SUPA_SERVICE);
+
+function validFilePath(p) {
+// 허용되는 파일경로 패턴: 영숫자, -, _, /, ., 최대길이 제한
+return typeof p === "string" && /^[A-Za-z0-9_\\-./]{1,300}$/.test(p);
+}
+
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    console.log('❌ Method not POST:', req.method);
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
+const { filePath } = req.body || {};
 
-  try {
-    // FormData에서 이미지 추출
-    const formData = await req.formData();
-    const imageFile = formData.get('image');
-    const tag = formData.get('tag') || 'DRAWER001';
+if (!filePath || !validFilePath(filePath)) {
+return res.status(400).json({ error: "Invalid filePath" });
+}
+if (!SUPA_URL || !SUPA_SERVICE || !GEMINI_KEY) {
+return res.status(500).json({ error: "Server env not configured" });
+}
 
-    if (!imageFile) {
-      return res.status(400).json({ error: '이미지 파일이 필요합니다', success: false });
-    }
+try {
+// 1) signed url 생성 (짧게: 60초)
+const { data: signedData, error: signErr } = await supa.storage.from(BUCKET).createSignedUrl(filePath, 60);
+if (signErr || !signedData?.signedUrl) throw signErr || new Error("signed url failed");
+const signedUrl = signedData.signedUrl;
 
-    console.log('📸 Analyze 시작:', { tag, filename: imageFile.name });
+// 2) 이미지 다운로드
+const imgResp = await fetch(signedUrl);
+if (!imgResp.ok) throw new Error(`image download failed ${imgResp.status}`);
+const arr = await imgResp.arrayBuffer();
+const b64 = Buffer.from(arr).toString("base64");
 
-    // 이미지 base64 변환
-    const bytes = await imageFile.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const base64Image = buffer.toString('base64');
-    const mimeType = imageFile.type || 'image/jpeg';
+// 3) Gemini REST 호출 (API key in header)
+const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+const body = {
+contents: [
+{
+parts: [
+{ inline_data: { mime_type: "image/jpeg", data: b64 } },
+{ text: "이 이미지에 보이는 물품의 이름만 콤마(,)로 구분하여 한국어로 출력하세요. 설명 금지." }
+]
+}
+]
+};
 
-    // 제미나이 API 호출
-    const apiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              {
-                text: `이 서랍 사진에서 물건들의 이름, 카테고리, 개수를 추출해줘.
-형식: 정확히 JSON 배열로만 응답. 
-예: [{"name":"쫀디기","category":"식품","quantity":2}]
-카테고리 예시: 식품,주방,화장품,의약품,문구,전자제품,기타`
-              },
-              {
-                inlineData: {
-                  mimeType: mimeType,
-                  data: base64Image
-                }
-              }
-            ]
-          }]
-        })
-      }
-    );
+const gResp = await fetch(`${endpoint}?key=${GEMINI_KEY}`, {
+method: "POST",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify(body),
+// optional: timeout handling can be added in production
+});
 
-    const data = await apiResponse.json();
-    console.log('🤖 Gemini 응답:', data);
+const gData = await gResp.json();
 
-    if (!apiResponse.ok) {
-      throw new Error(data.error?.message || 'Gemini API 오류');
-    }
+// 4) 텍스트 추출 (여러 포맷 대응)
+let text = null;
+if (gData?.candidates?.[0]?.content?.[0]?.text) text = gData.candidates[0].content[0].text;
+else if (gData?.response?.text) text = gData.response.text;
+else if (typeof gData === "string") text = gData;
+else text = JSON.stringify(gData).slice(0, 2000);
 
-    // JSON 파싱 (안전 처리)
-    let items = [];
-    try {
-      const content = data.candidates[0].content.parts[0].text;
-      items = JSON.parse(content);
-      if (!Array.isArray(items)) items = [];
-    } catch (parseErr) {
-      console.error('JSON 파싱 실패:', parseErr);
-      items = [];
-    }
-
-    res.status(200).json({
-      success: true,
-      items: items.map(i => ({
-        cat: i.category || '기타',
-        n: i.name || '알 수 없음',
-        q: parseInt(i.quantity) || 1
-      })),
-      tag,
-      analyzed: items.length
-    });
-
-  } catch (error) {
-    console.error('💥 Analyze 오류:', error);
-    res.status(500).json({ 
-      error: error.message,
-      success: false 
-    });
-  }
+const items = text.split(",").map(s => s.trim()).filter(Boolean);
+return res.status(200).json({ items, raw: text });
+} catch (err) {
+console.error("analyze error:", err);
+return res.status(500).json({ error: err.message || "analyze failed", raw: (err.stack || "") });
+}
 }
