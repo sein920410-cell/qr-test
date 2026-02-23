@@ -1,16 +1,21 @@
-/* 1. 로딩 애니메이션 (분석 중 표시) */
+/* --- 기존 디자인 유지 --- */
+
+/* 1. 로딩 애니메이션 (비서 결이 분석 중일 때 표시) */
 .loading-overlay {
   position: fixed;
   top: 0; left: 0;
   width: 100%; height: 100%;
-  background: rgba(255, 255, 255, 0.8);
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
+  background: rgba(255, 255, 255, 0.8); /* 반투명 배경 */
+  display: none; /* 평소에는 숨김 */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   z-index: 1000;
 }
 
 .spinner {
-  width: 40px; height: 40px;
+  width: 40px;
+  height: 40px;
   border: 4px solid #f3f3f3;
   border-top: 4px solid #3498db; /* 세련된 파란색 */
   border-radius: 50%;
@@ -22,11 +27,18 @@
   100% { transform: rotate(360deg); }
 }
 
+.loading-text {
+  margin-top: 15px;
+  font-weight: bold;
+  color: #333;
+}
+
 /* 2. 목록 UI 개선 (수량 버튼 및 편집/삭제) */
 .item-controls {
   display: flex;
   align-items: center;
   gap: 10px;
+  margin-top: 5px;
 }
 
 .qty-btn {
@@ -41,4 +53,12 @@
   font-size: 0.8rem;
   color: #888;
   margin-top: 5px;
+}
+
+/* 부가세 안내 스타일 */
+.vat-notice {
+  font-size: 0.7rem;
+  color: #aaa;
+  text-align: center;
+  margin-top: 20px;
 }
