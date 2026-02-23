@@ -16,7 +16,6 @@
         .search-bar.active { background: #fff; border: 1.5px solid var(--primary); box-shadow: 0 4px 12px rgba(0,123,255,0.08); }
         .search-bar input { border: none; background: transparent; outline: none; width: 0; transition: 0.3s; font-size: 15px; }
         .search-bar.active input { width: 100%; margin-left: 10px; }
-        .empty-notice { text-align: center; color: var(--gray); padding: 60px 20px; line-height: 1.8; font-size: 15px; }
         .media-card { width: 100%; height: 250px; background: #fff; border-radius: 20px; overflow: hidden; position: relative; border: 1px solid #e2e8f0; margin-bottom: 20px; display: none; }
         .media-card img { width: 100%; height: 100%; object-fit: contain; }
         #preview-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 2000; flex-direction: column; align-items: center; justify-content: center; }
@@ -39,7 +38,7 @@
         </div>
     </section>
     <main style="flex:1; overflow-y:auto; padding:0 20px 100px;">
-        <div id="empty-notice" class="empty-notice">이 서랍에 아직 물건이 없습니다.<br>사진을 찍거나 직접 입력해 보세요.</div>
+        <div id="empty-notice" style="text-align:center; color:var(--gray); padding:60px 20px;">이 서랍에 아직 물건이 없습니다.<br>사진을 찍거나 직접 입력해 보세요.</div>
         <div id="media-card" class="media-card">
             <button style="position:absolute; top:10px; right:10px;" onclick="deleteMedia()">×</button>
             <div id="media-target" style="height:100%;"></div>
@@ -96,7 +95,7 @@
         function updateList() {
             document.getElementById('list-container').innerHTML = items.map((it, i) => `
                 <div class="item-row">
-                    <div><span style="font-weight:700;">${it.n}</span><br><small style="color:red" onclick="del(${i})">삭제</small></div>
+                    <div><span style="font-weight:700;">${it.n}</span><br><small style="color:#ff4d4d; cursor:pointer;" onclick="del(${i})">삭제</small></div>
                     <div class="qty-controls"><button class="btn-qty" onclick="qty(${i},-1)">-</button><span style="margin:0 10px; font-weight:800;">${it.q}</span><button class="btn-qty" onclick="qty(${i},1)">+</button></div>
                 </div>`).join('');
         }
@@ -104,7 +103,7 @@
         function filterItems(v) { const rows = document.querySelectorAll('.item-row'); rows.forEach(r => r.style.display = r.innerText.includes(v) ? 'flex' : 'none'); }
         function qty(i, v) { items[i].q = Math.max(0, items[i].q + v); updateList(); }
         function del(i) { if(confirm('삭제?')) { items.splice(i,1); updateList(); } }
-        function addItem() { const n = prompt("이름?"); if(n) { items.push({n, q:1}); updateList(); } }
+        function addItem() { const n = prompt("물품 이름?"); if(n) { items.push({n, q:1}); updateList(); } }
         function toggleChat() { alert('비서 결과 대화를 시작합니다!'); }
     </script>
 </body>
