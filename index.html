@@ -2,19 +2,20 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" href="data:;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==">
     <title>공간:결 - 검색</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { font-family: -apple-system, sans-serif; background: #f8fafc; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
         .card { background: #fff; padding: 40px; border-radius: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); width: 90%; max-width: 400px; text-align: center; }
-        input { width: 100%; padding: 18px; border: 2px solid #007bff; border-radius: 15px; font-size: 18px; outline: none; }
-   </style>
+        input { width: 100%; padding: 18px; border: 2px solid #007bff; border-radius: 15px; font-size: 18px; outline: none; transition: 0.3s; }
+        input:focus { border-color: #0056b3; box-shadow: 0 0 10px rgba(0,123,255,0.2); }
+    </style>
 </head>
-    <link rel="icon" href="data:;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==">
 <body>
-    <div class="search-card">
-        <div class="title">🔍 무엇을 찾으시나요?</div>
-        <input type="text" class="input-box" placeholder="양말, 충전기, 안경..." onkeypress="if(event.keyCode==13) location.href='drawer.html?q='+this.value">
+    <div class="card">
+        <h2 style="margin-bottom:30px;">🔍 무엇을 찾으시나요?</h2>
+        <input type="text" placeholder="양말, 노트북, 안경..." onkeypress="if(event.keyCode==13) location.href='drawer.html?q='+this.value">
         <p style="color:#94a3b8; margin-top:20px; font-size:14px;">서랍 이름을 입력하거나 QR을 스캔하세요.</p>
     </div>
 </body>
