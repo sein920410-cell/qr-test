@@ -2,46 +2,9 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>공간:결 - 검색</title>
+<title>공간:결 - 스마트 보관 관리</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-  /* --- 1. 디자인 (CSS) 영역 --- */
-  :root { --primary: #007bff; --bg: #f8fafc; }
-  body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; }
-  
-  /* 비서 결의 로딩 화면 디자인 */
-  .loading-overlay {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(255, 255, 255, 0.8);
-    display: none; /* 평소에는 숨겨둡니다 */
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-  }
-
-  .spinner {
-    width: 40px; height: 40px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #3498db;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-
-  .loading-text { margin-top: 15px; font-weight: bold; color: #333; }
-
-  /* 기존 검색창 디자인 */
-  .search-container { max-width: 600px; margin: 40px auto; background: #fff; padding: 25px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-  .search-box { width: 100%; padding: 18px; border: 2px solid var(--primary); border-radius: 14px; font-size: 18px; outline: none; box-sizing: border-box; }
-  .result-item { padding: 18px; border: 1px solid #eee; border-radius: 16px; margin-top: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -53,15 +16,47 @@
 <div class="search-container">
   <h2 style="margin-bottom: 20px;">🔍 무엇을 찾으시나요?</h2>
   <input type="text" id="main-search" class="search-box" placeholder="물건 이름을 입력하세요" oninput="searchItems()">
+  
+  <div style="margin-top:20px;">
+    <p style="font-size:14px; color:#666;">※ 영상은 5초 이내(4.5MB 이하)로 촬영해 주세요.</p>
+    <input type="file" id="fileInput" accept="image/*,video/*" onchange="handleFileUpload(this.files[0])">
+  </div>
+
   <div id="result-list"></div>
 </div>
 
 <script>
+// 1. 용량 체크 및 업로드 핸들러
+async function handleFileUpload(file) {
+  if (!file) return;
+
+  const MAX_SIZE = 4.5 * 1024 * 1024; // Vercel 4.5MB 제한 [cite: 2026-02-23]
+  
+  if (file.size > MAX_SIZE) {
+    alert("파일이 너무 커요! 영상은 5초 내외로 짧게 찍거나, 사진으로 등록해 주세요.");
+    return;
+  }
+
+  // 로딩 시작
+  document.getElementById('loadingOverlay').style.display = 'flex';
+
+  try {
+    // 여기에 기존의 분석 API 호출 코드를 넣으세요
+    console.log("분석 시작:", file.name);
+    // const response = await fetch('/api/analyze', { ... });
+  } catch (error) {
+    alert("분석 중 오류가 발생했습니다.");
+  } finally {
+    // 로딩 종료
+    document.getElementById('loadingOverlay').style.display = 'none';
+  }
+}
+
+// 2. 검색 기능
 function searchItems() {
   const query = document.getElementById('main-search').value.trim().toLowerCase();
   const list = document.getElementById('result-list');
-  list.innerHTML = ''; 
-  if(!query) return;
+  list.innerHTML = ''; if(!query) return;
 
   const inventory = [];
   ['DRAWER001', 'DRAWER002'].forEach(tag => {
@@ -81,15 +76,6 @@ function searchItems() {
       </div>`;
   });
 }
-
-// 만약 분석 기능을 호출할 때 로딩창을 띄우고 싶다면 아래 함수를 사용하세요
-function showLoading() {
-  document.getElementById('loadingOverlay').style.display = 'flex';
-}
-function hideLoading() {
-  document.getElementById('loadingOverlay').style.display = 'none';
-}
 </script>
-
 </body>
 </html>
