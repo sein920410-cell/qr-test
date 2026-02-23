@@ -1,225 +1,132 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <link rel="icon" href="data:;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==">
     <meta charset="UTF-8">
+    <link rel="icon" href="data:;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==">
     <title>공간:결 - 프리미엄 리포트</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --primary: #007bff; --bg: #f8fafc; --text: #1e293b; --gray: #94a3b8; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-
-        /* 1. 헤더: 제목 중앙 배치 */
         .header { display: flex; justify-content: center; align-items: center; padding: 15px 20px; background: #fff; border-bottom: 1px solid #f1f5f9; position: relative; }
         .header-title { font-size: 17px; font-weight: 800; }
         .btn-plus-top { position: absolute; right: 20px; background: var(--primary); color: #fff; border: none; width: 36px; height: 36px; border-radius: 10px; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-
-        /* 2. 검색창: 차분하고 세련된 디자인 */
         .search-area { padding: 10px 20px; }
         .search-bar { background: #edf2f7; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; cursor: pointer; transition: 0.3s; }
         .search-bar.active { background: #fff; border: 1.5px solid var(--primary); box-shadow: 0 4px 12px rgba(0,123,255,0.08); }
         .search-bar input { border: none; background: transparent; outline: none; width: 0; transition: 0.3s; font-size: 15px; }
         .search-bar.active input { width: 100%; margin-left: 10px; }
-        .search-ph { font-size: 14px; font-weight: 500; color: #718096; margin-left: 8px; }
-
-        /* 3. 메인 뷰 및 안내 문구 */
         .content-view { flex: 1; overflow-y: auto; padding: 0 20px 100px; }
-        .divider { height: 1px; background: #e2e8f0; margin: 15px 0; }
-        .empty-notice { text-align: center; color: var(--gray); padding: 40px 20px; line-height: 1.8; font-size: 14px; font-weight: 500; }
-
-        /* 4. 미디어 카드 & 분석 중 오버레이 */
         .media-card { width: 100%; height: 250px; background: #fff; border-radius: 20px; overflow: hidden; position: relative; border: 1px solid #e2e8f0; margin-bottom: 20px; display: none; }
-        .media-card img, .media-card video { width: 100%; height: 100%; object-fit: contain; }
-        .analysis-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.7); display:none; flex-direction:column; align-items:center; justify-content:center; z-index: 5; }
-        .analysis-text { color: var(--primary); font-weight: 800; font-size: 16px; }
-        .btn-del-media { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.4); color: #fff; border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; z-index: 10; }
-
-        /* 5. 사진 전용 미리보기 모달 */
+        .media-card img { width: 100%; height: 100%; object-fit: contain; }
+        .analysis-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.7); display:none; flex-direction:column; align-items:center; justify-content:center; z-index: 5; text-align: center; }
         #preview-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 20000; flex-direction: column; align-items: center; justify-content: center; }
         .preview-img { max-width: 90%; max-height: 60%; border-radius: 15px; transition: transform 0.3s; }
-        .rotate-controls { margin-top: 25px; display: flex; gap: 20px; }
-        .btn-rot { background: #2d3748; color: #fff; border: none; width: 50px; height: 50px; border-radius: 50%; font-size: 20px; cursor: pointer; }
-        .preview-footer { margin-top: 30px; display: flex; gap: 12px; width: 85%; }
-        .btn-p { flex: 1; padding: 16px; border-radius: 14px; border: none; font-weight: 800; font-size: 15px; cursor: pointer; }
-
-        /* 6. 목록 및 결에게 묻기 */
-        .item-row { background: #fff; border-radius: 18px; padding: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #f1f5f9; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
-        .qty-box { display: flex; align-items: center; background: #f8fafc; padding: 4px; border-radius: 10px; border: 1px solid #e2e8f0; }
         .btn-qty { border: none; background: #fff; width: 28px; height: 28px; border-radius: 6px; color: var(--primary); font-weight: 900; }
-        .btn-add-man { width: 100%; padding: 16px; border: 1px dashed #cbd5e1; border-radius: 15px; background: transparent; color: var(--gray); font-weight: 700; margin-top: 10px; }
         .fab-gyeol { position: fixed; bottom: 30px; right: 25px; width: 60px; height: 60px; background: #000; color: #fff; border: none; border-radius: 50%; font-size: 24px; display: none; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 1000; }
+        /* 채팅창 스타일 보완 */
+        .chat-win { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 20001; flex-direction: column; }
     </style>
 </head>
 <body>
     <header class="header">
-        <div class="header-title" id="disp-id" onclick="editTitle()">서랍 1</div>
+        <div class="header-title" id="disp-id">서랍 1</div>
         <button class="btn-plus-top" onclick="triggerFile()">+</button>
     </header>
 
     <section class="search-area">
         <div class="search-bar" id="sb-wrap" onclick="toggleSearch(true)">
-            <span style="font-size: 16px; color: #a0aec0;">🔍</span>
-            <span class="search-ph" id="sb-ph">이 서랍에서 검색</span>
+            <span>🔍</span>
+            <span class="search-ph" id="sb-ph" style="margin-left:8px; font-size:14px; color:var(--gray);">이 서랍에서 검색</span>
             <input type="text" id="sb-input" oninput="filterItems(this.value)" onblur="toggleSearch(false)">
         </div>
     </section>
 
     <main class="content-view">
-        <div class="divider"></div>
-        
-        <div id="empty-notice" class="empty-notice">
-            이 서랍에 아직 등록된 물건이 없습니다.<br>사진을 찍거나 직접 입력해 보세요.
-        </div>
-
+        <div id="empty-notice" class="empty-notice" style="text-align:center; color:var(--gray); padding:40px 20px;">이 서랍에 아직 물품이 없습니다.<br>사진을 찍어 등록해 보세요.</div>
         <div id="media-card" class="media-card">
             <div id="analysis-overlay" class="analysis-overlay">
-                <div class="analysis-text">비서 "결"이 분석 중... 🤖</div>
+                <div style="color:var(--primary); font-weight:800;">비서 "결"이 분석 중... 🤖</div>
             </div>
-            <button class="btn-del-media" onclick="deleteMedia()">×</button>
+            <button style="position:absolute; top:12px; right:12px; background:rgba(0,0,0,0.4); color:#fff; border:none; border-radius:50%; width:28px; height:28px;" onclick="deleteMedia()">×</button>
             <div id="media-target" style="height:100%; display:flex; align-items:center; justify-content:center;"></div>
         </div>
-
         <div id="list-container"></div>
-        <button id="btn-man" class="btn-add-man" onclick="addItem()" style="display:none;">+ 물품 직접 추가</button>
+        <button id="btn-man" onclick="addItem()" style="display:none; width:100%; padding:16px; border:1px dashed #ccc; border-radius:15px; background:none; color:var(--gray); font-weight:700;">+ 물품 직접 추가</button>
     </main>
 
     <div id="preview-modal">
-        <div style="position:absolute; top:25px; right:25px; color:#fff; font-size:32px;" onclick="closePreview()">✕</div>
-        <div style="color:#fff; margin-bottom:20px; font-weight:800;">사진 미리보기</div>
         <img id="preview-img" class="preview-img">
-        <div class="rotate-controls">
-            <button class="btn-rot" onclick="rotatePreview(-90)">↺</button>
-            <button class="btn-rot" onclick="rotatePreview(90)">↻</button>
+        <div style="margin-top:25px; display:flex; gap:15px;">
+            <button onclick="rotatePreview(-90)" style="background:#2d3748; color:#fff; border:none; width:50px; height:50px; border-radius:50%; font-size:20px;">↺</button>
+            <button onclick="rotatePreview(90)" style="background:#2d3748; color:#fff; border:none; width:50px; height:50px; border-radius:50%; font-size:20px;">↻</button>
         </div>
-        <div class="preview-footer">
-            <button class="btn-p" style="background:#4a5568; color:#fff;" onclick="triggerFile()">다시 촬영</button>
-            <button id="btn-reg" class="btn-p" style="background:var(--primary); color:#fff;" onclick="registerMedia()">등록하기</button>
+        <div style="margin-top:30px; display:flex; gap:12px; width:85%;">
+            <button style="flex:1; padding:16px; border-radius:14px; background:#4a5568; color:#fff; border:none; font-weight:800;" onclick="triggerFile()">다시 촬영</button>
+            <button id="btn-reg" style="flex:1; padding:16px; border-radius:14px; background:var(--primary); color:#fff; border:none; font-weight:800;" onclick="registerMedia()">등록하기</button>
         </div>
     </div>
 
-    <button id="fab-gyeol" class="fab-gyeol" onclick="toggleChat()">✨</button>
+    <button id="fab-gyeol" class="fab-gyeol" onclick="openChat()">✨</button>
     <input type="file" id="hidden-file" style="display:none;" accept="image/*,video/*">
 
     <script>
         const SUPA_URL = 'https://tqhtggusphhcsygiitrv.supabase.co';
         const SUPA_KEY = 'sb_publishable_lJeKpO0aRv9mTBE1qnbkow_JqTmhnHQ';
         const _supa = supabase.createClient(SUPA_URL, SUPA_KEY);
-
         let items = []; let currentRot = 0; let selectedFile = null;
         const tag = (new URLSearchParams(window.location.search).get('tag') || 'DRAWER001').toUpperCase();
 
         function triggerFile() { document.getElementById('hidden-file').click(); }
-
         document.getElementById('hidden-file').onchange = (e) => {
-            selectedFile = e.target.files[0]; if (!selectedFile) return;
-            if (selectedFile.type.includes('image')) {
-                const reader = new FileReader();
-                reader.onload = (re) => {
-                    document.getElementById('preview-img').src = re.target.result;
+            selectedFile = e.target.files[0]; if(!selectedFile) return;
+            if(selectedFile.type.includes('image')){
+                const r = new FileReader(); r.onload = (ev) => {
+                    document.getElementById('preview-img').src = ev.target.result;
                     document.getElementById('preview-modal').style.display = 'flex';
                     currentRot = 0; document.getElementById('preview-img').style.transform = `rotate(0deg)`;
-                }; reader.readAsDataURL(selectedFile);
-            } else { registerMedia(); } // 영상은 회전 없이 즉시 등록
+                }; r.readAsDataURL(selectedFile);
+            } else { registerMedia(); }
         };
-
-        function rotatePreview(deg) {
-            currentRot = (currentRot + deg) % 360;
-            document.getElementById('preview-img').style.transform = `rotate(${currentRot}deg)`;
-        }
-
+        function rotatePreview(d) { currentRot = (currentRot + d) % 360; document.getElementById('preview-img').style.transform = `rotate(${currentRot}deg)`; }
         function closePreview() { document.getElementById('preview-modal').style.display = 'none'; }
-
         async function registerMedia() {
-            if(!selectedFile) return;
-            const btn = document.getElementById('btn-reg');
-            if(btn) btn.disabled = true;
-
+            const b = document.getElementById('btn-reg'); b.disabled = true; b.innerText = "처리 중...";
             closePreview();
             document.getElementById('empty-notice').style.display = 'none';
             document.getElementById('media-card').style.display = 'block';
             document.getElementById('analysis-overlay').style.display = 'flex';
-            
             const path = `${tag}/${Date.now()}_${selectedFile.name}`;
             try {
-                const { error: upErr } = await _supa.storage.from('user_uploads').upload(path, selectedFile);
-                if (upErr) throw upErr;
-
-                const { data: sign } = await _supa.storage.from('user_uploads').createSignedUrl(path, 3600);
-                displayMedia(sign.signedUrl, selectedFile.type);
-
-                const res = await fetch('/api/analyze', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ filePath: path })
-                });
-                const data = await res.json();
-                
-                items = (data.items || []).map(n => ({ n, q: 1 }));
+                await _supa.storage.from('user_uploads').upload(path, selectedFile);
+                const { data: s } = await _supa.storage.from('user_uploads').createSignedUrl(path, 3600);
+                document.getElementById('media-target').innerHTML = `<img src="${s.signedUrl}" style="transform: rotate(${currentRot}deg)">`;
+                const res = await fetch('/api/analyze', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({filePath:path}) });
+                const d = await res.json();
+                items = (d.items || []).map(n => ({ n, q: 1 }));
                 updateList();
                 document.getElementById('btn-man').style.display = 'block';
                 document.getElementById('fab-gyeol').style.display = 'flex';
-            } catch (err) {
-                alert("오류 발생: " + err.message);
-            } finally {
-                document.getElementById('analysis-overlay').style.display = 'none';
-                if(btn) btn.disabled = false;
-            }
+            } catch(e) { alert("오류: " + e.message); }
+            finally { document.getElementById('analysis-overlay').style.display = 'none'; b.disabled = false; b.innerText = "등록하기"; }
         }
-
-        function displayMedia(url, type) {
-            const target = document.getElementById('media-target');
-            if (type.includes('video')) {
-                target.innerHTML = `<video src="${url}" autoplay loop muted playsinline></video>`;
-            } else {
-                target.innerHTML = `<img src="${url}" style="transform: rotate(${currentRot}deg)">`;
-            }
-        }
-
         function updateList() {
-            const container = document.getElementById('list-container');
-            container.innerHTML = items.map((it, idx) => `
-                <div class="item-row">
-                    <div>
-                        <span style="font-weight:700; font-size:16px;">${it.n}</span>
-                        <div style="font-size:12px; color:#94a3b8; margin-top:4px; font-weight:bold;">
-                            편집 <span style="color:#ff4d4d; margin-left:10px;" onclick="deleteItem(${idx})">삭제</span>
-                        </div>
-                    </div>
-                    <div class="qty-box">
-                        <button class="btn-qty" onclick="changeQty(${idx}, -1)">-</button>
-                        <span style="margin:0 12px; font-weight:800;">${it.q}</span>
-                        <button class="btn-qty" onclick="changeQty(${idx}, 1)">+</button>
+            document.getElementById('list-container').innerHTML = items.map((it, i) => `
+                <div class="item-row" style="background:#fff; border-radius:18px; padding:18px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border:1px solid #f1f5f9;">
+                    <div><span style="font-weight:700;">${it.n}</span><br><small style="color:#94a3b8; font-weight:bold;" onclick="del(${i})">삭제</small></div>
+                    <div style="display:flex; align-items:center; background:#f8fafc; padding:4px; border-radius:10px; border:1px solid #e2e8f0;">
+                        <button class="btn-qty" onclick="qty(${i},-1)">-</button><span style="margin:0 12px; font-weight:800;">${it.q}</span><button class="btn-qty" onclick="qty(${i},1)">+</button>
                     </div>
                 </div>`).join('');
         }
-
-        function toggleSearch(active) {
-            const wrap = document.getElementById('sb-wrap');
-            if(active) {
-                wrap.classList.add('active');
-                document.getElementById('sb-ph').style.display = 'none';
-                document.getElementById('sb-input').focus();
-            } else if(!document.getElementById('sb-input').value) {
-                wrap.classList.remove('active');
-                document.getElementById('sb-ph').style.display = 'block';
-            }
-        }
-
-        function filterItems(val) {
-            const rows = document.querySelectorAll('.item-row');
-            rows.forEach(row => {
-                const name = row.querySelector('span').innerText;
-                row.style.display = name.includes(val) ? 'flex' : 'none';
-            });
-        }
-
-        function changeQty(idx, val) { items[idx].q = Math.max(0, items[idx].q + val); updateList(); }
-        function deleteItem(idx) { if(confirm('삭제?')) { items.splice(idx, 1); updateList(); } }
-        function addItem() { const n = prompt("물품 이름"); if(n) { items.push({ n, q: 1 }); updateList(); } }
-        function toggleChat() { alert('비서 결과 대화를 시작합니다!'); }
-        function deleteMedia() { if(confirm('사진 삭제?')) { location.reload(); } }
-        function editTitle() { const n = prompt("이름 수정", document.getElementById('disp-id').innerText); if(n) document.getElementById('disp-id').innerText = n; }
+        function toggleSearch(a) { const w = document.getElementById('sb-wrap'); if(a){ w.classList.add('active'); document.getElementById('sb-ph').style.display='none'; document.getElementById('sb-input').focus(); } else if(!document.getElementById('sb-input').value){ w.classList.remove('active'); document.getElementById('sb-ph').style.display='block'; } }
+        function filterItems(v) { document.querySelectorAll('.item-row').forEach(r => r.style.display = r.innerText.includes(v) ? 'flex' : 'none'); }
+        function qty(i, v) { items[i].q = Math.max(0, items[i].q + v); updateList(); }
+        function del(i) { if(confirm('삭제?')){ items.splice(i,1); updateList(); } }
+        function addItem() { const n = prompt("물품 이름"); if(n){ items.push({n, q:1}); updateList(); } }
+        function openChat() { alert('비서 결과 대화를 시작합니다!'); }
+        function deleteMedia() { if(confirm('사진 삭제?')) location.reload(); }
     </script>
 </body>
 </html>
