@@ -2,39 +2,94 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>공간:결 - 스마트 검색</title>
+<title>공간:결 - 검색</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="style.css">
+<style>
+  /* --- 1. 디자인 (CSS) 영역 --- */
+  :root { --primary: #007bff; --bg: #f8fafc; }
+  body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; }
+  
+  /* 비서 결의 로딩 화면 디자인 */
+  .loading-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    display: none; /* 평소에는 숨겨둡니다 */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .spinner {
+    width: 40px; height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .loading-text { margin-top: 15px; font-weight: bold; color: #333; }
+
+  /* 기존 검색창 디자인 */
+  .search-container { max-width: 600px; margin: 40px auto; background: #fff; padding: 25px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+  .search-box { width: 100%; padding: 18px; border: 2px solid var(--primary); border-radius: 14px; font-size: 18px; outline: none; box-sizing: border-box; }
+  .result-item { padding: 18px; border: 1px solid #eee; border-radius: 16px; margin-top: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+</style>
 </head>
 <body>
-<div class="container">
-  <div class="card">
-    <h2 style="margin-bottom: 20px; font-size: 1.5rem;">🔍 무엇을 찾으시나요?</h2>
-    <input type="text" id="main-search" class="search-box" placeholder="물건 이름을 입력하세요" oninput="searchItems()">
-    <div id="result-list" style="margin-top: 10px;"></div>
-  </div>
+
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="spinner"></div>
+  <p class="loading-text">비서 <b>'결'</b>이 서랍을 분석하고 있어요...</p>
 </div>
+
+<div class="search-container">
+  <h2 style="margin-bottom: 20px;">🔍 무엇을 찾으시나요?</h2>
+  <input type="text" id="main-search" class="search-box" placeholder="물건 이름을 입력하세요" oninput="searchItems()">
+  <div id="result-list"></div>
+</div>
+
 <script>
 function searchItems() {
   const query = document.getElementById('main-search').value.trim().toLowerCase();
   const list = document.getElementById('result-list');
-  list.innerHTML = ''; if(!query) return;
+  list.innerHTML = ''; 
+  if(!query) return;
 
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key.startsWith('gyeol_')) {
-      const tag = key.replace('gyeol_', '');
-      const items = JSON.parse(localStorage.getItem(key));
-      items.filter(it => it.n.toLowerCase().includes(query)).forEach(it => {
-        list.innerHTML += `
-          <div class="result-item">
-            <span><strong>${it.n}</strong> <small style="color:#888;">(${tag})</small></span>
-            <button class="btn-black" onclick="location.href='drawer.html?tag=${tag}'">이동</button>
-          </div>`;
-      });
+  const inventory = [];
+  ['DRAWER001', 'DRAWER002'].forEach(tag => {
+    const saved = localStorage.getItem('gyeol_' + tag);
+    if (saved) {
+      const items = JSON.parse(saved);
+      items.forEach(it => inventory.push({ ...it, tag }));
     }
-  }
+  });
+
+  const results = inventory.filter(it => it.n.toLowerCase().includes(query));
+  results.forEach(it => {
+    list.innerHTML += `
+      <div class="result-item" onclick="location.href='drawer.html?tag=${it.tag}'">
+        <span>${it.n} (${it.tag})</span>
+        <button style="background:#000; color:#fff; border:none; padding:8px 12px; border-radius:8px;">이동</button>
+      </div>`;
+  });
+}
+
+// 만약 분석 기능을 호출할 때 로딩창을 띄우고 싶다면 아래 함수를 사용하세요
+function showLoading() {
+  document.getElementById('loadingOverlay').style.display = 'flex';
+}
+function hideLoading() {
+  document.getElementById('loadingOverlay').style.display = 'none';
 }
 </script>
+
 </body>
 </html>
