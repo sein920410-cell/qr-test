@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import fetch from "node-fetch";
+import { Buffer } from "buffer"; // 안정성을 위해 추가
 
 const supa = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -12,14 +13,14 @@ export default async function handler(req, res) {
     const imgResp = await fetch(signedData.signedUrl);
     const b64 = Buffer.from(await imgResp.arrayBuffer()).toString("base64");
 
-    // 1.5 Flash 모델로 변경하여 하루 1,500회 한도로 넉넉하게 사용합니다
+    // Gemini 1.5 Flash 사용으로 넉넉한 한도 확보
     const gResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [
           { inlineData: { mimeType: "image/jpeg", data: b64 } },
-          { text: "당신은 정리 전문가 비서 '결'입니다. 사진 속 물건들을 [물품명(색상/특징)] 형태로 아주 꼼꼼하게 콤마(,)로만 구분해서 나열해주세요." }
+          { text: "당신은 정리 전문가 비서 '결'입니다. 사진 속 물건들을 [물품명(색상/특징)] 형태로 아주 꼼꼼하게 리스트업하세요. 답변은 오직 물품명들을 콤마(,)로만 구분해서 나열하고 다른 설명은 절대 하지 마세요." }
         ]}]
       })
     });
