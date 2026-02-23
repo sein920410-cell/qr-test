@@ -4,7 +4,7 @@ import fetch from "node-fetch";
 const SUPA_URL = process.env.SUPABASE_URL;
 const SUPA_SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
-const MODEL = process.env.GEMINI_MODEL || "gemini-3-flash-preview";
+const MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash";
 
 const supa = createClient(SUPA_URL, SUPA_SERVICE);
 
