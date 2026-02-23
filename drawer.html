@@ -1,237 +1,70 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>공간:결 - 현세인</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        :root { --primary: #007bff; --bg: #f8fafc; --text: #1e293b; --gray: #94a3b8; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-
-        /* 1. 헤더: 제목 중앙, + 버튼 우측 */
-        .header { display: flex; justify-content: center; align-items: center; padding: 15px 20px; background: #fff; border-bottom: 1px solid #f1f5f9; position: relative; }
-        .header-title { font-size: 18px; font-weight: 800; }
-        .btn-plus-top { position: absolute; right: 20px; background: var(--primary); color: #fff; border: none; width: 36px; height: 36px; border-radius: 10px; font-size: 24px; cursor: pointer; display:flex; align-items:center; justify-content:center; }
-
-        /* 2. 검색창: 돋보기가 튀지 않는 차분한 디자인 */
-        .search-area { padding: 10px 20px; }
-        .search-bar { background: #edf2f7; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; cursor: pointer; transition: 0.3s; }
-        .search-bar.active { background: #fff; border: 1.5px solid var(--primary); box-shadow: 0 4px 12px rgba(0,123,255,0.08); }
-        .search-bar input { border: none; background: transparent; outline: none; width: 0; transition: 0.3s; font-size: 15px; }
-        .search-bar.active input { width: 100%; margin-left: 10px; }
-        .search-ph { font-size: 14px; font-weight: 500; color: #718096; margin-left: 8px; }
-
-        /* 3. 콘텐츠 영역 및 안내 문구 */
-        .content-view { flex: 1; overflow-y: auto; padding: 0 20px 100px; }
-        .empty-notice { text-align: center; color: var(--gray); padding: 60px 20px; line-height: 1.8; font-size: 15px; font-weight: 500; }
-
-        /* 사진 카드 */
-        .media-card { width: 100%; height: 250px; background: #fff; border-radius: 20px; overflow: hidden; position: relative; border: 1px solid #e2e8f0; margin-bottom: 20px; display: none; }
-        .media-card img, .media-card video { width: 100%; height: 100%; object-fit: contain; }
-        .btn-del-media { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.4); color: #fff; border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; z-index: 10; font-size: 16px; }
-
-        /* 미리보기 모달 */
-        #preview-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 20000; flex-direction: column; align-items: center; justify-content: center; }
-        .preview-img { max-width: 90%; max-height: 60%; border-radius: 15px; transition: transform 0.3s; }
-        .preview-btns { margin-top: 25px; display: flex; gap: 15px; width: 85%; }
-        .btn-p-circle { background: #2d3748; color: #fff; border: none; width: 50px; height: 50px; border-radius: 50%; font-size: 20px; cursor: pointer; display:flex; align-items:center; justify-content:center; }
-        .btn-p-main { flex: 1; padding: 16px; border-radius: 14px; border: none; font-weight: 800; font-size: 16px; cursor: pointer; }
-
-        /* 목록 디자인 */
-        .item-row { background: #fff; border-radius: 18px; padding: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #f1f5f9; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
-        .qty-controls { display: flex; align-items: center; background: #f8fafc; padding: 4px; border-radius: 10px; border: 1px solid #e2e8f0; }
-        .btn-qty { border: none; background: #fff; width: 28px; height: 28px; border-radius: 6px; color: var(--primary); font-weight: 900; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-
-        .btn-add-manual { width: 100%; padding: 16px; border: 1px dashed #cbd5e1; border-radius: 15px; background: transparent; color: var(--gray); font-weight: 700; margin-top: 10px; cursor: pointer; }
-
-        /* 둥근 '결에게 묻기' 아이콘 */
-        .fab-gyeol { position: fixed; bottom: 35px; right: 25px; width: 60px; height: 60px; background: #000; color: #fff; border: none; border-radius: 50%; font-size: 24px; display: none; align-items: center; justify-content: center; box-shadow: 0 12px 30px rgba(0,0,0,0.25); cursor: pointer; z-index: 1000; }
-        
-        /* 로딩 애니메이션 */
-        .loader { width: 20px; height: 20px; border: 3px solid #FFF; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; margin-right: 10px; }
-        @keyframes rotation { 0% { transform: rotate(0deg) } 100% { transform: rotate(360deg) } }
-    </style>
+<meta charset="UTF-8">
+<title>공간:결 - 서랍 관리</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header class="header">
-        <div class="header-title" id="disp-id" onclick="editTitle()">서랍 1</div>
-        <button class="btn-plus-top" onclick="triggerFile()">+</button>
-    </header>
 
-    <section class="search-area">
-        <div class="search-bar" id="sb-wrap" onclick="toggleSearch(true)">
-            <span style="font-size: 16px; color: #a0aec0;">🔍</span>
-            <span class="search-ph" id="sb-ph"> 이 서랍에서 검색 </span>
-            <input type="text" id="sb-input" oninput="filterItems(this.value)" onblur="toggleSearch(false)">
-        </div>
-    </section>
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="spinner"></div>
+  <p class="loading-text">비서 <b>'결'</b>이 서랍을 분석하고 있어요...</p>
+</div>
 
-    <main class="content-view">
-        <div id="empty-notice" class="empty-notice">
-            이 서랍에 아직 등록된 물건이 없습니다.<br>사진을 찍거나 직접 입력해 보세요.
-        </div>
+<div class="drawer-header">
+  <h2 id="drawer-title">서랍</h2>
+  <button class="add-btn" onclick="document.getElementById('fileInput').click()">+</button>
+  <input type="file" id="fileInput" hidden accept="image/*,video/*" onchange="handleAnalyze(this.files[0])">
+</div>
 
-        <div id="media-card" class="media-card">
-            <button class="btn-del-media" onclick="deleteMedia()">×</button>
-            <div id="media-target" style="height:100%; display:flex; align-items:center; justify-content:center;"></div>
-        </div>
+<div class="search-container" style="margin-top: 10px;">
+  <input type="text" id="drawer-search" class="search-box" placeholder="이 서랍에서 검색">
+  <div id="item-list">
+    <p id="empty-msg" style="text-align:center; color:#888; margin-top:40px;">이 서랍에 아직 등록된 물건이 없습니다.<br>사진을 찍거나 직접 입력해 보세요.</p>
+  </div>
+</div>
 
-        <div id="list-container"></div>
-        <button id="btn-manual" class="btn-add-manual" onclick="addItem()" style="display:none;">+ 물품 직접 추가</button>
-    </main>
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const tag = urlParams.get('tag') || 'DRAWER001';
+document.getElementById('drawer-title').innerText = tag;
 
-    <div id="preview-modal">
-        <div style="position:absolute; top:25px; right:25px; color:#fff; font-size:32px; font-weight:300;" onclick="closePreview()">✕</div>
-        <img id="preview-img" class="preview-img">
-        <div class="preview-btns">
-            <button class="btn-p-circle" onclick="rotatePreview(-90)">↺</button>
-            <button class="btn-p-circle" onclick="rotatePreview(90)">↻</button>
-        </div>
-        <div class="preview-btns">
-            <button class="btn-p-main" style="background:#4a5568; color:#fff;" onclick="triggerFile()">다시 촬영</button>
-            <button id="btn-register" class="btn-p-main" style="background:var(--primary); color:#fff;" onclick="registerMedia()">등록하기</button>
-        </div>
-    </div>
+async function handleAnalyze(file) {
+  if (!file) return;
 
-    <button id="fab-gyeol" class="fab-gyeol" onclick="toggleChat()">✨</button>
+  // 1. 용량 체크 (Vercel 4.5MB 제한) [cite: 2026-02-23]
+  const MAX_SIZE = 4.5 * 1024 * 1024;
+  if (file.size > MAX_SIZE) {
+    alert("파일이 너무 커서 비서 '결'이 분석할 수 없어요! 영상은 5초 내외로 촬영해 주세요.");
+    return;
+  }
 
-    <input type="file" id="hidden-file" style="display:none;" accept="image/*,video/*">
+  // 2. 로딩 시작
+  document.getElementById('loadingOverlay').style.display = 'flex';
 
-    <script>
-        // === Supabase 설정 (세인 님 정보를 넣어주세요) ===
-        const SUPA_URL = 'https://tqhtggusphhcsygiitrv.supabase.co';
-        const SUPA_KEY = 'sb_publishable_lJeKpO0aRv9mTBE1qnbkow_JqTmhnHQ';
-        const _supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('tag', tag);
 
-        const params = new URLSearchParams(window.location.search);
-        const tag = (params.get('tag') || 'DRAWER001').toUpperCase();
-        let items = [];
-        let currentRotation = 0;
-        let selectedFile = null;
+    const resp = await fetch('/api/analyze', { method: 'POST', body: formData });
+    const data = await resp.json();
 
-        function triggerFile() { document.getElementById('hidden-file').click(); }
+    if (data.error) throw new Error(data.error);
+    
+    // 성공 시 목록 업데이트 로직 (세인 님의 기존 저장 로직 연결)
+    alert("비서 '결'이 물건 등록을 완료했습니다!");
+    location.reload(); 
 
-        document.getElementById('hidden-file').onchange = (e) => {
-            selectedFile = e.target.files[0];
-            if (!selectedFile) return;
-            
-            if (selectedFile.type.includes('image')) {
-                const reader = new FileReader();
-                reader.onload = (re) => {
-                    document.getElementById('preview-img').src = re.target.result;
-                    document.getElementById('preview-modal').style.display = 'flex';
-                    currentRotation = 0;
-                    document.getElementById('preview-img').style.transform = `rotate(0deg)`;
-                };
-                reader.readAsDataURL(selectedFile);
-            } else {
-                registerMedia(); // 영상은 바로 등록
-            }
-        };
-
-        function closePreview() { document.getElementById('preview-modal').style.display = 'none'; }
-        function rotatePreview(deg) {
-            currentRotation = (currentRotation + deg) % 360;
-            document.getElementById('preview-img').style.transform = `rotate(${currentRotation}deg)`;
-        }
-
-        async function registerMedia() {
-            if(!selectedFile) return;
-            const btn = document.getElementById('btn-register');
-            btn.innerHTML = '<span class="loader"></span> 분석 중...';
-            btn.disabled = true;
-
-            const path = `${tag}/${Date.now()}_${selectedFile.name}`;
-            
-            try {
-                // 1. 업로드
-                const { error: upErr } = await _supa.storage.from('user_uploads').upload(path, selectedFile);
-                if (upErr) throw upErr;
-
-                // 2. 미리보기 주소 
-                const { data: sign } = await _supa.storage.from('user_uploads').createSignedUrl(path, 3600);
-                
-                // 3. AI 분석 요청
-                const res = await fetch('/api/analyze', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ filePath: path })
-                });
-                const data = await res.json();
-                
-                // 성공 시 UI 업데이트
-                items = (data.items || []).map(n => ({ n, q: 1 }));
-                displayMedia(sign.signedUrl, selectedFile.type);
-                updateList();
-
-                closePreview();
-                document.getElementById('empty-notice').style.display = 'none';
-                document.getElementById('media-card').style.display = 'block';
-                document.getElementById('btn-manual').style.display = 'block';
-                document.getElementById('fab-gyeol').style.display = 'flex';
-
-            } catch (err) {
-                alert("처리 중 오류가 발생했습니다: " + err.message);
-            } finally {
-                btn.innerHTML = '등록하기';
-                btn.disabled = false;
-            }
-        }
-
-        function displayMedia(url, type) {
-            const target = document.getElementById('media-target');
-            if (type.includes('video')) {
-                target.innerHTML = `<video src="${url}" autoplay loop muted playsinline></video>`;
-            } else {
-                target.innerHTML = `<img src="${url}" style="transform: rotate(${currentRotation}deg)">`;
-            }
-        }
-
-        function updateList() {
-            const container = document.getElementById('list-container');
-            container.innerHTML = items.map((it, idx) => `
-                <div class="item-row">
-                    <div>
-                        <span style="font-weight:700; font-size:16px;">${it.n}</span>
-                        <div style="font-size:12px; color:#94a3b8; margin-top:4px; font-weight:bold;">
-                            편집 <span style="color:#ff4d4d; margin-left:10px;" onclick="deleteItem(${idx})">삭제</span>
-                        </div>
-                    </div>
-                    <div class="qty-controls">
-                        <button class="btn-qty" onclick="changeQty(${idx}, -1)">-</button>
-                        <span style="margin:0 12px; font-weight:800;">${it.q}</span>
-                        <button class="btn-qty" onclick="changeQty(${idx}, 1)">+</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function toggleSearch(active) {
-            const wrap = document.getElementById('sb-wrap');
-            if(active) {
-                wrap.classList.add('active');
-                document.getElementById('sb-ph').style.display = 'none';
-                document.getElementById('sb-input').focus();
-            } else if(!document.getElementById('sb-input').value) {
-                wrap.classList.remove('active');
-                document.getElementById('sb-ph').style.display = 'block';
-            }
-        }
-
-        function filterItems(val) {
-            const rows = document.querySelectorAll('.item-row');
-            rows.forEach(row => {
-                const name = row.querySelector('span').innerText;
-                row.style.display = name.includes(val) ? 'flex' : 'none';
-            });
-        }
-
-        function changeQty(idx, val) { items[idx].q = Math.max(0, items[idx].q + val); updateList(); }
-        function deleteItem(idx) { if(confirm('삭제할까요?')) { items.splice(idx, 1); updateList(); } }
-        function addItem() { const n = prompt("물품 이름"); if(n) { items.push({ n, q: 1 }); updateList(); } }
-        function toggleChat() { alert('비서 결과 대화를 시작합니다!'); } // 채팅창 로직은 이전과 동일
-        function editTitle() { /* 이전과 동일 */ }
-    </script>
+  } catch (err) {
+    alert("오류 발생: " + err.message);
+  } finally {
+    // 3. 로딩 종료
+    document.getElementById('loadingOverlay').style.display = 'none';
+  }
+}
+</script>
 </body>
 </html>
