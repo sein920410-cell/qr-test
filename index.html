@@ -6,7 +6,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 :root { --primary: #007bff; --bg: #f8fafc; }
-body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; }
+<body>
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="spinner"></div>
+    <p class="loading-text">비서 <b>'결'</b>이 서랍을 분석하고 있어요...</p>
+  </div>
+
+</body>{ font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; }
 .search-container { max-width: 600px; margin: 40px auto; background: #fff; padding: 25px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
 .search-box { width: 100%; padding: 18px; border: 2px solid var(--primary); border-radius: 14px; font-size: 18px; outline: none; box-sizing: border-box; }
 .result-item { padding: 18px; border: 1px solid #eee; border-radius: 16px; margin-top: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
