@@ -1,9 +1,22 @@
 {
-  "name": "qr-test",
+  "name": "gonggan-gyeol",
   "version": "1.0.0",
-  "type": "module",
+  "description": "QR 기반 스마트 보관 관리 시스템 - 공간:결",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "qr",
+    "storage",
+    "ai",
+    "gemini"
+  ],
+  "author": "Hyun & Sein",
+  "license": "ISC",
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^2.7.0",
+    "buffer": "^6.0.3"
   }
 }
