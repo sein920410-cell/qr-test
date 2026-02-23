@@ -7,39 +7,33 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<div class="search-container">
-  <h2 style="margin-bottom: 20px;">🔍 무엇을 찾으시나요?</h2>
-  <input type="text" id="main-search" class="search-box" placeholder="물건 이름을 입력하세요" oninput="searchItems()">
-  <div id="result-list"></div>
+<div class="container">
+  <div class="card">
+    <h2 style="margin-bottom: 20px;">🔍 무엇을 찾으시나요?</h2>
+    <input type="text" id="main-search" class="search-box" placeholder="물건 이름을 입력하세요" oninput="searchItems()">
+    <div id="result-list"></div>
+  </div>
 </div>
-
 <script>
 function searchItems() {
   const query = document.getElementById('main-search').value.trim().toLowerCase();
   const list = document.getElementById('result-list');
-  list.innerHTML = ''; 
-  if(!query) return;
+  list.innerHTML = ''; if(!query) return;
 
-  const inventory = [];
-  // 모든 서랍 데이터 수집
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key.startsWith('gyeol_')) {
       const tag = key.replace('gyeol_', '');
       const items = JSON.parse(localStorage.getItem(key));
-      items.forEach(it => inventory.push({ ...it, tag }));
+      items.filter(it => it.n.toLowerCase().includes(query)).forEach(it => {
+        list.innerHTML += `
+          <div style="padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+            <span>${it.n} (${tag})</span>
+            <button onclick="location.href='drawer.html?tag=${tag}'" style="background:#000; color:#fff; border:none; padding:8px 15px; border-radius:8px;">이동</button>
+          </div>`;
+      });
     }
   }
-
-  const results = inventory.filter(it => it.n.toLowerCase().includes(query));
-  results.forEach(it => {
-    list.innerHTML += `
-      <div class="result-item" onclick="location.href='drawer.html?tag=${it.tag}'">
-        <span>${it.n} <small style="color:#888;">(${it.tag})</small></span>
-        <button class="move-btn">이동</button>
-      </div>`;
-  });
 }
 </script>
 </body>
