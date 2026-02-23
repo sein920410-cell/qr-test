@@ -1,45 +1,38 @@
 :root { --primary: #007bff; --bg: #f8fafc; }
+body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; }
 
-body { 
-  font-family: -apple-system, sans-serif; 
-  background: var(--bg); 
-  margin: 0; 
-  padding: 20px; 
-}
-
-/* 1. 비서 '결' 로딩 애니메이션 */
+/* 로딩 레이어 */
 .loading-overlay {
   position: fixed;
   top: 0; left: 0;
   width: 100%; height: 100%;
-  background: rgba(255, 255, 255, 0.8);
-  display: none; /* 스크립트로 제어 */
+  background: rgba(255, 255, 255, 0.9);
+  display: none;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 2000;
 }
 
 .spinner {
-  width: 40px; height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid var(--primary);
+  width: 45px; height: 45px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid var(--primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-.loading-text { margin-top: 15px; font-weight: bold; color: #333; }
+.loading-text { margin-top: 15px; font-weight: 600; color: #333; }
 
-/* 2. 검색 및 목록 UI */
-.search-container { max-width: 600px; margin: 40px auto; background: #fff; padding: 25px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-.search-box { width: 100%; padding: 18px; border: 2px solid var(--primary); border-radius: 14px; font-size: 18px; outline: none; box-sizing: border-box; }
-.result-item { padding: 18px; border: 1px solid #eee; border-radius: 16px; margin-top: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+/* 검색 및 리스트 */
+.search-container { max-width: 600px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+.search-box { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 12px; font-size: 16px; box-sizing: border-box; background: #f1f3f5; border: none; }
 
-/* 수량 조절 버튼 */
-.qty-controls { display: flex; align-items: center; gap: 8px; }
-.qty-btn { background: #eee; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; }
+.result-item { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+.move-btn { background: #000; color: #fff; border: none; padding: 8px 16px; border-radius: 10px; cursor: pointer; }
+
+/* 헤더 */
+.drawer-header { display: flex; justify-content: space-between; align-items: center; max-width: 600px; margin: 0 auto; }
+.add-btn { background: var(--primary); color: #fff; border: none; width: 40px; height: 40px; border-radius: 12px; font-size: 24px; cursor: pointer; }
