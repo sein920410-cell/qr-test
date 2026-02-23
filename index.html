@@ -6,27 +6,15 @@
     <title>공간:결 - 검색</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        :root { --primary: #007bff; --bg: #f8fafc; --text: #1e293b; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        
-        /* 카드 디자인: 그림자와 둥근 모서리로 프리미엄 느낌 강조 */
-        .search-card { background: #fff; padding: 40px; border-radius: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); width: 90%; max-width: 400px; text-align: center; }
-        
-        .title { font-size: 22px; font-weight: 800; margin-bottom: 25px; color: var(--text); }
-        
-        /* 입력창: 파란색 테두리로 포인트를 주었습니다 */
-        .input-box { width: 100%; padding: 18px; border: 2px solid var(--primary); border-radius: 15px; font-size: 17px; box-sizing: border-box; outline: none; transition: 0.3s; }
-        .input-box:focus { box-shadow: 0 0 15px rgba(0,123,255,0.15); }
-        
-        .footer-text { color: #94a3b8; margin-top: 20px; font-size: 14px; line-height: 1.5; font-weight: 500; }
+        body { font-family: -apple-system, sans-serif; background: #f8fafc; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .card { background: #fff; padding: 40px; border-radius: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); width: 90%; max-width: 400px; text-align: center; }
+        input { width: 100%; padding: 18px; border: 2px solid #007bff; border-radius: 15px; font-size: 18px; outline: none; box-sizing: border-box; }
     </style>
 </head>
 <body>
-    <div class="search-card">
-        <div class="title">🔍 무엇을 찾으시나요?</div>
-        <input type="text" class="input-box" placeholder="양말, 충전기, 안경..." 
-               onkeypress="if(event.keyCode==13) location.href='drawer.html?q='+encodeURIComponent(this.value)">
-        <p class="footer-text">서랍 이름을 입력하거나<br>QR 코드를 스캔해 보세요.</p>
+    <div class="card">
+        <h2 style="margin-bottom:30px;">🔍 무엇을 찾으시나요?</h2>
+        <input type="text" placeholder="양말, 노트북..." onkeypress="if(event.keyCode==13) location.href='drawer.html?q='+encodeURIComponent(this.value)">
     </div>
 </body>
 </html>
