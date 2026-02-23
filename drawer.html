@@ -7,15 +7,14 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
 <div id="loadingOverlay" class="loading-overlay">
   <div class="spinner"></div>
-  <p class="loading-text">비서 <b>'결'</b>이 사진을 압축하고 분석 중입니다...</p>
+  <p class="loading-text">비서 <b>'결'</b>이 확인 중입니다...</p>
 </div>
 
 <div class="container">
   <div class="header" style="margin-top: 20px;">
-    <h1 id="drawer-title" style="margin:0;">서랍</h1>
+    <h1 id="drawer-title" style="margin:0; font-size: 1.8rem;">서랍</h1>
     <button class="btn-add" onclick="document.getElementById('fileInput').click()">+</button>
     <input type="file" id="fileInput" hidden accept="image/*,video/*" onchange="processFile(this.files[0])">
   </div>
@@ -23,7 +22,7 @@
   <div class="card">
     <input type="text" id="drawer-search" class="search-box" style="margin-bottom:20px;" placeholder="이 서랍에서 검색">
     <div id="item-list">
-      <p style="text-align:center; color:#888;">등록된 물건이 없습니다.</p>
+      <p style="text-align:center; color:#888; padding: 40px 0;">등록된 물건이 없습니다.<br>사진을 찍어 등록해 보세요.</p>
     </div>
   </div>
 </div>
@@ -33,36 +32,26 @@ const urlParams = new URLSearchParams(window.location.search);
 const tag = urlParams.get('tag') || 'DRAWER001';
 document.getElementById('drawer-title').innerText = tag;
 
-// [확실한 해결책] 사진 자동 압축 함수
+// [해결사] 사진 자동 압축 로직 (Vercel 용량 제한 돌파) [cite: 2026-02-23]
 async function compressImage(file) {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
-    reader.onload = (event) => {
+    reader.onload = (e) => {
       const img = new Image();
-      img.src = event.target.result;
+      img.src = e.target.result;
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-
-        // 가로 세로 최대 1280px로 조절 (용량 급감)
-        const MAX_SIZE = 1280;
-        if (width > height) {
-          if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
-        } else {
-          if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
+        let width = img.width; let height = img.height;
+        const MAX = 1200; // 최대 크기 제한으로 용량 대폭 축소
+        if (width > height) { if (width > MAX) { height *= MAX / width; width = MAX; } }
+        else { if (height > MAX) { width *= MAX / height; height = MAX; } }
+        canvas.width = width; canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
-
-        // 품질을 0.7로 낮추어 용량을 확실히 줄임
         canvas.toBlob((blob) => {
           resolve(new File([blob], file.name, { type: 'image/jpeg' }));
-        }, 'image/jpeg', 0.7);
+        }, 'image/jpeg', 0.7); // 품질 70%로 압축
       };
     };
   });
@@ -74,14 +63,13 @@ async function processFile(file) {
 
   try {
     let fileToSend = file;
-
-    // 1. 이미지라면 자동으로 압축 진행
+    // 이미지면 무조건 압축 시도
     if (file.type.startsWith('image/')) {
       fileToSend = await compressImage(file);
     } 
-    // 2. 영상이라면 용량 체크만 진행 (영상은 브라우저 압축이 어려움)
+    // 영상이면 용량만 체크 (브라우저 압축 불가)
     else if (file.size > 4.5 * 1024 * 1024) {
-      alert("영상은 4.5MB를 넘을 수 없어요. 5초 이내로 짧게 찍어주세요!");
+      alert("영상은 4.5MB 이하(약 5초)만 가능합니다.");
       document.getElementById('loadingOverlay').style.display = 'none';
       return;
     }
@@ -94,7 +82,7 @@ async function processFile(file) {
     const data = await resp.json();
 
     if (data.error) throw new Error(data.error);
-    alert("비서 '결'이 등록을 마쳤습니다!");
+    alert("비서 '결'이 물건을 등록했습니다!");
     location.reload();
   } catch (err) {
     alert("오류: " + err.message);
