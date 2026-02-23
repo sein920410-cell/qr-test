@@ -2,77 +2,42 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>공간:결 - 스마트 보관 관리</title>
+<title>공간:결 - 검색</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div id="loadingOverlay" class="loading-overlay">
-  <div class="spinner"></div>
-  <p class="loading-text">비서 <b>'결'</b>이 서랍을 분석하고 있어요...</p>
-</div>
-
 <div class="search-container">
   <h2 style="margin-bottom: 20px;">🔍 무엇을 찾으시나요?</h2>
   <input type="text" id="main-search" class="search-box" placeholder="물건 이름을 입력하세요" oninput="searchItems()">
-  
-  <div style="margin-top:20px;">
-    <p style="font-size:14px; color:#666;">※ 영상은 5초 이내(4.5MB 이하)로 촬영해 주세요.</p>
-    <input type="file" id="fileInput" accept="image/*,video/*" onchange="handleFileUpload(this.files[0])">
-  </div>
-
   <div id="result-list"></div>
 </div>
 
 <script>
-// 1. 용량 체크 및 업로드 핸들러
-async function handleFileUpload(file) {
-  if (!file) return;
-
-  const MAX_SIZE = 4.5 * 1024 * 1024; // Vercel 4.5MB 제한 [cite: 2026-02-23]
-  
-  if (file.size > MAX_SIZE) {
-    alert("파일이 너무 커요! 영상은 5초 내외로 짧게 찍거나, 사진으로 등록해 주세요.");
-    return;
-  }
-
-  // 로딩 시작
-  document.getElementById('loadingOverlay').style.display = 'flex';
-
-  try {
-    // 여기에 기존의 분석 API 호출 코드를 넣으세요
-    console.log("분석 시작:", file.name);
-    // const response = await fetch('/api/analyze', { ... });
-  } catch (error) {
-    alert("분석 중 오류가 발생했습니다.");
-  } finally {
-    // 로딩 종료
-    document.getElementById('loadingOverlay').style.display = 'none';
-  }
-}
-
-// 2. 검색 기능
 function searchItems() {
   const query = document.getElementById('main-search').value.trim().toLowerCase();
   const list = document.getElementById('result-list');
-  list.innerHTML = ''; if(!query) return;
+  list.innerHTML = ''; 
+  if(!query) return;
 
   const inventory = [];
-  ['DRAWER001', 'DRAWER002'].forEach(tag => {
-    const saved = localStorage.getItem('gyeol_' + tag);
-    if (saved) {
-      const items = JSON.parse(saved);
+  // 모든 서랍 데이터 수집
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key.startsWith('gyeol_')) {
+      const tag = key.replace('gyeol_', '');
+      const items = JSON.parse(localStorage.getItem(key));
       items.forEach(it => inventory.push({ ...it, tag }));
     }
-  });
+  }
 
   const results = inventory.filter(it => it.n.toLowerCase().includes(query));
   results.forEach(it => {
     list.innerHTML += `
       <div class="result-item" onclick="location.href='drawer.html?tag=${it.tag}'">
-        <span>${it.n} (${it.tag})</span>
-        <button style="background:#000; color:#fff; border:none; padding:8px 12px; border-radius:8px;">이동</button>
+        <span>${it.n} <small style="color:#888;">(${it.tag})</small></span>
+        <button class="move-btn">이동</button>
       </div>`;
   });
 }
