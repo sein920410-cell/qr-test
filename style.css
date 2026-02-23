@@ -1,8 +1,7 @@
-/* 기본 테마 */
-:root { --primary: #007bff; --bg: #f8fafc; --card-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; line-height: 1.6; }
+:root { --primary: #007bff; --bg: #f8fafc; }
+body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; }
 
-/* 1. 비서 '결' 로딩 화면 (분석 중 표시) */
+/* 로딩 레이어 (분석 중 표시) */
 .loading-overlay {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   background: rgba(255, 255, 255, 0.9); display: none;
@@ -14,19 +13,15 @@ body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0;
   animation: spin 1s linear infinite;
 }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-.loading-text { margin-top: 15px; font-weight: bold; font-size: 1.1rem; }
+.loading-text { margin-top: 15px; font-weight: bold; }
 
-/* 2. 레이아웃 및 카드 */
+/* 공통 UI */
 .container { max-width: 600px; margin: 0 auto; }
-.card { background: #fff; padding: 25px; border-radius: 24px; box-shadow: var(--card-shadow); margin-top: 20px; }
-.search-box { width: 100%; padding: 18px; border: 2px solid var(--primary); border-radius: 14px; font-size: 18px; outline: none; box-sizing: border-box; transition: all 0.3s; }
-.search-box:focus { box-shadow: 0 0 10px rgba(0,123,255,0.2); }
+.card { background: #fff; padding: 25px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-top: 20px; }
+.search-box { width: 100%; padding: 18px; border: 2px solid var(--primary); border-radius: 14px; font-size: 18px; outline: none; box-sizing: border-box; }
 
-/* 3. 목록 아이템 디자인 */
-.result-item { padding: 18px; border: 1px solid #eee; border-radius: 16px; margin-top: 12px; display: flex; justify-content: space-between; align-items: center; background: #fff; transition: transform 0.2s; }
-.result-item:active { transform: scale(0.98); }
-.btn-black { background: #000; color: #fff; border: none; padding: 10px 20px; border-radius: 12px; font-weight: 600; cursor: pointer; }
-.btn-add { background: var(--primary); color: #fff; border: none; width: 48px; height: 48px; border-radius: 16px; font-size: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,123,255,0.3); }
-
-/* 헤더 영역 */
-.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+/* 목록 및 버튼 */
+.result-item { padding: 18px; border: 1px solid #eee; border-radius: 16px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; background: #fff; }
+.btn-black { background: #000; color: #fff; border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; }
+.btn-add { background: var(--primary); color: #fff; border: none; width: 45px; height: 45px; border-radius: 14px; font-size: 28px; cursor: pointer; }
+.header { display: flex; justify-content: space-between; align-items: center; }
