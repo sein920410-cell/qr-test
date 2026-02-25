@@ -9,12 +9,15 @@ export default async function handler(req, res) {
   const { filePath } = req.body;
 
   try {
+    // 1. Supabase에서 서명된 URL 가져오기
     const { data: s, error: sErr } = await supa.storage.from('user_uploads').createSignedUrl(filePath, 120);
     if (sErr || !s) throw new Error("이미지 주소 생성 실패");
 
+    // 2. 이미지 데이터를 Base64로 변환
     const imgResp = await fetch(s.signedUrl);
     const b64 = Buffer.from(await imgResp.arrayBuffer()).toString("base64");
 
+    // 3. Gemini 1.5 Flash로 분석 요청
     const gResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
