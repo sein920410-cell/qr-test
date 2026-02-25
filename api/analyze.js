@@ -14,14 +14,14 @@ export default async function handler(req, res) {
     const arrayBuffer = await imgResp.arrayBuffer();
     const b64 = Buffer.from(arrayBuffer).toString("base64");
 
-    // v1beta 대신 정식 v1 버전 주소 사용
+    // v1beta 에러를 해결하기 위해 v1 정식 엔드포인트 사용
     const gResp = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [
           { inlineData: { mimeType: "image/jpeg", data: b64 } },
-          { text: "정리 전문가 비서 '결'입니다. 사진 속 물건들을 [물품명(특징)] 형태로 콤마(,)로만 구분해서 나열해줘. 인사말 없이 결과만 보내." }
+          { text: "정리 전문가 비서 '결'입니다. 사진 속 물건들을 [물품명(특징)] 형태로 꼼꼼하게 콤마(,)로만 구분해서 리스트업하세요. 결과만 보내주세요." }
         ]}]
       })
     });
