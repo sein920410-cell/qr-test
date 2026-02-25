@@ -21,7 +21,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         contents: [{ parts: [
           { inlineData: { mimeType: "image/jpeg", data: b64 } },
-          { text: "당신은 정리 전문가 비서 '결'입니다. 사진 속 물건들을 [물품명(특징)] 형태로 꼼꼼하게 콤마(,)로만 구분해서 나열해줘. 인사말 없이 결과만 보내." }
+          { text: "정리 전문가 비서 '결'입니다. 사진 속 물건들을 [물품명(특징)] 형태로 꼼꼼하게 콤마(,)로만 구분해서 나열해줘. 결과만 짧게 보내." }
         ]}]
       })
     });
