@@ -7,14 +7,17 @@ export default async function handler(req, res) {
   const { filePath } = req.body;
 
   try {
+    // 1. Supabase 주소 가져오기
     const { data: s, error: sErr } = await supa.storage.from('user_uploads').createSignedUrl(filePath, 300);
     if (sErr || !s) throw new Error("이미지 주소 생성 실패");
 
+    // 2. 이미지 데이터 변환 (여기서 중복을 완전히 제거했습니다!)
     const imgResp = await fetch(s.signedUrl);
     const arrayBuffer = await imgResp.arrayBuffer();
     const b64 = Buffer.from(arrayBuffer).toString("base64");
 
-    // [핵심] 모델명을 'latest'로 고정하여 404 에러 방지
+    // 3. 지피티가 조언한 'v1beta'와 '정확한 모델명'을 조합한 호출
+    // 모델명을 'gemini-1.5-flash-latest'로 더 구체화했습니다.
     const gResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
