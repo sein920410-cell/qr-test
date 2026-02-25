@@ -9,22 +9,21 @@ export default async function handler(req, res) {
   const { filePath } = req.body;
 
   try {
-    // 1. Supabase에서 서명된 URL 가져오기
+    // 1. Supabase에서 안전하게 주소 가져오기
     const { data: s, error: sErr } = await supa.storage.from('user_uploads').createSignedUrl(filePath, 120);
     if (sErr || !s) throw new Error("이미지 주소 생성 실패");
 
-    // 2. 이미지 데이터를 Base64로 변환
     const imgResp = await fetch(s.signedUrl);
     const b64 = Buffer.from(await imgResp.arrayBuffer()).toString("base64");
 
-    // 3. Gemini 1.5 Flash로 분석 요청
+    // 2. Gemini 1.5 Flash로 분석 요청
     const gResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [
           { inlineData: { mimeType: "image/jpeg", data: b64 } },
-          { text: "당신은 정리 전문가 비서 '결'입니다. 사진 속 물건들을 [물품명(특징)] 형태로 꼼꼼하게 콤마(,)로만 구분해서 리스트업하세요. 인사말은 생략하고 결과만 나열해주세요." }
+          { text: "정리 전문가 비서 '결'입니다. 사진 속 물건들을 [물품명(특징)] 형태로 꼼꼼하게 콤마(,)로만 구분해서 나열해줘. 인사말 없이 결과만 보내." }
         ]}]
       })
     });
