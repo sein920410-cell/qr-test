@@ -1,32 +1,206 @@
-// 이미지 압축 함수 (더 강력하게 수정됨)
-function resizeImage(file, maxSize) {
-    return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-                
-                // 최대 크기를 800px로 조정 (용량 최적화)
-                const scale = Math.min(800 / width, 800 / height, 1);
-                width *= scale;
-                height *= scale;
-                
-                canvas.width = width; canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-                
-                // 화질을 0.5(50%)로 낮춰 용량을 확실히 줄임
-                canvas.toBlob((blob) => {
-                    const resizedFile = new File([blob], file.name, {type: 'image/jpeg'});
-                    console.log("압축 완료 용량:", (resizedFile.size / 1024).toFixed(2), "KB");
-                    resolve(resizedFile);
-                }, 'image/jpeg', 0.5); 
-            };
-            img.src = e.target.result;
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="data:;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==">
+    <title>공간:결 - 프리미엄 리포트</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --primary: #007bff; --bg: #f8fafc; --text: #1e293b; --gray: #94a3b8; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        .header { display: flex; justify-content: center; align-items: center; padding: 15px 20px; background: #fff; border-bottom: 1px solid #f1f5f9; position: relative; }
+        .header-title { font-size: 18px; font-weight: 800; }
+        .btn-plus-top { position: absolute; right: 20px; background: var(--primary); color: #fff; border: none; width: 36px; height: 36px; border-radius: 10px; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .search-area { padding: 10px 20px; }
+        .search-bar { background: #edf2f7; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; cursor: pointer; }
+        .search-bar input { border: none; background: transparent; outline: none; width: 100%; font-size: 15px; margin-left: 10px; }
+        .media-card { width: 100%; height: 250px; background: #fff; border-radius: 20px; overflow: hidden; position: relative; border: 1px solid #e2e8f0; margin-bottom: 20px; display: none; }
+        .media-card img, .media-card video { width: 100%; height: 100%; object-fit: contain; }
+        .analysis-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.8); display:none; flex-direction:column; align-items:center; justify-content:center; z-index: 5; }
+        .item-row { background: #fff; border-radius: 18px; padding: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #f1f5f9; }
+        #preview-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; flex-direction: column; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-title" id="disp-id">서랍</div>
+        <button class="btn-plus-top" onclick="triggerFile()">+</button>
+    </header>
+
+    <section class="search-area">
+        <div class="search-bar">
+            <span>🔍</span>
+            <input type="text" id="sb-input" placeholder="이 서랍에서 검색" oninput="filterItems(this.value)">
+        </div>
+    </section>
+
+    <main style="flex:1; overflow-y:auto; padding:0 20px 100px;">
+        <div id="empty-notice" style="text-align:center; color:var(--gray); padding:50px 20px;">
+            등록된 물건이 없습니다.<br>사진을 찍거나 직접 입력해 보세요.
+        </div>
+
+        <div id="media-card" class="media-card">
+            <div id="analysis-overlay" class="analysis-overlay">
+                <div style="color:var(--primary); font-weight:800;">비서 "결"이 분석 중... 🤖</div>
+            </div>
+            <button style="position:absolute; top:12px; right:12px; background:rgba(0,0,0,0.4); color:#fff; border:none; width:28px; height:28px; border-radius:50%; z-index:10;" onclick="location.reload()">×</button>
+            <div id="media-target" style="height:100%; display:flex; align-items:center; justify-content:center;"></div>
+        </div>
+
+        <div id="list-container"></div>
+    </main>
+
+    <div id="preview-modal">
+        <img id="preview-img" style="max-width:90%; max-height:60%; border-radius:15px;">
+        <div style="margin-top:30px; display:flex; gap:12px; width:85%;">
+            <button onclick="location.reload()" style="flex:1; padding:16px; border-radius:14px; background:#4a5568; color:#fff; font-weight:800; border:none;">다시 촬영</button>
+            <button id="btn-reg" style="flex:1; padding:16px; border-radius:14px; background:var(--primary); color:#fff; font-weight:800; border:none;" onclick="processAndRegister()">등록하기</button>
+        </div>
+    </div>
+
+    <input type="file" id="hidden-file" style="display:none;" accept="image/*,video/*">
+
+    <script>
+        const _supa = supabase.createClient('https://tqhtggusphhcsygiitrv.supabase.co', 'sb_publishable_lJeKpO0aRv9mTBE1qnbkow_JqTmhnHQ');
+        let items = [];
+        let rawFile = null;
+        const tag = (new URLSearchParams(window.location.search).get('tag') || 'DRAWER001').toUpperCase();
+        document.getElementById('disp-id').innerText = tag;
+
+        function triggerFile() { document.getElementById('hidden-file').click(); }
+
+        document.getElementById('hidden-file').onchange = (e) => {
+            rawFile = e.target.files[0];
+            if(!rawFile) return;
+            
+            if(rawFile.type.includes('image')) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    document.getElementById('preview-img').src = ev.target.result;
+                    document.getElementById('preview-modal').style.display = 'flex';
+                };
+                reader.readAsDataURL(rawFile);
+            } else {
+                processAndRegister();
+            }
         };
-        reader.readAsDataURL(file);
-    });
-}
+
+        // 이미지 압축 함수 (강력한 압축 모드)
+        function resizeImage(file, maxSize) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const scale = Math.min(maxSize / width, maxSize / height, 1);
+                        width *= scale;
+                        height *= scale;
+                        canvas.width = width; canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        canvas.toBlob((blob) => {
+                            resolve(new File([blob], file.name, {type: 'image/jpeg'}));
+                        }, 'image/jpeg', 0.5); // 화질을 50%로 낮춰 용량 최소화
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function processAndRegister() {
+            const btn = document.getElementById('btn-reg');
+            btn.disabled = true;
+            btn.innerText = "압축 및 분석 중...";
+
+            let fileToUpload = rawFile;
+            if (rawFile.type.includes('image')) {
+                fileToUpload = await resizeImage(rawFile, 800); // 800px로 더 작게 압축
+            }
+
+            document.getElementById('preview-modal').style.display = 'none';
+            document.getElementById('empty-notice').style.display = 'none';
+            document.getElementById('media-card').style.display = 'block';
+            document.getElementById('analysis-overlay').style.display = 'flex';
+
+            const path = `${tag}/${Date.now()}_${fileToUpload.name}`;
+
+            try {
+                // 1. Supabase 업로드
+                const { error: upErr } = await _supa.storage.from('user_uploads').upload(path, fileToUpload);
+                if(upErr) throw upErr;
+
+                // 2. 미리보기 표시
+                const { data: sUrl } = await _supa.storage.from('user_uploads').createSignedUrl(path, 3600);
+                document.getElementById('media-target').innerHTML = rawFile.type.includes('video') 
+                    ? `<video src="${sUrl.signedUrl}" autoplay loop muted playsinline></video>` 
+                    : `<img src="${sUrl.signedUrl}">`;
+
+                // 3. AI 분석 요청
+                const res = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filePath: path })
+                });
+                const data = await res.json();
+                
+                // 4. 목록 활성화 (아이템이 있을 때만 업데이트)
+                if (data.items && data.items.length > 0) {
+                    items = data.items.map(name => ({ name, count: 1 }));
+                } else {
+                    items = [{ name: "분석된 물건이 없습니다", count: 0 }];
+                }
+                updateList();
+
+            } catch(e) {
+                alert("문제가 발생했어요: " + e.message);
+                document.getElementById('empty-notice').style.display = 'block';
+            } finally {
+                document.getElementById('analysis-overlay').style.display = 'none';
+                btn.disabled = false;
+                btn.innerText = "등록하기";
+            }
+        }
+
+        function updateList() {
+            const container = document.getElementById('list-container');
+            container.innerHTML = items.map((it, i) => `
+                <div class="item-row">
+                    <div>
+                        <span style="font-weight:700;">${it.name}</span><br>
+                        <small style="color:#ff4d4d; font-weight:bold; cursor:pointer;" onclick="removeItem(${i})">삭제</small>
+                    </div>
+                    <div style="display:flex; align-items:center; background:#f8fafc; padding:4px; border-radius:10px; border:1px solid #e2e8f0;">
+                        <button style="border:none; background:#fff; width:28px; height:28px; border-radius:6px; color:var(--primary); font-weight:900;" onclick="changeQty(${i}, -1)">-</button>
+                        <span style="margin:0 12px; font-weight:800;">${it.count}</span>
+                        <button style="border:none; background:#fff; width:28px; height:28px; border-radius:6px; color:var(--primary); font-weight:900;" onclick="changeQty(${i}, 1)">+</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function changeQty(i, v) {
+            items[i].count = Math.max(0, items[i].count + v);
+            updateList();
+        }
+
+        function removeItem(i) {
+            if(confirm('삭제하시겠습니까?')) {
+                items.splice(i, 1);
+                updateList();
+            }
+        }
+
+        function filterItems(v) {
+            const rows = document.querySelectorAll('.item-row');
+            rows.forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(v.toLowerCase()) ? 'flex' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>
