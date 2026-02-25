@@ -10,7 +10,6 @@
         :root { --primary: #007bff; --bg: #f8fafc; --text: #1e293b; --gray: #94a3b8; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* 세인 님 전용 상단 3버튼 틀 복구 */
         .header-row { display: flex; justify-content: space-between; padding: 15px 20px; background: #fff; align-items: center; gap: 8px; border-bottom: 1px solid #f1f5f9; }
         .btn-top { background: #f1f5f9; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 10px; font-size: 13px; font-weight: 800; color: #64748b; text-decoration: none; }
         .title-badge { background: #1e293b; color: #fff; padding: 10px 20px; border-radius: 100px; font-weight: 800; font-size: 15px; flex-grow: 1; text-align: center; }
@@ -49,25 +48,40 @@
     <input type="file" id="hidden-file" style="display:none;" accept="image/*">
 
     <script>
+        // [수정] Supabase 클라이언트 설정 유지
         const _supa = supabase.createClient('https://tqhtggusphhcsygiitrv.supabase.co', 'sb_publishable_lJeKpO0aRv9mTBE1qnbkow_JqTmhnHQ');
         let items = [];
+        let fileObj = null;
 
         function triggerFile() { document.getElementById('hidden-file').click(); }
+
+        // [수정] 파일 선택 시 바로 분석 프로세스로 연결
         document.getElementById('hidden-file').onchange = async (e) => {
-            const rawFile = e.target.files[0]; if(!rawFile) return;
-            
+            fileObj = e.target.files[0]; 
+            if(!fileObj) return;
+            await registerMedia();
+        };
+
+        // [수정] 통합된 인식 및 등록 함수 (여기가 핵심!)
+        async function registerMedia() {
             document.getElementById('analysis-overlay').style.display = 'flex';
             document.getElementById('status-text').style.display = 'none';
             
-            // 핵심: 브라우저에서 먼저 압축하여 Vercel의 4.5MB 제한 해결
-            const compressed = await resizeImage(rawFile, 1024);
-            const path = `DRAWER001/${Date.now()}_${compressed.name}`;
-            
             try {
-                await _supa.storage.from('user_uploads').upload(path, compressed);
+                // 1. 이미지 압축 (Vercel 4.5MB 제한 해결용)
+                const compressed = await resizeImage(fileObj, 1024);
+                const path = `DRAWER001/${Date.now()}_${compressed.name}`;
+                
+                // 2. Supabase 업로드
+                const { error: upErr } = await _supa.storage.from('user_uploads').upload(path, compressed);
+                if (upErr) throw upErr;
+
+                // 3. 서명된 URL 생성 및 미리보기 표시
                 const { data: s } = await _supa.storage.from('user_uploads').createSignedUrl(path, 3600);
+                if (!s || !s.signedUrl) throw new Error("이미지 주소 생성 실패");
                 document.getElementById('media-target').innerHTML = `<img src="${s.signedUrl}">`;
 
+                // 4. 비서 '결'에게 목록 분석 요청
                 const res = await fetch('/api/analyze', { 
                     method:'POST', 
                     headers:{'Content-Type':'application/json'}, 
@@ -76,6 +90,7 @@
                 const d = await res.json();
                 if (d.error) throw new Error(d.error);
                 
+                // 5. 목록 업데이트
                 items = (d.items || []).map(n => ({ n, q: 1 }));
                 updateList();
             } catch(err) {
@@ -83,7 +98,7 @@
             } finally {
                 document.getElementById('analysis-overlay').style.display = 'none';
             }
-        };
+        }
 
         function resizeImage(file, maxSize) {
             return new Promise((res) => {
@@ -118,38 +133,5 @@
         function addItem() { const n = prompt("이름"); if(n) { items.push({n, q:1}); updateList(); } }
         function filterItems(v) { document.querySelectorAll('.item-card').forEach(r => r.style.display = r.innerText.includes(v) ? 'flex' : 'none'); }
     </script>
-    // drawer.html의 <script> 태그 안 registerMedia 함수만 이 내용으로 덮어쓰세요.
-async function registerMedia() {
-    const btn = document.getElementById('reg-btn'); 
-    if(btn) { btn.innerText = "분석 중..."; btn.disabled = true; }
-    
-    document.getElementById('preview-modal').style.display = 'none';
-    document.getElementById('analysis-overlay').style.display = 'flex';
-    
-    const fileToUpload = fileObj.type.includes('image') ? await resizeImage(fileObj, 1024) : fileObj;
-    const path = `DRAWER001/${Date.now()}_${fileToUpload.name}`;
-    
-    try {
-        await _supa.storage.from('user_uploads').upload(path, fileToUpload);
-        const { data: s } = await _supa.storage.from('user_uploads').createSignedUrl(path, 3600);
-        
-        if (!s || !s.signedUrl) throw new Error("이미지 주소 생성 실패");
-        
-        document.getElementById('media-target').innerHTML = fileObj.type.includes('video') ? `<video src="${s.signedUrl}" autoplay loop muted playsinline></video>` : `<img src="${s.signedUrl}" style="transform:rotate(${rot}deg)">`;
-
-        const res = await fetch('/api/analyze', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({filePath:path}) });
-        const d = await res.json();
-        
-        if (d.items) {
-            items = d.items.map(n => ({ n, q: 1 }));
-            updateList();
-        }
-    } catch(e) { 
-        alert("인식 오류: " + e.message); 
-    } finally { 
-        document.getElementById('analysis-overlay').style.display = 'none'; 
-        if(btn) { btn.innerText = "등록"; btn.disabled = false; }
-    }
-}
 </body>
 </html>
