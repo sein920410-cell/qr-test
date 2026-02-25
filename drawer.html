@@ -9,8 +9,7 @@
     <style>
         :root { --primary: #007bff; --bg: #f8fafc; --text: #1e293b; --gray: #94a3b8; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
-        /* 상단 3버튼 틀 복구 */
+        /* 상단 3버튼 레이아웃 */
         .header-row { display: flex; justify-content: space-between; padding: 15px 20px; background: #fff; align-items: center; gap: 8px; }
         .btn-top { background: #f1f5f9; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 10px; font-size: 13px; font-weight: 800; color: #64748b; text-decoration: none; }
         .title-badge { background: #1e293b; color: #fff; padding: 10px 20px; border-radius: 100px; font-weight: 800; font-size: 15px; flex-grow: 1; text-align: center; }
@@ -18,24 +17,19 @@
         
         .main-card { background: #fff; padding: 20px; border-radius: 0 0 30px 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
         .media-box { width: 100%; height: 230px; background: #f1f5f9; border-radius: 20px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0; }
-        .media-box img, .media-box video { width: 100%; height: 100%; object-fit: contain; }
-        
+        .media-box img { width: 100%; height: 100%; object-fit: contain; }
         .search-input { width: 100%; padding: 15px; border: 1px solid #e2e8f0; border-radius: 15px; margin-top: 15px; font-size: 15px; box-sizing: border-box; }
         .analysis-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.7); display:none; flex-direction:column; align-items:center; justify-content:center; text-align: center; }
-
         .list-container { flex: 1; overflow-y: auto; padding: 20px; }
         .item-card { background: #fff; border-radius: 18px; padding: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
-        
         #preview-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; flex-direction: column; align-items: center; justify-content: center; }
-        .preview-img { max-width: 90%; max-height: 60%; object-fit: contain; transition: transform 0.3s; }
-        
-        .fab-gyeol { position: fixed; bottom: 30px; right: 25px; width: 60px; height: 60px; background: #000; color: #fff; border: none; border-radius: 50%; font-size: 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .preview-img { max-width: 90%; max-height: 60%; object-fit: contain; }
     </style>
 </head>
 <body>
     <div class="header-row">
         <a href="index.html" class="btn-top">🔍 검색창</a>
-        <div class="title-badge" id="disp-id" onclick="editTitle()">서랍 1</div>
+        <div class="title-badge" id="disp-id">서랍 1</div>
         <button class="btn-add-main" onclick="triggerFile()">📸 사진/영상 추가</button>
     </div>
 
@@ -52,44 +46,36 @@
 
     <div id="preview-modal">
         <img id="preview-img" class="preview-img">
-        <div style="margin-top:20px; display:flex; gap:15px;">
-            <button onclick="rotatePreview(-90)" style="background:#444; color:#fff; border:none; width:50px; height:50px; border-radius:50%; font-size:20px;">↺</button>
-            <button onclick="rotatePreview(90)" style="background:#444; color:#fff; border:none; width:50px; height:50px; border-radius:50%; font-size:20px;">↻</button>
-        </div>
         <div style="margin-top:25px; display:flex; gap:10px; width:80%;">
             <button onclick="triggerFile()" style="flex:1; padding:15px; border-radius:12px; background:#fff; border:none; font-weight:800;">다시 촬영</button>
             <button onclick="registerMedia()" id="reg-btn" style="flex:1; padding:15px; border-radius:12px; background:var(--primary); color:#fff; border:none; font-weight:800;">등록</button>
         </div>
     </div>
 
-    <button class="fab-gyeol" onclick="alert('비서 결 대화 기능을 준비 중입니다!')">✨</button>
     <input type="file" id="hidden-file" style="display:none;" accept="image/*,video/*">
 
     <script>
         const _supa = supabase.createClient('https://tqhtggusphhcsygiitrv.supabase.co', 'sb_publishable_lJeKpO0aRv9mTBE1qnbkow_JqTmhnHQ');
-        let items = []; let rot = 0; let fileObj = null;
+        let items = []; let rawFile = null;
 
         function triggerFile() { document.getElementById('hidden-file').click(); }
         document.getElementById('hidden-file').onchange = (e) => {
-            fileObj = e.target.files[0]; if(!fileObj) return;
-            if(fileObj.type.includes('image')){
+            rawFile = e.target.files[0]; if(!rawFile) return;
+            if(rawFile.type.includes('image')){
                 const r = new FileReader(); r.onload = (ev) => {
                     document.getElementById('preview-img').src = ev.target.result;
                     document.getElementById('preview-modal').style.display = 'flex';
-                    rot = 0; document.getElementById('preview-img').style.transform = `rotate(0deg)`;
-                }; r.readAsDataURL(fileObj);
+                }; r.readAsDataURL(rawFile);
             } else { registerMedia(); }
         };
-
-        function rotatePreview(d) { rot = (rot + d) % 360; document.getElementById('preview-img').style.transform = `rotate(${rot}deg)`; }
 
         async function registerMedia() {
             const btn = document.getElementById('reg-btn'); btn.innerText = "분석 중..."; btn.disabled = true;
             document.getElementById('preview-modal').style.display = 'none';
             document.getElementById('analysis-overlay').style.display = 'flex';
             
-            // 사진 압축 로직 (Vercel 4.5MB 제한을 넘기지 않게 함)
-            const fileToUpload = fileObj.type.includes('image') ? await resizeImage(fileObj, 1024) : fileObj;
+            // 핵심: 사진 자동 압축 (Vercel 4.5MB 제한 해결)
+            const fileToUpload = rawFile.type.includes('image') ? await resizeImage(rawFile, 1024) : rawFile;
             const path = `DRAWER001/${Date.now()}_${fileToUpload.name}`;
             
             try {
@@ -97,13 +83,16 @@
                 const { data: s, error: sErr } = await _supa.storage.from('user_uploads').createSignedUrl(path, 3600);
                 if (sErr || !s) throw new Error("이미지 주소 생성 실패");
                 
-                document.getElementById('media-target').innerHTML = fileObj.type.includes('video') ? `<video src="${s.signedUrl}" autoplay loop muted playsinline></video>` : `<img src="${s.signedUrl}" style="transform:rotate(${rot}deg)">`;
+                document.getElementById('media-target').innerHTML = rawFile.type.includes('video') ? `<video src="${s.signedUrl}" autoplay loop muted playsinline></video>` : `<img src="${s.signedUrl}">`;
 
+                // 백엔드 분석 요청
                 const res = await fetch('/api/analyze', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({filePath:path}) });
                 const d = await res.json();
+                
+                // 목록 업데이트
                 items = (d.items || []).map(n => ({ n, q: 1 }));
                 updateList();
-            } catch(e) { alert("오류: " + e.message); }
+            } catch(e) { alert("인식 오류: " + e.message); }
             finally { document.getElementById('analysis-overlay').style.display = 'none'; btn.innerText = "등록"; btn.disabled = false; }
         }
 
@@ -139,12 +128,6 @@
         function del(i) { if(confirm('삭제할까요?')) { items.splice(i,1); updateList(); } }
         function addItem() { const n = prompt("이름"); if(n) { items.push({n, q:1}); updateList(); } }
         function filterItems(v) { document.querySelectorAll('.item-card').forEach(r => r.style.display = r.innerText.includes(v) ? 'flex' : 'none'); }
-        function editTitle() { const n = prompt("서랍 이름 수정", document.getElementById('disp-id').innerText); if(n) document.getElementById('disp-id').innerText = n; }
-
-        window.onload = () => {
-            const q = new URLSearchParams(window.location.search).get('q');
-            if(q) { document.getElementById('search-bar').value = q; filterItems(q); }
-        };
     </script>
 </body>
 </html>
