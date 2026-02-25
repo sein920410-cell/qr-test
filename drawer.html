@@ -118,5 +118,38 @@
         function addItem() { const n = prompt("이름"); if(n) { items.push({n, q:1}); updateList(); } }
         function filterItems(v) { document.querySelectorAll('.item-card').forEach(r => r.style.display = r.innerText.includes(v) ? 'flex' : 'none'); }
     </script>
+    // drawer.html의 <script> 태그 안 registerMedia 함수만 이 내용으로 덮어쓰세요.
+async function registerMedia() {
+    const btn = document.getElementById('reg-btn'); 
+    if(btn) { btn.innerText = "분석 중..."; btn.disabled = true; }
+    
+    document.getElementById('preview-modal').style.display = 'none';
+    document.getElementById('analysis-overlay').style.display = 'flex';
+    
+    const fileToUpload = fileObj.type.includes('image') ? await resizeImage(fileObj, 1024) : fileObj;
+    const path = `DRAWER001/${Date.now()}_${fileToUpload.name}`;
+    
+    try {
+        await _supa.storage.from('user_uploads').upload(path, fileToUpload);
+        const { data: s } = await _supa.storage.from('user_uploads').createSignedUrl(path, 3600);
+        
+        if (!s || !s.signedUrl) throw new Error("이미지 주소 생성 실패");
+        
+        document.getElementById('media-target').innerHTML = fileObj.type.includes('video') ? `<video src="${s.signedUrl}" autoplay loop muted playsinline></video>` : `<img src="${s.signedUrl}" style="transform:rotate(${rot}deg)">`;
+
+        const res = await fetch('/api/analyze', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({filePath:path}) });
+        const d = await res.json();
+        
+        if (d.items) {
+            items = d.items.map(n => ({ n, q: 1 }));
+            updateList();
+        }
+    } catch(e) { 
+        alert("인식 오류: " + e.message); 
+    } finally { 
+        document.getElementById('analysis-overlay').style.display = 'none'; 
+        if(btn) { btn.innerText = "등록"; btn.disabled = false; }
+    }
+}
 </body>
 </html>
