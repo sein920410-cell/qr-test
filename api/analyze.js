@@ -9,19 +9,21 @@ export default async function handler(req, res) {
   const { filePath } = req.body;
 
   try {
+    // 1. Supabase에서 서명된 URL 가져오기 (오류 방지 로직 추가)
     const { data: s, error: sErr } = await supa.storage.from('user_uploads').createSignedUrl(filePath, 120);
-    if (sErr || !s) throw new Error("이미지 주소 생성 실패");
+    if (sErr || !s || !s.signedUrl) throw new Error("이미지 주소를 생성할 수 없습니다.");
 
     const imgResp = await fetch(s.signedUrl);
     const b64 = Buffer.from(await imgResp.arrayBuffer()).toString("base64");
 
+    // 2. Gemini 1.5 Flash로 분석
     const gResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [
           { inlineData: { mimeType: "image/jpeg", data: b64 } },
-          { text: "정리 전문가 비서 '결'입니다. 사진 속 물건들을 [물품명(특징)] 형태로 꼼꼼하게 콤마(,)로만 구분해서 나열해줘. 인사말 없이 결과만 보내." }
+          { text: "정리 비서 '결'입니다. 사진 속 물건들을 [물품명(특징)] 형태로 콤마(,)로만 구분해서 나열해줘. 결과만 짧게 보내." }
         ]}]
       })
     });
