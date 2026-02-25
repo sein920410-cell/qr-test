@@ -8,7 +8,7 @@ export default async function handler(req, res) {
 
   try {
     const { data: s, error: sErr } = await supa.storage.from('user_uploads').createSignedUrl(filePath, 300);
-    if (sErr || !s) throw new Error("이미지 주소 생성 실패: " + (sErr?.message || "데이터 없음"));
+    if (sErr || !s) throw new Error("이미지 주소 생성 실패");
 
     const imgResp = await fetch(s.signedUrl);
     const arrayBuffer = await imgResp.arrayBuffer();
@@ -20,12 +20,16 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         contents: [{ parts: [
           { inlineData: { mimeType: "image/jpeg", data: b64 } },
-          { text: "정리 전문가 비서 '결'입니다. 사진 속 물건들을 [물품명(특징)] 형태로 꼼꼼하게 콤마(,)로만 구분해서 리스트업하세요. 인사말은 생략하고 결과만 나열해." }
+          { text: "정리 비서 '결'입니다. 사진 속 물건들을 [물품명(특징)] 형태로 콤마(,)로만 구분해서 나열해줘. 결과만 짧게 보내." }
         ]}]
       })
     });
 
     const gData = await gResp.json();
+    
+    // Gemini API 에러 체크 추가
+    if (gData.error) throw new Error(gData.error.message);
+    
     const rawText = gData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
     const items = rawText.split(",").map(s => s.trim()).filter(s => s.length > 0);
     
