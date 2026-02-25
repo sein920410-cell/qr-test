@@ -10,7 +10,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
     });
     const gData = await gResp.json();
-    return res.status(200).json({ reply: gData?.candidates?.[0]?.content?.parts?.[0]?.text || "죄송해요, 이해하지 못했어요." });
+    return res.status(200).json({ reply: gData?.candidates?.[0]?.content?.parts?.[0]?.text || "이해하지 못했어요." });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
