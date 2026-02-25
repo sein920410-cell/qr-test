@@ -23,18 +23,8 @@
     </style>
 </head>
 <body>
-    <div class="header-row">
-        <a href="index.html" class="btn-top">🔍 검색창</a>
-        <div class="title-badge" id="disp-id">서랍 1</div>
-        <button class="btn-add-main" onclick="triggerFile()">📸 사진 추가</button>
-    </div>
-    <div class="main-card">
-        <div class="media-box" id="media-target">
-            <div id="analysis-overlay" class="analysis-overlay"><div style="color:#3b82f6; font-weight:800;">비서 "결"이 분석 중... 🤖</div></div>
-            <div id="status-text" style="color:var(--gray);">미디어를 추가해 보세요</div>
-        </div>
-        <input type="text" class="search-input" id="search-bar" placeholder="물건 찾기..." oninput="filterItems(this.value)">
-    </div>
+    <div class="header-row"><a href="index.html" class="btn-top">🔍 검색창</a><div class="title-badge" id="disp-id">서랍 1</div><button class="btn-add-main" onclick="triggerFile()">📸 사진 추가</button></div>
+    <div class="main-card"><div class="media-box" id="media-target"><div id="analysis-overlay" class="analysis-overlay"><div style="color:#3b82f6; font-weight:800;">비서 "결"이 분석 중... 🤖</div></div><div id="status-text" style="color:var(--gray);">미디어를 추가해 보세요</div></div><input type="text" class="search-input" id="search-bar" placeholder="물건 찾기..." oninput="filterItems(this.value)"></div>
     <div class="list-container" id="list-container"></div>
     <div style="padding: 0 20px 40px;"><button onclick="addItem()" style="width:100%; padding:16px; border:1px dashed #cbd5e1; border-radius:15px; background:transparent; color:var(--gray); font-weight:700;">+ 물품 직접 추가</button></div>
     <input type="file" id="hidden-file" style="display:none;" accept="image/*">
