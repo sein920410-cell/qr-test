@@ -10,7 +10,7 @@
         :root { --primary: #007bff; --bg: #f8fafc; --text: #1e293b; --gray: #94a3b8; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* 상단 3버튼 틀 복구 (스크린샷 기준) */
+        /* 3버튼 헤더 레이아웃 고정 */
         .header-row { display: flex; justify-content: space-between; padding: 10px 15px; background: #fff; align-items: center; gap: 10px; border-bottom: 1px solid #f1f5f9; }
         .btn-top { background: #e2e8f0; border: none; padding: 10px 15px; border-radius: 10px; font-size: 14px; font-weight: 700; color: #475569; text-decoration: none; white-space: nowrap; }
         .title-badge { background: #1e293b; color: #fff; padding: 10px 0; border-radius: 12px; font-weight: 800; font-size: 16px; flex: 1; text-align: center; }
@@ -57,7 +57,7 @@
             document.getElementById('status-text').style.display = 'none';
             
             try {
-                // 아이폰 에러 방지를 위한 표준 Blob 처리
+                // 아이폰 에러를 방지하는 표준 Blob 처리 로직
                 const compressedBlob = await resizeImage(rawFile, 1024);
                 const fileName = `DRAWER001/${Date.now()}.jpg`;
                 
