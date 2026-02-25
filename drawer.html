@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="ko"><head>
     <meta charset="UTF-8">
     <link rel="icon" href="data:;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==">
-    <title>공간:결 - HYUNSEIN</title>
+    <title>공간:결 - 관리</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -11,115 +11,99 @@
         .header-title { font-size: 18px; font-weight: 800; }
         .btn-plus-top { position: absolute; right: 20px; background: var(--primary); color: #fff; border: none; width: 36px; height: 36px; border-radius: 10px; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .search-area { padding: 10px 20px; }
-        .search-bar { background: #edf2f7; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; cursor: pointer; transition: 0.3s; }
-        .search-bar.active { background: #fff; border: 1.5px solid var(--primary); box-shadow: 0 4px 12px rgba(0,123,255,0.08); }
-        .search-bar input { border: none; background: transparent; outline: none; width: 0; transition: 0.3s; font-size: 15px; }
-        .search-bar.active input { width: 100%; margin-left: 10px; }
-        .search-ph { font-size: 14px; font-weight: 500; color: #718096; margin-left: 8px; }
+        .search-bar { background: #edf2f7; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; }
+        .search-bar input { border: none; background: transparent; outline: none; width: 100%; font-size: 15px; margin-left: 10px; }
         .media-card { width: 100%; height: 250px; background: #fff; border-radius: 20px; overflow: hidden; position: relative; border: 1px solid #e2e8f0; margin-bottom: 20px; display: none; }
-        .media-card img { width: 100%; height: 100%; object-fit: contain; }
+        .media-card img, .media-card video { width: 100%; height: 100%; object-fit: cover; } /* 프레임 꽉 차게 수정 */
         .analysis-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.7); display:none; flex-direction:column; align-items:center; justify-content:center; z-index: 5; }
-        #preview-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 20000; flex-direction: column; align-items: center; justify-content: center; }
-        .preview-img { max-width: 90%; max-height: 60%; border-radius: 15px; transition: transform 0.3s; }
         .item-row { background: #fff; border-radius: 18px; padding: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #f1f5f9; }
+        .btn-edit { color: var(--primary); font-weight: bold; cursor: pointer; margin-right: 8px; font-size: 12px; }
+        .btn-del { color: #ff4d4d; font-weight: bold; cursor: pointer; font-size: 12px; }
         .fab-gyeol { position: fixed; bottom: 35px; right: 25px; width: 60px; height: 60px; background: #000; color: #fff; border: none; border-radius: 50%; font-size: 24px; display: none; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 1000; }
+        /* 채팅 전용 UI */
+        #chat-window { display: none; position: fixed; bottom: 105px; right: 25px; width: 300px; height: 400px; background: #fff; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 2000; flex-direction: column; border: 1px solid #e2e8f0; }
+        #chat-header { padding: 15px; background: #000; color: #fff; font-weight: bold; border-radius: 20px 20px 0 0; display: flex; justify-content: space-between; }
+        #chat-msgs { flex: 1; padding: 15px; overflow-y: auto; font-size: 14px; background: #f8fafc; }
+        .msg-box { margin-bottom: 10px; padding: 10px; border-radius: 12px; max-width: 80%; }
+        .msg-user { background: var(--primary); color: #fff; align-self: flex-end; margin-left: auto; }
+        .msg-bot { background: #fff; border: 1px solid #e2e8f0; color: #333; }
+        #chat-input-wrap { padding: 10px; display: flex; gap: 5px; background: #fff; }
+        #chat-input-wrap input { flex: 1; border: 1px solid #e2e8f0; padding: 10px; border-radius: 10px; outline: none; }
     </style></head><body>
     <header class="header">
         <div class="header-title" id="disp-id">서랍 1</div>
         <button class="btn-plus-top" onclick="triggerFile()">+</button>
     </header>
     <section class="search-area">
-        <div class="search-bar" id="sb-wrap" onclick="toggleSearch(true)">
-            <span>🔍</span><span class="search-ph" id="sb-ph">이 서랍에서 검색</span>
-            <input type="text" id="sb-input" oninput="filterItems(this.value)" onblur="toggleSearch(false)">
-        </div>
+        <div class="search-bar">🔍<input type="text" id="sb-input" placeholder="이 서랍에서 검색" oninput="filterItems(this.value)"></div>
     </section>
     <main style="flex:1; overflow-y:auto; padding:0 20px 100px;">
-        <div id="empty-notice" style="text-align:center; color:var(--gray); padding:50px 20px; font-size:14px;">등록된 물건이 없습니다.<br>사진을 찍거나 직접 입력해 보세요.</div>
+        <div id="empty-notice" style="text-align:center; color:var(--gray); padding:50px 20px;">등록된 물품이 없습니다.</div>
         <div id="media-card" class="media-card">
-            <div id="analysis-overlay" class="analysis-overlay"><div style="color:var(--primary); font-weight:800;">비서 "결"이 분석 중... 🤖</div></div>
-            <button style="position:absolute; top:12px; right:12px; background:rgba(0,0,0,0.4); color:#fff; border:none; width:28px; height:28px; border-radius:50%;" onclick="deleteMedia()">×</button>
-            <div id="media-target" style="height:100%; display:flex; align-items:center; justify-content:center;"></div>
+            <div id="analysis-overlay" class="analysis-overlay"><div style="color:var(--primary); font-weight:800;">분석 중... 🤖</div></div>
+            <button style="position:absolute; top:12px; right:12px; background:rgba(0,0,0,0.5); color:#fff; border:none; width:28px; height:28px; border-radius:50%; z-index:10;" onclick="location.reload()">×</button>
+            <div id="media-target" style="height:100%;"></div>
         </div>
         <div id="list-container"></div>
-        <button id="btn-man" onclick="addItem()" style="display:none; width:100%; padding:16px; border:1px dashed #cbd5e1; border-radius:15px; background:transparent; color:var(--gray); font-weight:700;">+ 물품 직접 추가</button>
+        <button id="btn-man" onclick="addItem()" style="display:none; width:100%; padding:15px; border:1px dashed #cbd5e1; border-radius:15px; background:transparent; color:var(--gray); font-weight:700; margin-top:10px;">+ 물품 직접 추가</button>
     </main>
-    <div id="preview-modal">
-        <img id="preview-img" class="preview-img">
-        <div style="margin-top:20px; display:flex; gap:15px;">
-            <button onclick="rotatePreview(-90)" style="background:#2d3748; color:#fff; border:none; width:50px; height:50px; border-radius:50%; font-size:20px;">↺</button>
-            <button onclick="rotatePreview(90)" style="background:#2d3748; color:#fff; border:none; width:50px; height:50px; border-radius:50%; font-size:20px;">↻</button>
-        </div>
-        <div style="margin-top:30px; display:flex; gap:12px; width:85%;">
-            <button onclick="triggerFile()" style="flex:1; padding:16px; border-radius:14px; background:#4a5568; color:#fff; font-weight:800; border:none;">다시 촬영</button>
-            <button id="btn-reg" style="flex:1; padding:16px; border-radius:14px; background:var(--primary); color:#fff; font-weight:800; border:none;" onclick="processAndRegister()">등록하기</button>
-        </div>
+
+    <div id="chat-window">
+        <div id="chat-header"><span>비서 '결'</span><span style="cursor:pointer" onclick="toggleChat()">×</span></div>
+        <div id="chat-msgs" style="display:flex; flex-direction:column;"></div>
+        <div id="chat-input-wrap"><input type="text" id="chat-input" placeholder="질문하세요" onkeypress="if(event.keyCode==13) sendChat()"></div>
     </div>
-    <button id="fab-gyeol" class="fab-gyeol" onclick="alert('비서 결과 대화를 시작합니다!')">✨</button>
+
+    <button id="fab-gyeol" class="fab-gyeol" onclick="toggleChat()">✨</button>
     <input type="file" id="hidden-file" style="display:none;" accept="image/*,video/*">
 
     <script>
         const _supa = supabase.createClient('https://tqhtggusphhcsygiitrv.supabase.co', 'sb_publishable_lJeKpO0aRv9mTBE1qnbkow_JqTmhnHQ');
-        let items = []; let currentRot = 0; let rawFile = null;
-        const tag = (new URLSearchParams(window.location.search).get('tag') || 'DRAWER001').toUpperCase();
+        let items = []; const tag = (new URLSearchParams(window.location.search).get('tag') || 'DRAWER001').toUpperCase();
+        document.getElementById('disp-id').innerText = tag;
 
         function triggerFile() { document.getElementById('hidden-file').click(); }
-        document.getElementById('hidden-file').onchange = (e) => {
-            rawFile = e.target.files[0]; if(!rawFile) return;
-            if(rawFile.type.includes('image')){
-                const r = new FileReader(); r.onload = (ev) => {
-                    document.getElementById('preview-img').src = ev.target.result;
-                    document.getElementById('preview-modal').style.display = 'flex';
-                    currentRot = 0; document.getElementById('preview-img').style.transform = `rotate(0deg)`;
-                }; r.readAsDataURL(rawFile);
-            } else { processAndRegister(); }
-        };
-
-        function rotatePreview(d) { currentRot = (currentRot + d) % 360; document.getElementById('preview-img').style.transform = `rotate(${currentRot}deg)`; }
-
-        async function processAndRegister() {
-            const b = document.getElementById('btn-reg'); b.disabled = true; b.innerText = "압축 및 분석 중...";
-            let fileToUpload = rawFile;
-            if (rawFile.type.includes('image')) { fileToUpload = await resizeImage(rawFile, 1024); }
-            document.getElementById('preview-modal').style.display = 'none';
+        document.getElementById('hidden-file').onchange = async (e) => {
+            const file = e.target.files[0]; if(!file) return;
             document.getElementById('empty-notice').style.display = 'none';
             document.getElementById('media-card').style.display = 'block';
             document.getElementById('analysis-overlay').style.display = 'flex';
-            const path = `${tag}/${Date.now()}_${fileToUpload.name}`;
+            
+            let uploadFile = file;
+            if (file.type.includes('image')) { uploadFile = await resizeImg(file, 800); }
+            const path = `${tag}/${Date.now()}_${uploadFile.name}`;
+            
             try {
-                await _supa.storage.from('user_uploads').upload(path, fileToUpload);
+                await _supa.storage.from('user_uploads').upload(path, uploadFile);
                 const { data: s } = await _supa.storage.from('user_uploads').createSignedUrl(path, 3600);
-                document.getElementById('media-target').innerHTML = rawFile.type.includes('video') ? `<video src="${s.signedUrl}" autoplay loop muted playsinline></video>` : `<img src="${s.signedUrl}" style="transform: rotate(${currentRot}deg)">`;
+                document.getElementById('media-target').innerHTML = file.type.includes('video') ? `<video src="${s.signedUrl}" autoplay loop muted playsinline></video>` : `<img src="${s.signedUrl}">`;
                 const res = await fetch('/api/analyze', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({filePath:path}) });
                 const d = await res.json();
                 items = (d.items || []).map(n => ({ n, q: 1 }));
                 updateList(); document.getElementById('btn-man').style.display = 'block'; document.getElementById('fab-gyeol').style.display = 'flex';
-            } catch(e) { alert("오류: " + e.message); }
-            finally { document.getElementById('analysis-overlay').style.display = 'none'; b.disabled = false; b.innerText = "등록하기"; }
-        }
+            } catch(err) { alert("업로드 실패: " + err.message); }
+            finally { document.getElementById('analysis-overlay').style.display = 'none'; }
+        };
 
-        function resizeImage(file, maxSize) {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        let w = img.width, h = img.height;
-                        if (w > h) { if (w > maxSize) { h *= maxSize / w; w = maxSize; } }
-                        else { if (h > maxSize) { w *= maxSize / h; h = maxSize; } }
-                        canvas.width = w; canvas.height = h;
-                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                        canvas.toBlob((blob) => { resolve(new File([blob], file.name, {type: 'image/jpeg'})); }, 'image/jpeg', 0.8);
-                    }; img.src = e.target.result;
-                }; reader.readAsDataURL(file);
+        function resizeImg(f, s) {
+            return new Promise(r => {
+                const rd = new FileReader(); rd.readAsDataURL(f);
+                rd.onload = (e) => {
+                    const i = new Image(); i.src = e.target.result;
+                    i.onload = () => {
+                        const c = document.createElement('canvas'); const sc = Math.min(s/i.width, s/i.height, 1);
+                        c.width = i.width*sc; c.height = i.height*sc;
+                        c.getContext('2d').drawImage(i, 0, 0, c.width, c.height);
+                        c.toBlob(b => r(new File([b], f.name, {type:'image/jpeg'})), 'image/jpeg', 0.6);
+                    };
+                };
             });
         }
 
         function updateList() {
             document.getElementById('list-container').innerHTML = items.map((it, i) => `
                 <div class="item-row">
-                    <div><span style="font-weight:700;">${it.n}</span><br><small style="color:#ff4d4d; font-weight:bold; cursor:pointer;" onclick="del(${i})">삭제</small></div>
+                    <div><span style="font-weight:700;">${it.n}</span><br><span class="btn-edit" onclick="edit(${i})">수정</span><span class="btn-del" onclick="del(${i})">삭제</span></div>
                     <div style="display:flex; align-items:center; background:#f8fafc; padding:4px; border-radius:10px; border:1px solid #e2e8f0;">
                         <button style="border:none; background:#fff; width:28px; height:28px; border-radius:6px; color:var(--primary); font-weight:900;" onclick="qty(${i},-1)">-</button>
                         <span style="margin:0 12px; font-weight:800;">${it.q}</span>
@@ -127,10 +111,18 @@
                     </div>
                 </div>`).join('');
         }
-        function toggleSearch(a) { const w = document.getElementById('sb-wrap'); if(a){ w.classList.add('active'); document.getElementById('sb-ph').style.display='none'; document.getElementById('sb-input').focus(); } else if(!document.getElementById('sb-input').value){ w.classList.remove('active'); document.getElementById('sb-ph').style.display='block'; } }
-        function filterItems(v) { document.querySelectorAll('.item-row').forEach(r => r.style.display = r.innerText.includes(v) ? 'flex' : 'none'); }
+
+        function toggleChat() { const w = document.getElementById('chat-window'); w.style.display = (w.style.display === 'flex') ? 'none' : 'flex'; }
+        async function sendChat() {
+            const i = document.getElementById('chat-input'); const m = i.value; if(!m) return;
+            const b = document.getElementById('chat-msgs'); b.innerHTML += `<div class="msg-box msg-user">${m}</div>`; i.value = '';
+            const res = await fetch('/api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message:m, inventory:JSON.stringify(items), tag:tag}) });
+            const d = await res.json(); b.innerHTML += `<div class="msg-box msg-bot">${d.reply}</div>`; b.scrollTop = b.scrollHeight;
+        }
+
+        function edit(i) { const n = prompt("이름 수정", items[i].n); if(n) { items[i].n = n; updateList(); } }
+        function del(i) { if(confirm('삭제할까요?')){ items.splice(i,1); updateList(); } }
         function qty(i, v) { items[i].q = Math.max(0, items[i].q + v); updateList(); }
-        function del(i) { if(confirm('삭제?')){ items.splice(i,1); updateList(); } }
-        function addItem() { const n = prompt("물품 이름"); if(n) { items.push({n, q:1}); updateList(); } }
-        function deleteMedia() { if(confirm('사진 삭제?')) location.reload(); }
+        function addItem() { const n = prompt("새 물품"); if(n) { items.push({n, q:1}); updateList(); } }
+        function filterItems(v) { document.querySelectorAll('.item-row').forEach(r => r.style.display = r.innerText.includes(v) ? 'flex' : 'none'); }
     </script></body></html>
