@@ -2,197 +2,139 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>공간:결 - 관리</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==">
+    <title>공간:결 - 프리미엄 리포트</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #2563eb; --bg: #ffffff; --text: #111827; --gray: #9ca3af; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--text); overflow-x: hidden; }
-        
-        /* 헤더: 중앙 정렬 고수 */
-        .header { display: flex; justify-content: center; align-items: center; height: 60px; border-bottom: 1px solid #eee; position: sticky; top: 0; background: #fff; z-index: 100; }
-        .header-title { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.5px; }
-        .btn-plus { position: absolute; right: 20px; font-size: 24px; border: none; background: none; cursor: pointer; }
-
-        /* 검색창 */
-        .search-container { padding: 15px 20px; }
-        .search-box { background: #f3f4f6; border-radius: 12px; padding: 10px 15px; display: flex; align-items: center; }
-        .search-box input { border: none; background: transparent; outline: none; width: 100%; font-size: 15px; margin-left: 8px; }
-
-        /* 미디어 카드: 이미지 꽉 차게 */
-        .card-view { margin: 0 20px 20px; border-radius: 16px; overflow: hidden; background: #eee; position: relative; aspect-ratio: 4 / 3; display: none; }
-        .card-view img, .card-view video { width: 100%; height: 100%; object-fit: cover; }
-        
-        /* 목록 디자인 */
-        #list-container { padding: 0 20px 100px; }
-        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f3f4f6; }
-        .item-info { flex: 1; }
-        .item-name { font-weight: 600; font-size: 16px; margin-bottom: 4px; display: block; }
-        .item-btns { font-size: 12px; color: var(--gray); }
-        .item-btns span { margin-right: 10px; cursor: pointer; }
-
-        /* 채팅창 개선 (모바일 최적화) */
-        #chat-window { 
-            position: fixed; bottom: 0; left: 0; width: 100%; height: 70vh; 
-            background: #fff; border-radius: 20px 20px 0 0; box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
-            display: none; flex-direction: column; z-index: 2000;
-        }
-        #chat-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; font-weight: 700; }
-        #chat-msgs { flex: 1; overflow-y: auto; padding: 20px; background: #f9fafb; display: flex; flex-direction: column; gap: 10px; }
-        .msg { max-width: 80%; padding: 10px 14px; border-radius: 15px; font-size: 14px; line-height: 1.4; }
-        .msg-user { align-self: flex-end; background: var(--primary); color: #fff; }
-        .msg-bot { align-self: flex-start; background: #fff; border: 1px solid #e5e7eb; }
-
-        /* 입력바 + 전송 버튼 추가 */
-        #chat-input-area { padding: 10px 20px calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid #eee; display: flex; gap: 10px; background: #fff; }
-        #chat-input-area input { flex: 1; padding: 12px; border: 1px solid #e5e7eb; border-radius: 25px; outline: none; font-size: 15px; }
-        .btn-send { background: var(--primary); color: #fff; border: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-
-        /* 세련된 플로팅 버튼 */
-        .fab { position: fixed; bottom: 30px; right: 20px; width: 56px; height: 56px; background: #111827; color: #fff; border: none; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1000; }
-        
-        /* 분석 중 로딩 */
-        .loader { position: absolute; inset: 0; background: rgba(255,255,255,0.8); display: none; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; color: var(--primary); }
+        :root { --primary: #007bff; --bg: #f8fafc; --text: #1e293b; --gray: #94a3b8; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        .header { display: flex; justify-content: center; align-items: center; padding: 15px 20px; background: #fff; border-bottom: 1px solid #f1f5f9; position: relative; }
+        .header-title { font-size: 18px; font-weight: 800; }
+        .btn-plus { position: absolute; right: 20px; background: var(--primary); color: #fff; border: none; width: 36px; height: 36px; border-radius: 10px; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .search-area { padding: 10px 20px; }
+        .search-bar { background: #edf2f7; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; cursor: pointer; transition: 0.3s; }
+        .search-bar.active { background: #fff; border: 1.5px solid var(--primary); box-shadow: 0 4px 12px rgba(0,123,255,0.08); }
+        .search-bar input { border: none; background: transparent; outline: none; width: 0; transition: 0.3s; font-size: 15px; }
+        .search-bar.active input { width: 100%; margin-left: 10px; }
+        .media-card { width: 100%; height: 250px; background: #fff; border-radius: 20px; overflow: hidden; position: relative; border: 1px solid #e2e8f0; margin-bottom: 20px; display: none; }
+        .media-card img { width: 100%; height: 100%; object-fit: contain; }
+        .analysis-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.7); display:none; flex-direction:column; align-items:center; justify-content:center; z-index: 5; }
+        #preview-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 20000; flex-direction: column; align-items: center; justify-content: center; }
+        .preview-img { max-width: 90%; max-height: 60%; border-radius: 15px; transition: transform 0.3s; }
+        .item-row { background: #fff; border-radius: 18px; padding: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #f1f5f9; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .fab-gyeol { position: fixed; bottom: 35px; right: 25px; width: 60px; height: 60px; background: #000; color: #fff; border: none; border-radius: 50%; font-size: 24px; display: none; align-items: center; justify-content: center; box-shadow: 0 12px 30px rgba(0,0,0,0.25); z-index: 1000; }
     </style>
 </head>
 <body>
-
     <header class="header">
-        <div class="header-title">공간 : 결</div>
-        <button class="btn-plus" onclick="document.getElementById('file-input').click()">+</button>
+        <div class="header-title" id="disp-id">서랍 1</div>
+        <button class="btn-plus" onclick="triggerFile()">+</button>
     </header>
-
-    <div class="search-container">
-        <div class="search-box">🔍 <input type="text" placeholder="어떤 물건을 찾으시나요?" oninput="filterList(this.value)"></div>
-    </div>
-
-    <div id="media-card" class="card-view">
-        <div id="media-content"></div>
-        <div id="loader" class="loader">AI가 물건을 찾는 중...</div>
-    </div>
-
-    <div id="list-container">
-        <p id="empty-msg" style="text-align:center; color:#999; margin-top:50px;">우측 상단 + 버튼으로 사진을 찍어주세요.</p>
-    </div>
-
-    <button id="chat-fab" class="fab" onclick="toggleChat()">✨</button>
-
-    <div id="chat-window">
-        <div id="chat-header"><span>비서 '결'</span> <span onclick="toggleChat()" style="cursor:pointer">✕</span></div>
-        <div id="chat-msgs"></div>
-        <div id="chat-input-area">
-            <input type="text" id="chat-input" placeholder="무엇이든 물어보세요" onkeypress="if(event.keyCode==13) sendChat()">
-            <button class="btn-send" onclick="sendChat()">➔</button>
+    <section class="search-area">
+        <div class="search-bar" id="sb-wrap" onclick="toggleSearch(true)">
+            <span>🔍</span><span id="sb-ph" style="margin-left:8px; font-size:14px; color:var(--gray);">이 서랍에서 검색</span>
+            <input type="text" id="sb-input" oninput="filterItems(this.value)" onblur="toggleSearch(false)">
+        </div>
+    </section>
+    <main style="flex:1; overflow-y:auto; padding:0 20px 100px;">
+        <div id="empty-notice" style="text-align:center; color:var(--gray); padding:50px 20px; font-size:14px;">등록된 물건이 없습니다.<br>사진을 찍거나 직접 입력해 보세요.</div>
+        <div id="media-card" class="media-card">
+            <div id="analysis-overlay" class="analysis-overlay"><div style="color:var(--primary); font-weight:800;">비서 "결"이 분석 중... 🤖</div></div>
+            <button style="position:absolute; top:12px; right:12px; background:rgba(0,0,0,0.4); color:#fff; border:none; width:28px; height:28px; border-radius:50%;" onclick="deleteMedia()">×</button>
+            <div id="media-target" style="height:100%; display:flex; align-items:center; justify-content:center;"></div>
+        </div>
+        <div id="list-container"></div>
+        <button id="btn-man" onclick="addItem()" style="display:none; width:100%; padding:16px; border:1px dashed #cbd5e1; border-radius:15px; background:transparent; color:var(--gray); font-weight:700; margin-top:10px;">+ 물품 직접 추가</button>
+    </main>
+    <div id="preview-modal">
+        <img id="preview-img" class="preview-img">
+        <div style="margin-top:20px; display:flex; gap:15px;">
+            <button onclick="rotatePreview(-90)" style="background:#2d3748; color:#fff; border:none; width:50px; height:50px; border-radius:50%; font-size:20px;">↺</button>
+            <button onclick="rotatePreview(90)" style="background:#2d3748; color:#fff; border:none; width:50px; height:50px; border-radius:50%; font-size:20px;">↻</button>
+        </div>
+        <div style="margin-top:30px; display:flex; gap:12px; width:85%;">
+            <button style="flex:1; padding:16px; border-radius:14px; background:#4a5568; color:#fff; border:none; font-weight:800;" onclick="triggerFile()">다시 촬영</button>
+            <button id="btn-reg" style="flex:1; padding:16px; border-radius:14px; background:var(--primary); color:#fff; border:none; font-weight:800;" onclick="processAndRegister()">등록하기</button>
         </div>
     </div>
-
-    <input type="file" id="file-input" style="display:none" accept="image/*,video/*">
+    <button id="fab-gyeol" class="fab-gyeol" onclick="alert('비서 결과 대화를 시작합니다!')">✨</button>
+    <input type="file" id="hidden-file" style="display:none;" accept="image/*,video/*">
 
     <script>
-        const supa = supabase.createClient('https://tqhtggusphhcsygiitrv.supabase.co', 'sb_publishable_lJeKpO0aRv9mTBE1qnbkow_JqTmhnHQ');
-        let inventory = [];
-        const drawerTag = new URLSearchParams(window.location.search).get('tag') || 'BASIC';
+        const _supa = supabase.createClient('https://tqhtggusphhcsygiitrv.supabase.co', 'sb_publishable_lJeKpO0aRv9mTBE1qnbkow_JqTmhnHQ');
+        let items = []; let currentRot = 0; let rawFile = null;
+        const tag = (new URLSearchParams(window.location.search).get('tag') || 'DRAWER001').toUpperCase();
 
-        document.getElementById('file-input').onchange = async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            // UI 업데이트
-            document.getElementById('empty-msg').style.display = 'none';
-            document.getElementById('media-card').style.display = 'block';
-            document.getElementById('loader').style.display = 'flex';
-
-            const path = `${drawerTag}/${Date.now()}_${file.name}`;
-            
-            try {
-                // 업로드 및 분석
-                await supa.storage.from('user_uploads').upload(path, file);
-                const { data } = await supa.storage.from('user_uploads').createSignedUrl(path, 3600);
-                
-                document.getElementById('media-content').innerHTML = file.type.includes('video') 
-                    ? `<video src="${data.signedUrl}" autoplay loop muted playsinline></video>` 
-                    : `<img src="${data.signedUrl}">`;
-
-                const res = await fetch('/api/analyze', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ filePath: path })
-                });
-                
-                const result = await res.json();
-                inventory = (result.items || []).map(name => ({ name, count: 1 }));
-                renderList();
-                document.getElementById('chat-fab').style.display = 'flex';
-                
-            } catch (err) {
-                alert("인식 오류가 발생했습니다. 다시 시도해주세요.");
-            } finally {
-                document.getElementById('loader').style.display = 'none';
-            }
+        function triggerFile() { document.getElementById('hidden-file').click(); }
+        document.getElementById('hidden-file').onchange = (e) => {
+            rawFile = e.target.files[0]; if(!rawFile) return;
+            if(rawFile.type.includes('image')){
+                const r = new FileReader(); r.onload = (ev) => {
+                    document.getElementById('preview-img').src = ev.target.result;
+                    document.getElementById('preview-modal').style.display = 'flex';
+                    currentRot = 0; document.getElementById('preview-img').style.transform = `rotate(0deg)`;
+                }; r.readAsDataURL(rawFile);
+            } else { processAndRegister(); }
         };
+        function rotatePreview(d) { currentRot = (currentRot + d) % 360; document.getElementById('preview-img').style.transform = `rotate(${currentRot}deg)`; }
+        function closePreview() { document.getElementById('preview-modal').style.display = 'none'; }
 
-        function renderList() {
-            const container = document.getElementById('list-container');
-            container.innerHTML = inventory.map((item, i) => `
+        async function processAndRegister() {
+            const b = document.getElementById('btn-reg'); b.disabled = true; b.innerText = "압축 및 분석 중...";
+            let fileToUpload = rawFile;
+            if (rawFile.type.includes('image')) { fileToUpload = await resizeImage(rawFile, 1024); }
+            closePreview(); document.getElementById('empty-notice').style.display = 'none';
+            document.getElementById('media-card').style.display = 'block';
+            document.getElementById('analysis-overlay').style.display = 'flex';
+            const path = `${tag}/${Date.now()}_${fileToUpload.name}`;
+            try {
+                await _supa.storage.from('user_uploads').upload(path, fileToUpload);
+                const { data: s } = await _supa.storage.from('user_uploads').createSignedUrl(path, 3600);
+                document.getElementById('media-target').innerHTML = rawFile.type.includes('video') ? `<video src="${s.signedUrl}" autoplay loop muted playsinline></video>` : `<img src="${s.signedUrl}" style="transform: rotate(${currentRot}deg)">`;
+                const res = await fetch('/api/analyze', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({filePath:path}) });
+                const d = await res.json();
+                items = (d.items || []).map(n => ({ n, q: 1 }));
+                updateList(); document.getElementById('btn-man').style.display = 'block'; document.getElementById('fab-gyeol').style.display = 'flex';
+            } catch(e) { alert("오류: " + e.message); }
+            finally { document.getElementById('analysis-overlay').style.display = 'none'; b.disabled = false; b.innerText = "등록하기"; }
+        }
+
+        function resizeImage(file, maxSize) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let w = img.width, h = img.height;
+                        if (w > h) { if (w > maxSize) { h *= maxSize / w; w = maxSize; } }
+                        else { if (h > maxSize) { w *= maxSize / h; h = maxSize; } }
+                        canvas.width = w; canvas.height = h;
+                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                        canvas.toBlob((blob) => { resolve(new File([blob], file.name, {type: 'image/jpeg'})); }, 'image/jpeg', 0.8);
+                    }; img.src = e.target.result;
+                }; reader.readAsDataURL(file);
+            });
+        }
+
+        function updateList() {
+            document.getElementById('list-container').innerHTML = items.map((it, i) => `
                 <div class="item-row">
-                    <div class="item-info">
-                        <span class="item-name">${item.name}</span>
-                        <div class="item-btns">
-                            <span onclick="editItem(${i})">수정</span>
-                            <span onclick="removeItem(${i})" style="color:#ef4444">삭제</span>
-                        </div>
+                    <div><span style="font-weight:700;">${it.n}</span><br><small style="color:#94a3b8; font-weight:bold; cursor:pointer;" onclick="del(${i})">삭제</small></div>
+                    <div style="display:flex; align-items:center; background:#f8fafc; padding:4px; border-radius:10px; border:1px solid #e2e8f0;">
+                        <button style="border:none; background:#fff; width:28px; height:28px; border-radius:6px; color:var(--primary); font-weight:900;" onclick="qty(${i},-1)">-</button>
+                        <span style="margin:0 12px; font-weight:800;">${it.q}</span>
+                        <button style="border:none; background:#fff; width:28px; height:28px; border-radius:6px; color:var(--primary); font-weight:900;" onclick="qty(${i},1)">+</button>
                     </div>
-                    <div style="display:flex; align-items:center; gap:12px; background:#f9fafb; padding:8px 12px; border-radius:20px;">
-                        <button onclick="changeQty(${i},-1)" style="border:none; background:none; font-weight:bold;">-</button>
-                        <span style="font-weight:700;">${item.count}</span>
-                        <button onclick="changeQty(${i},1)" style="border:none; background:none; font-weight:bold; color:var(--primary);">+</button>
-                    </div>
-                </div>
-            `).join('');
+                </div>`).join('');
         }
-
-        function toggleChat() {
-            const win = document.getElementById('chat-window');
-            win.style.display = (win.style.display === 'flex') ? 'none' : 'flex';
-            if(win.style.display === 'flex') document.getElementById('chat-input').focus();
-        }
-
-        async function sendChat() {
-            const input = document.getElementById('chat-input');
-            const text = input.value.trim();
-            if (!text) return;
-
-            const box = document.getElementById('chat-msgs');
-            box.innerHTML += `<div class="msg msg-user">${text}</div>`;
-            input.value = '';
-            box.scrollTop = box.scrollHeight;
-
-            const res = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text, inventory: JSON.stringify(inventory), tag: drawerTag })
-            });
-            const data = await res.json();
-            box.innerHTML += `<div class="msg msg-bot">${data.reply}</div>`;
-            box.scrollTop = box.scrollHeight;
-        }
-
-        function editItem(i) {
-            const val = prompt("이름 수정", inventory[i].name);
-            if(val) { inventory[i].name = val; renderList(); }
-        }
-        function removeItem(i) {
-            if(confirm("삭제하시겠습니까?")) { inventory.splice(i, 1); renderList(); }
-        }
-        function changeQty(i, n) {
-            inventory[i].count = Math.max(1, inventory[i].count + n);
-            renderList();
-        }
-        function filterList(v) {
-            document.querySelectorAll('.item-row').forEach(row => {
-                row.style.display = row.innerText.includes(v) ? 'flex' : 'none';
-            });
-        }
+        function toggleSearch(a) { const w = document.getElementById('sb-wrap'); if(a){ w.classList.add('active'); document.getElementById('sb-ph').style.display='none'; document.getElementById('sb-input').focus(); } else if(!document.getElementById('sb-input').value){ w.classList.remove('active'); document.getElementById('sb-ph').style.display='block'; } }
+        function filterItems(v) { document.querySelectorAll('.item-row').forEach(r => r.style.display = r.innerText.includes(v) ? 'flex' : 'none'); }
+        function qty(i, v) { items[i].q = Math.max(0, items[i].q + v); updateList(); }
+        function del(i) { if(confirm('삭제?')){ items.splice(i,1); updateList(); } }
+        function addItem() { const n = prompt("물품 이름"); if(n) { items.push({n, q:1}); updateList(); } }
+        function deleteMedia() { if(confirm('사진 삭제?')) location.reload(); }
     </script>
 </body>
 </html>
