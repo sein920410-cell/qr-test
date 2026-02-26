@@ -2,17 +2,46 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>공간 : 결 - 로그인</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==">
+    <title>공간:결 - 로그인</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: -apple-system, sans-serif; background: #0f172a; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; color: #fff; }
-        button { background: #fff; color: #000; border: none; padding: 16px; width: 280px; border-radius: 15px; font-weight: 800; cursor: pointer; font-size: 16px; }
+        body { 
+            font-family: -apple-system, sans-serif; 
+            background: #0f172a; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            margin: 0; 
+            color: #fff; 
+            /* 아이폰에서 텍스트가 작아지는 현상 방지 */
+            -webkit-text-size-adjust: 100%;
+        }
+        .container { text-align: center; padding: 20px; }
+        h1 { font-size: 36px; font-weight: 900; margin-bottom: 10px; letter-spacing: -1px; }
+        p { color: #94a3b8; margin-bottom: 50px; font-size: 16px; }
+        button { 
+            background: #fff; 
+            color: #000; 
+            border: none; 
+            padding: 18px; 
+            width: 100%; 
+            max-width: 280px; 
+            border-radius: 18px; 
+            font-weight: 800; 
+            cursor: pointer; 
+            font-size: 18px; 
+            box-shadow: 0 4px 15px rgba(255,255,255,0.1);
+            transition: transform 0.2s;
+        }
+        button:active { transform: scale(0.96); }
     </style>
 </head>
 <body>
-    <div style="text-align:center;">
-        <h1 style="font-size:32px; font-weight:900;">공간 : 결</h1>
-        <p style="color:#94a3b8; margin-bottom:40px;">당신의 소중한 공간을 정리합니다.</p>
+    <div class="container">
+        <h1>공간:결</h1>
+        <p>당신의 소중한 공간을 정리합니다.</p>
         <button onclick="location.href='index.html'">시작하기</button>
     </div>
 </body>
