@@ -2,16 +2,17 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>공간:결 - 프리미엄 리포트</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==">
+    <title>공간:결 - 관리</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #007bff; --bg: #f8fafc; --text: #1e293b; --gray: #94a3b8; }
+        :root { --primary: #3b82f6; --bg: #f8fafc; --text: #1e293b; --gray: #94a3b8; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         .header-row { display: flex; justify-content: space-between; padding: 10px 15px; background: #fff; align-items: center; gap: 10px; border-bottom: 1px solid #f1f5f9; }
-        .btn-top { background: #e2e8f0; border: none; padding: 10px 15px; border-radius: 10px; font-size: 14px; font-weight: 700; color: #475569; text-decoration: none; white-space: nowrap; }
+        .btn-top { background: #e2e8f0; border: none; padding: 10px 15px; border-radius: 10px; font-size: 14px; font-weight: 700; color: #475569; text-decoration: none; }
         .title-badge { background: #1e293b; color: #fff; padding: 10px 0; border-radius: 12px; font-weight: 800; font-size: 16px; flex: 1; text-align: center; }
-        .btn-add-main { background: #3b82f6; color: #fff; border: none; padding: 10px 15px; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; white-space: nowrap; }
+        .btn-add-main { background: var(--primary); color: #fff; border: none; padding: 10px 15px; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; }
         .main-card { background: #fff; padding: 20px; border-radius: 0 0 30px 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
         .media-box { width: 100%; height: 230px; background: #f1f5f9; border-radius: 20px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0; }
         .media-box img { width: 100%; height: 100%; object-fit: contain; }
@@ -25,70 +26,43 @@
 <body>
     <div class="header-row">
         <a href="index.html" class="btn-top">🔍 검색창</a>
-        <div class="title-badge" id="disp-id">서랍 1</div>
+        <div class="title-badge">서랍 1</div>
         <button class="btn-add-main" onclick="triggerFile()">📸 사진 추가</button>
     </div>
-
     <div class="main-card">
         <div class="media-box" id="media-target">
             <div id="analysis-overlay" class="analysis-overlay">
-                <div style="color:#3b82f6; font-weight:800;">비서 "결"이 분석 중... 🤖</div>
+                <div style="color:var(--primary); font-weight:800;">비서 "결"이 분석 중... 🤖</div>
             </div>
             <div id="status-text" style="color:var(--gray);">미디어를 추가해 보세요</div>
         </div>
         <input type="text" class="search-input" id="search-bar" placeholder="물건 찾기..." oninput="filterItems(this.value)">
     </div>
-
     <div class="list-container" id="list-container"></div>
-    <div style="padding: 0 20px 40px;">
-        <button onclick="addItem()" style="width:100%; padding:16px; border:1px dashed #cbd5e1; border-radius:15px; background:transparent; color:var(--gray); font-weight:700;">+ 물품 직접 추가</button>
-    </div>
-
     <input type="file" id="hidden-file" style="display:none;" accept="image/*">
-
     <script>
         const _supa = supabase.createClient('https://tqhtggusphhcsygiitrv.supabase.co', 'sb_publishable_lJeKpO0aRv9mTBE1qnbkow_JqTmhnHQ');
         let items = [];
-
         function triggerFile() { document.getElementById('hidden-file').click(); }
-
         document.getElementById('hidden-file').onchange = async (e) => {
             const rawFile = e.target.files[0];
             if(!rawFile) return;
-            
             document.getElementById('analysis-overlay').style.display = 'flex';
-            document.getElementById('status-text').style.display = 'none';
-            
             try {
-                const compressedBlob = await resizeImage(rawFile, 1024);
+                const blob = await resizeImage(rawFile, 1024);
                 const fileName = `DRAWER001/${Date.now()}.jpg`;
-                
-                const { error: upErr } = await _supa.storage.from('user_uploads').upload(fileName, compressedBlob, { contentType: 'image/jpeg' });
-                if (upErr) throw upErr;
-
+                await _supa.storage.from('user_uploads').upload(fileName, blob, { contentType: 'image/jpeg' });
                 const { data: s } = await _supa.storage.from('user_uploads').createSignedUrl(fileName, 3600);
-                if (!s || !s.signedUrl) throw new Error("이미지 주소 생성 실패");
                 document.getElementById('media-target').innerHTML = `<img src="${s.signedUrl}">`;
-
-                const res = await fetch('/api/analyze', { 
-                    method:'POST', 
-                    headers:{'Content-Type':'application/json'}, 
-                    body:JSON.stringify({ filePath: fileName }) 
-                });
-                
+                const res = await fetch('/api/analyze', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ filePath: fileName }) });
                 const d = await res.json();
                 if (d.error) throw new Error(d.error);
-                
                 items = (d.items || []).map(n => ({ n, q: 1 }));
                 updateList();
-            } catch(err) {
-                alert("인식 오류: " + err.message);
-            } finally {
-                document.getElementById('analysis-overlay').style.display = 'none';
-            }
+            } catch(err) { alert("인식 오류: " + err.message); }
+            finally { document.getElementById('analysis-overlay').style.display = 'none'; }
         };
-
-        function resizeImage(file, maxSize) {
+        function resizeImage(file, max) {
             return new Promise((res) => {
                 const r = new FileReader();
                 r.onload = (e) => {
@@ -96,24 +70,22 @@
                     i.onload = () => {
                         const canvas = document.createElement('canvas');
                         let w = i.width, h = i.height;
-                        if(w > h) { if(w > maxSize) { h *= maxSize/w; w = maxSize; } } 
-                        else { if(h > maxSize) { w *= maxSize/h; h = maxSize; } }
+                        if(w > h) { if(w > max) { h *= max/w; w = max; } } 
+                        else { if(h > max) { w *= max/h; h = max; } }
                         canvas.width = w; canvas.height = h;
                         canvas.getContext('2d').drawImage(i, 0, 0, w, h);
-                        canvas.toBlob((blob) => res(blob), 'image/jpeg', 0.8);
+                        canvas.toBlob((b) => res(b), 'image/jpeg', 0.8);
                     };
                     i.src = e.target.result;
                 };
                 r.readAsDataURL(file);
             });
         }
-
         function updateList() {
             document.getElementById('list-container').innerHTML = items.map((it, i) => `
                 <div class="item-card">
                     <div><span style="font-weight:700; font-size:16px;">${it.n}</span><br>
-                        <small class="btn-act" onclick="modify(${i})">편집/수정</small> | 
-                        <small class="btn-act" style="color:#ff4d4d;" onclick="del(${i})">삭제</small>
+                        <small class="btn-act" onclick="del(${i})" style="color:#ff4d4d;">삭제</small>
                     </div>
                     <div style="display:flex; align-items:center; background:#f8fafc; padding:4px; border-radius:10px; border:1px solid #e2e8f0;">
                         <button style="border:none; background:#fff; width:28px; height:28px; border-radius:6px; color:#3b82f6; font-weight:900;" onclick="qty(${i},-1)">-</button>
@@ -122,10 +94,8 @@
                     </div>
                 </div>`).join('');
         }
-        function modify(i) { const n = prompt("이름 수정", items[i].n); if(n) { items[i].n = n; updateList(); } }
         function qty(i, v) { items[i].q = Math.max(0, items[i].q + v); updateList(); }
         function del(i) { if(confirm('삭제할까요?')) { items.splice(i,1); updateList(); } }
-        function addItem() { const n = prompt("물품 이름"); if(n) { items.push({n, q:1}); updateList(); } }
         function filterItems(v) { document.querySelectorAll('.item-card').forEach(r => r.style.display = r.innerText.includes(v) ? 'flex' : 'none'); }
     </script>
 </body>
