@@ -15,8 +15,10 @@ export default async function handler(req, res) {
     const arrayBuffer = await imgResp.arrayBuffer();
     const b64 = Buffer.from(arrayBuffer).toString("base64");
 
-    // Vercel 환경 변수를 사용하며, 없을 경우 gemini-2.0-flash를 기본값으로 사용합니다.
-    const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+    // Vercel 환경 변수를 사용하도록 수정 (하드코딩 제거)
+    // Vercel Settings에서 이 값을 'gemini-1.5-flash'로 두면 됩니다.
+    const model = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+    
     const gResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
