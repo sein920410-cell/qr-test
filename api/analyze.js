@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import fetch from "node-fetch";
 
 const supa = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -14,8 +15,9 @@ export default async function handler(req, res) {
     const arrayBuffer = await imgResp.arrayBuffer();
     const b64 = Buffer.from(arrayBuffer).toString("base64");
 
-    // 가장 최신 모델명인 'gemini-1.5-flash-latest' 사용
-    const gResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+    // Vercel 환경 변수를 사용하며, 없을 경우 gemini-2.0-flash를 기본값으로 사용합니다.
+    const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+    const gResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
