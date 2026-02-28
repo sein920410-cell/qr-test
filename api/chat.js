@@ -14,7 +14,7 @@ export default async function handler(req, res) {
 
   try {
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
-    const prompt = `당신은 비서 '결'입니다. 태그: ${tag}. 물품: ${inventory}. 질문: ${message}. 친절하게 한국어로 응답하세요.`;
+    const prompt = `당신은 비서 '봄'입니다. 태그: ${tag}. 물품: ${inventory}. 질문: ${message}. 친절하게 한국어로 응답하세요.`;
     
     const gResp = await fetch(`${endpoint}?key=${GEMINI_KEY}`, {
       method: "POST",
