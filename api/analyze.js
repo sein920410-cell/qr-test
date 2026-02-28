@@ -13,7 +13,12 @@ export default async function handler(req, res) {
     const imgResp = await fetch(signedData.signedUrl);
     const b64 = Buffer.from(await imgResp.arrayBuffer()).toString("base64");
 
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${process.env.GEMINI_MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`;
+    // 모델 ID 처리 (models/ 가 중복되지 않게 정리)
+    const rawModel = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+    const modelId = rawModel.startsWith('models/') ? rawModel : `models/${rawModel}`;
+    
+    // API 호출 주소 생성
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/${modelId}:generateContent?key=${process.env.GEMINI_API_KEY}`;
     
     const gResp = await fetch(endpoint, {
       method: "POST",
@@ -28,23 +33,22 @@ export default async function handler(req, res) {
 
     const gData = await gResp.json();
 
-    // 🔴 구글 AI가 보낸 실제 에러를 로그에 찍습니다. (Vercel Logs에서 확인 가능)
+    // 로그에서 보신 그 404 에러를 여기서 잡아냅니다.
     if (gData.error) {
-      console.error("Google AI API Error:", JSON.stringify(gData.error));
-      return res.status(200).json({ items: [], error: `AI 에러: ${gData.error.message}` });
+      console.error("AI API Error:", JSON.stringify(gData.error));
+      return res.status(200).json({ 
+        items: [], 
+        error: `AI가 모델(${rawModel})을 찾지 못했습니다. Vercel 설정을 확인해주세요.` 
+      });
     }
 
-    if (!gData.candidates || !gData.candidates[0].content) {
-      console.error("AI 응답 구조 이상:", JSON.stringify(gData));
-      return res.status(200).json({ items: [], error: "AI 응답 형식이 올바르지 않습니다." });
-    }
-
-    const botText = gData.candidates[0].content.parts[0].text;
+    const botText = gData.candidates?.[0]?.content?.parts?.[0]?.text || "";
     const items = botText.split(",").map(s => s.trim()).filter(it => it);
+    
     return res.status(200).json({ items });
 
   } catch (err) {
     console.error("서버 내부 에러:", err.message);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: "서버 내부 오류가 발생했습니다." });
   }
 }
