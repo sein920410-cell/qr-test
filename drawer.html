@@ -13,7 +13,6 @@
         .media-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
         .list-container { flex: 1; overflow-y: auto; padding: 20px; }
         .item-row { background: #f0f7ff; padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e0f0ff; }
-        /* 채팅창 최적화 */
         .chat-window { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 9999; flex-direction: column; }
         .chat-messages { flex: 1; padding: 20px; overflow-y: auto; background: #f8fafc; }
         .chat-input-area { padding: 15px; display: flex; gap: 10px; border-top: 1px solid #eee; }
@@ -33,11 +32,11 @@
 
     <div class="list-container" id="list-container"></div>
 
-    <button class="floating-btn" onclick="toggleChat()">✨ 결에게 묻기</button>
+    <button class="floating-btn" onclick="toggleChat()">✨ 봄에게 묻기</button>
 
     <div id="chat-window" class="chat-window">
         <div style="background:#000; color:#fff; padding:20px; display:flex; justify-content:space-between;">
-            <strong>비서 '결'</strong><span onclick="toggleChat()" style="cursor:pointer; font-size:24px;">✕</span>
+            <strong>비서 '봄'</strong><span onclick="toggleChat()" style="cursor:pointer; font-size:24px;">✕</span>
         </div>
         <div class="chat-messages" id="chat-messages"></div>
         <div class="chat-input-area">
@@ -60,62 +59,37 @@
             input.type = 'file'; input.accept = 'image/*';
             input.onchange = async (e) => {
                 const file = e.target.files[0];
+                if (!file) return;
                 const path = `${tag}/${Date.now()}_${file.name}`;
-                async function analyzeImage() {
-    const input = document.createElement('input');
-    input.type = 'file'; 
-    input.accept = 'image/*';
-    
-    input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const path = `${tag}/${Date.now()}_${file.name}`;
-        const wrap = document.getElementById('media-wrap');
-        
-        // 1. 상태 표시 (알림창 대신 화면에 띄움)
-        wrap.innerHTML = '<div style="color:var(--primary); font-weight:bold;">보안 업로드 중... 📤</div>';
-        
-        try {
-            // 2. Supabase 업로드 실행 (이 작업은 이제 멈춤 없이 바로 실행됩니다)
-            const { error: upErr } = await _supa.storage.from('user_uploads').upload(path, file);
-            if (upErr) throw upErr;
-
-            wrap.innerHTML = '<div style="color:var(--primary); font-weight:bold;">AI 분석 중... 🤖</div>';
-
-            // 3. 보안 미리보기 열쇠(Signed URL) 가져오기
-            const { data: signData, error: signErr } = await _supa.storage.from('user_uploads').createSignedUrl(path, 3600);
-            if (signErr) throw signErr;
-            
-            // 미리보기 즉시 표시
-            wrap.innerHTML = `<img src="${signData.signedUrl}" style="width:100%; height:100%; object-fit:contain;">`;
-
-            // 4. AI 분석 API 호출
-            const res = await fetch('/api/analyze', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ filePath: path })
-            });
-            
-            const data = await res.json();
-            
-            if (data.items && data.items.length > 0) {
-                // 기존 목록에 추가
-                data.items.forEach(n => items.push({ n, q: 1 }));
-                localStorage.setItem('gyeol_' + tag, JSON.stringify(items));
-                updateList();
-                // 성공 메시지도 화면 구석에 작게 표시하거나 자동 소멸되게 처리
-            } else {
-                alert('물품을 인식하지 못했습니다. 다시 촬영해 주세요.');
-            }
-        } catch (err) {
-            console.error(err);
-            wrap.innerHTML = '<div style="color:red;">오류 발생! 다시 시도해주세요.</div>';
-            alert('오류: ' + err.message);
+                const wrap = document.getElementById('media-wrap');
+                wrap.innerHTML = '<div style="color:var(--primary); font-weight:bold;">보안 업로드 중... 📤</div>';
+                try {
+                    const { error: upErr } = await _supa.storage.from('user_uploads').upload(path, file);
+                    if (upErr) throw upErr;
+                    wrap.innerHTML = '<div style="color:var(--primary); font-weight:bold;">AI 분석 중... 🤖</div>';
+                    const { data: signData, error: signErr } = await _supa.storage.from('user_uploads').createSignedUrl(path, 3600);
+                    if (signErr) throw signErr;
+                    wrap.innerHTML = `<img src="${signData.signedUrl}" style="width:100%; height:100%; object-fit:contain;">`;
+                    const res = await fetch('/api/analyze', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filePath: path })
+                    });
+                    const data = await res.json();
+                    if (data.items && data.items.length > 0) {
+                        data.items.forEach(n => items.push({ n, q: 1 }));
+                        localStorage.setItem('gyeol_' + tag, JSON.stringify(items));
+                        updateList();
+                    } else {
+                        alert('물품을 인식하지 못했습니다.');
+                    }
+                } catch (err) {
+                    wrap.innerHTML = '<div style="color:red;">오류 발생!</div>';
+                    alert('오류: ' + err.message);
+                }
+            };
+            input.click();
         }
-    };
-    input.click();
-}
 
         function updateList(filter = '') {
             const filtered = items.filter(it => it.n.toLowerCase().includes(filter.toLowerCase()));
@@ -134,7 +108,6 @@
             const box = document.getElementById('chat-messages');
             box.innerHTML += `<div style="text-align:right; margin-bottom:15px;"><span style="background:var(--primary); color:#fff; padding:10px 15px; border-radius:15px; font-size:14px;">${text}</span></div>`;
             input.value = '';
-            
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
