@@ -13,12 +13,9 @@ export default async function handler(req, res) {
     const imgResp = await fetch(signedData.signedUrl);
     const b64 = Buffer.from(await imgResp.arrayBuffer()).toString("base64");
 
-    // 어떤 모델 이름을 넣어도 주소를 똑바로 찾아가게 만드는 로직
-    const rawModel = process.env.GEMINI_MODEL || "gemini-2.0-flash";
-    const modelId = rawModel.includes("/") ? rawModel : `models/${rawModel}`;
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/${modelId}:generateContent?key=${process.env.GEMINI_API_KEY}`;
-    
-    console.log("Calling API:", endpoint); // 로그 확인용
+    const rawModel = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+    const modelName = rawModel.includes('/') ? rawModel.split('/').pop() : rawModel;
+    const endpoint = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
     const gResp = await fetch(endpoint, {
       method: "POST",
@@ -32,16 +29,12 @@ export default async function handler(req, res) {
     });
 
     const gData = await gResp.json();
-
-    if (gData.error) {
-      return res.status(200).json({ items: [], error: `AI 에러: ${gData.error.message}` });
-    }
+    if (gData.error) return res.status(200).json({ items: [], error: gData.error.message });
 
     const botText = gData.candidates?.[0]?.content?.parts?.[0]?.text || "";
     const items = botText.split(",").map(s => s.trim()).filter(it => it);
-    
     return res.status(200).json({ items });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: "서버 오류 발생" });
   }
 }
