@@ -1,22 +1,44 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>공간:결 - 무엇을 찾으시나요?</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body { font-family: -apple-system, sans-serif; background: #f8fafc; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .search-card { background: #fff; padding: 40px; border-radius: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); width: 90%; max-width: 400px; text-align: center; }
-        .title { font-size: 22px; font-weight: 800; margin-bottom: 25px; color: #1e293b; }
-        .input-box { width: 100%; padding: 18px; border: 2px solid #007bff; border-radius: 15px; font-size: 18px; outline: none; box-sizing: border-box; }
-        .footer-text { color: #94a3b8; margin-top: 20px; font-size: 14px; line-height: 1.5; }
-    </style>
+<meta charset="UTF-8">
+<title>공간:결 - 검색</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+:root { --primary: #007bff; --bg: #f8fafc; }
+body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; }
+.search-container { max-width: 600px; margin: 40px auto; background: #fff; padding: 25px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+.search-box { width: 100%; padding: 18px; border: 2px solid var(--primary); border-radius: 14px; font-size: 18px; outline: none; box-sizing: border-box; }
+.result-item { padding: 18px; border: 1px solid #eee; border-radius: 16px; margin-top: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+</style>
 </head>
 <body>
-    <div class="search-card">
-        <div class="title">🔍 무엇을 찾으시나요?</div>
-        <input type="text" class="input-box" placeholder="양말, 충전기, 안경..." onkeypress="if(event.keyCode==13) location.href='drawer.html?q='+encodeURIComponent(this.value)">
-        <p class="footer-text">서랍 이름을 입력하거나<br>QR 코드를 스캔해 보세요.</p>
-    </div>
+<div class="search-container">
+<h2 style="margin-bottom: 20px;">🔍 무엇을 찾으시나요?</h2>
+<input type="text" id="main-search" class="search-box" placeholder="물건 이름을 입력하세요" oninput="searchItems()">
+<div id="result-list"></div>
+</div>
+<script>
+function searchItems() {
+const query = document.getElementById('main-search').value.trim().toLowerCase();
+const list = document.getElementById('result-list');
+list.innerHTML = ''; if(!query) return;
+
+const inventory = [];
+['DRAWER001', 'DRAWER002'].forEach(tag => {
+const saved = localStorage.getItem('gyeol_' + tag);
+if (saved) {
+const items = JSON.parse(saved);
+items.forEach(it => inventory.push({ ...it, tag }));
+}
+});
+
+const results = inventory.filter(it => it.n.toLowerCase().includes(query));
+results.forEach(it => {
+list.innerHTML += `<div class="result-item" onclick="location.href='drawer.html?tag=${it.tag}'">
+<span>${it.n} (${it.tag})</span><button style="background:#000; color:#fff; border:none; padding:8px 12px; border-radius:8px;">이동</button></div>`;
+});
+}
+</script>
 </body>
 </html>
