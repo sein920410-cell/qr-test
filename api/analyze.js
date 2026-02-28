@@ -7,8 +7,7 @@ const supa = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
   const { filePath } = req.body;
-  if (!filePath) return res.status(400).json({ error: "파일 경로 누락" });
-
+  
   try {
     const { data: signedData } = await supa.storage.from('user_uploads').createSignedUrl(filePath, 60);
     const imgResp = await fetch(signedData.signedUrl);
@@ -26,19 +25,16 @@ export default async function handler(req, res) {
     });
 
     const gData = await gResp.json();
-
-    // AI 응답이 비정상적일 경우를 대비한 안전장치
+    
+    // 안전장치: AI 응답이 비정상적일 경우
     if (!gData.candidates || !gData.candidates[0].content) {
-      console.error("AI 응답 오류:", JSON.stringify(gData));
-      return res.status(200).json({ items: [], error: "AI가 응답을 생성하지 못했습니다." });
+      return res.status(200).json({ items: [], error: "AI가 분석에 실패했습니다. 모델 설정을 확인해주세요." });
     }
 
     const botText = gData.candidates[0].content.parts[0].text;
-    const items = botText.split(",").map(s => s.trim()).filter(s => s !== "");
-    
+    const items = botText.split(",").map(s => s.trim()).filter(it => it);
     return res.status(200).json({ items });
   } catch (err) {
-    console.error("서버 에러:", err.message);
     return res.status(500).json({ error: err.message });
   }
 }
