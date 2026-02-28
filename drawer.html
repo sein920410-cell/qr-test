@@ -29,9 +29,7 @@
         <div class="media-box" id="media-wrap">사진을 찍으면 여기에 표시됩니다.</div>
         <input type="text" style="width:100%; padding:15px; border:2px solid var(--primary); border-radius:12px; box-sizing:border-box;" placeholder="찾으시는 물건이 있나요?" oninput="updateList(this.value)">
     </div>
-
     <div class="list-container" id="list-container"></div>
-
     <button class="floating-btn" onclick="toggleChat()">✨ 봄에게 묻기</button>
 
     <div id="chat-window" class="chat-window">
@@ -85,7 +83,7 @@
                         alert(data.error || '물품을 인식하지 못했습니다.');
                     }
                 } catch (err) {
-                    alert('오류: ' + err.message);
+                    alert('시스템 오류: ' + err.message);
                     wrap.innerHTML = '다시 시도해주세요.';
                 }
             };
