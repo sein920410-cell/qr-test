@@ -8,114 +8,76 @@
     <style>
         :root { --primary: #007bff; --bg: #f8fafc; --dark: #1e293b; --light-grey: #F2F4F7; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; color: var(--dark); }
-        
-        /* 헤더 */
         .header { background: #fff; padding: 15px 20px; display: flex; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); z-index: 10; }
         .header .spacer { width: 40px; }
         .drawer-name { font-size: 18px; font-weight: 800; flex: 1; text-align: center; }
         .icon-btn { background: none; border: none; font-size: 28px; cursor: pointer; color: var(--dark); width: 40px; text-align: right; }
-
-        /* 메인 사진/영상 영역 */
         .main-card { background: #fff; padding: 15px; border-radius: 0 0 25px 25px; flex-shrink: 0; position: relative; }
-        .media-box { width: 100%; height: 250px; background: #f1f5f9; border-radius: 20px; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0; overflow: hidden; cursor: pointer; -webkit-user-select: none; user-select: none; }
+        .media-box { width: 100%; height: 250px; background: #f1f5f9; border-radius: 20px; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0; overflow: hidden; cursor: pointer; -webkit-user-select: none; user-select: none; }
         .media-box img, .media-box video { max-width: 100%; max-height: 100%; object-fit: contain; pointer-events: none; }
-        .empty-text { color: #64748b; font-size: 14px; text-align: center; line-height: 1.6; }
-
-        /* 전체 토글 버튼 (아이콘을 이름 앞에 배치) */
         .list-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 15px 5px 15px; }
-        .add-list-btn { background: none; border: none; color: var(--primary); font-weight: bold; cursor: pointer; font-size: 15px; }
+        .add-list-btn { background: none; border: none; color: var(--primary); font-weight: bold; cursor: pointer; font-size: 15px; padding: 0; }
         .toggle-btn { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: #94a3b8; font-weight: bold; }
         .round-arrow { width: 26px; height: 26px; background: var(--light-grey); border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: transform 0.3s ease; }
         .chevron { width: 6px; height: 6px; border-right: 2px solid #64748b; border-bottom: 2px solid #64748b; transform: translateY(-1px) rotate(45deg); }
         .is-open .round-arrow { transform: rotate(180deg); }
-
-        /* 리스트 영역 및 카드 */
         .list-container { flex: 1; overflow-y: auto; padding: 0 15px 15px 15px; }
         .item-card { background: #fff; border-radius: 18px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; overflow: hidden; }
         .item-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; }
         .item-name { font-weight: 700; font-size: 16px; }
         .qty-controls { display: flex; align-items: center; gap: 8px; }
-        .qty-btn { width: 28px; height: 28px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+        .qty-btn { width: 28px; height: 28px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .qty-num { font-weight: 700; color: var(--primary); min-width: 30px; text-align: center; }
-
-        /* 접기/펼치기 전체 영역 */
         .item-content { display: none; padding: 15px; border-top: 1px solid #f8fafc; background: #fff; }
         .item-card.open .item-content { display: block; }
         .action-btn { background: none; border: none; color: #64748b; font-size: 13px; font-weight: 600; cursor: pointer; margin-right: 15px; }
-
-        /* 전체 화면 모드 */
+        .chat-window { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 10001; flex-direction: column; }
+        .overlay-header.dark { background: var(--dark); color: #fff; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        .msg { max-width: 80%; padding: 12px 16px; border-radius: 18px; font-size: 14px; }
+        .msg.user { align-self: flex-end; background: var(--primary); color: #fff; }
+        .msg.bot { align-self: flex-start; background: #f1f5f9; }
+        .bottom-actions { padding: 15px 0; display: flex; flex-direction: column; gap: 10px; }
+        .chat-entry { background: var(--dark); color: #fff; padding: 15px; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; }
+        .reset-btn { align-self: center; background: none; border: none; color: #94a3b8; font-size: 12px; text-decoration: underline; cursor: pointer; padding: 5px; }
         #fullscreen-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 20000; align-items: center; justify-content: center; }
         #fullscreen-view img, #fullscreen-view video { max-width: 100%; max-height: 100%; object-fit: contain; }
-
-        /* 검색/하단 UI */
-        .search-window { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 10001; flex-direction: column; }
-        .search-input { width: 100%; padding: 20px; border: none; border-bottom: 1px solid #f1f5f9; font-size: 18px; outline: none; }
-        .bottom-actions { padding: 15px; background: var(--bg); display: flex; flex-direction: column; gap: 10px; }
-        .chat-entry { background: var(--dark); color: #fff; padding: 15px; border-radius: 15px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
-        .reset-btn { align-self: center; background: none; border: none; color: #94a3b8; font-size: 12px; text-decoration: underline; cursor: pointer; padding: 5px; }
-        
         .rotate90 { transform: rotate(90deg); } .rotate180 { transform: rotate(180deg); } .rotate270 { transform: rotate(270deg); }
         .overlay-window { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 10000; flex-direction: column; }
         #preview-wrap { flex:1; display:flex; align-items:center; justify-content:center; background:#000; overflow:hidden; }
     </style>
 </head>
 <body>
-    <header class="header">
-        <div class="spacer"></div>
-        <div class="drawer-name" id="drawer-title" onclick="renameDrawer()">서랍 1</div>
-        <button class="icon-btn" onclick="analyzeMedia()">＋</button>
-    </header>
-
-    <div class="main-card" id="main-card-wrap">
-        <div class="media-box" id="media-wrap">
-            <div class="empty-text">이 서랍에 아직 등록된 사진/영상이 없습니다.<br>상단의 ＋ 버튼을 눌러 추가해 보세요.</div>
-        </div>
-    </div>
-
+    <header class="header"><div class="spacer"></div><div class="drawer-name" id="drawer-title" onclick="renameDrawer()">서랍 1</div><button class="icon-btn" onclick="analyzeMedia()">＋</button></header>
+    <div class="main-card"><div class="media-box" id="media-wrap"><div class="empty-text">사진/영상을 등록해 보세요.</div></div></div>
     <div class="list-header">
         <button class="add-list-btn" onclick="addItemDirectly()">＋ 목록추가</button>
-        <div class="toggle-btn" id="toggle-all-btn" onclick="toggleAll()">
-            <div class="round-arrow"><div class="chevron"></div></div>
-            <span id="toggle-text">전체펼치기</span>
-        </div>
+        <div class="toggle-btn" id="toggle-all-btn" onclick="toggleAll()"><div class="round-arrow"><div class="chevron"></div></div><span id="toggle-text">전체펼치기</span></div>
     </div>
-
     <div class="list-container">
         <div id="list-items"></div>
         <div class="bottom-actions">
             <div class="chat-entry" onclick="toggleOverlay('chat-window')">
-                <span>💬</span><strong>비서 '봄'에게 물어보기</strong>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/><path d="M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1"/></svg>
+                <strong>비서 '봄'에게 물어보기</strong>
             </div>
             <button class="reset-btn" onclick="clearAllItems()">목록 전체 초기화</button>
         </div>
     </div>
-
-    <div id="fullscreen-view" onclick="closeFullscreen()">
-        <div id="fs-content" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;"></div>
+    <div id="chat-window" class="chat-window">
+        <div class="overlay-header dark"><strong>비서 '봄'</strong><button class="icon-btn" style="color:#fff;" onclick="toggleOverlay('chat-window')">✕</button></div>
+        <div class="chat-messages" id="chat-messages"></div>
+        <div style="padding:15px; display:flex; gap:10px; border-top:1px solid #eee;"><input type="text" id="chat-input" style="flex:1; padding:12px; border:1px solid #ddd; border-radius:12px;" placeholder="봄에게 물어보세요..."><button onclick="sendMsg()" style="background:var(--dark); color:#fff; border:none; padding:0 20px; border-radius:12px;">전송</button></div>
     </div>
-
-    <div id="search-window" class="search-window">
-        <div class="header">
-            <div class="spacer"></div><div class="drawer-name">물품 검색</div>
-            <button class="icon-btn" onclick="toggleOverlay('search-window')">✕</button>
-        </div>
-        <input type="text" class="search-input" placeholder="검색어를 입력하세요..." oninput="renderItems(this.value)">
-    </div>
-
+    <div id="fullscreen-view" onclick="closeFullscreen()"><div id="fs-content" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;"></div></div>
     <div id="rotate-window" class="overlay-window">
         <div id="preview-wrap"></div>
-        <div style="padding:20px; display:flex; gap:10px; background:#fff;">
-            <button onclick="rotateMedia(90)" style="flex:1; padding:15px; border-radius:12px; border:1px solid #ddd;">회전</button>
-            <button onclick="confirmUpload()" style="flex:2; padding:15px; border-radius:12px; background:var(--dark); color:#fff; border:none; font-weight:bold;">등록</button>
-            <button onclick="cancelUpload()" style="flex:1; padding:15px; border-radius:12px; background:#f1f5f9; border:none;">취소</button>
-        </div>
+        <div style="padding:20px; display:flex; gap:10px; background:#fff;"><button onclick="rotateMedia(90)" style="flex:1; padding:15px; border-radius:12px; border:1px solid #ddd;">회전</button><button onclick="confirmUpload()" style="flex:2; padding:15px; border-radius:12px; background:var(--dark); color:#fff; border:none; font-weight:bold;">등록</button><button onclick="cancelUpload()" style="flex:1; padding:15px; border-radius:12px; background:#f1f5f9; border:none;">취소</button></div>
     </div>
-
     <script>
         const _supa = supabase.createClient('https://tqhtggusphhcsygiitrv.supabase.co', 'sb_publishable_lJeKpO0aRv9mTBE1qnbkow_JqTmhnHQ');
         const params = new URLSearchParams(window.location.search);
         const tag = (params.get('tag') || 'DRAWER001').toUpperCase();
-        
         let items = JSON.parse(localStorage.getItem('gyeol_' + tag) || '[]');
         let isAllOpen = false;
         let currentRotation = 0;
@@ -123,16 +85,15 @@
         let pressTimer;
         let isLongPress = false;
 
-        window.onload = () => {
+        window.onload = async () => {
             document.getElementById('drawer-title').innerText = localStorage.getItem('name_' + tag) || '서랍 1';
-            const lastMedia = localStorage.getItem('img_' + tag);
+            const mediaPath = localStorage.getItem('mediaPath_' + tag);
             const lastRot = localStorage.getItem('rot_' + tag) || 0;
-            if(lastMedia) showMedia(lastMedia, lastRot);
+            if (mediaPath) { const { data } = await _supa.storage.from('user_uploads').createSignedUrl(mediaPath, 3600); if (data) showMedia(data.signedUrl, lastRot); }
             renderItems();
             initMediaEvents();
         };
 
-        // 미디어 이벤트: 클릭(전체화면), 2초 이상 롱 프레스(삭제 확인창)
         function initMediaEvents() {
             const wrap = document.getElementById('media-wrap');
             const start = () => { isLongPress = false; pressTimer = setTimeout(() => { isLongPress = true; deleteMedia(); }, 2000); };
@@ -144,30 +105,21 @@
         function showMedia(url, rot) {
             const wrap = document.getElementById('media-wrap');
             const isVideo = url.match(/\.(mp4|mov|webm|ogg)/i) || url.includes('video');
-            if (isVideo) {
-                wrap.innerHTML = `<video src="${url}" class="rotate${rot}" id="main-media-el" playsinline muted loop autoplay></video>`;
-            } else {
-                wrap.innerHTML = `<img src="${url}" class="rotate${rot}" id="main-media-el">`;
-            }
+            wrap.innerHTML = isVideo ? `<video src="${url}" class="rotate${rot}" id="main-media-el" playsinline muted loop autoplay></video>` : `<img src="${url}" class="rotate${rot}" id="main-media-el">`;
         }
 
         function deleteMedia() {
-            if(!localStorage.getItem('img_' + tag)) return;
+            if(!localStorage.getItem('mediaPath_' + tag)) return;
             if(confirm('사진/영상을 삭제하시겠습니까?')) {
-                localStorage.removeItem('img_' + tag); localStorage.removeItem('rot_' + tag);
-                document.getElementById('media-wrap').innerHTML = '<div class="empty-text">이 서랍에 아직 등록된 사진/영상이 없습니다.</div>';
+                localStorage.removeItem('mediaPath_' + tag); localStorage.removeItem('rot_' + tag);
+                document.getElementById('media-wrap').innerHTML = '<div class="empty-text">등록된 사진/영상이 없습니다.</div>';
             }
         }
 
         function openFullscreen() {
-            const el = document.getElementById('main-media-el');
-            if(!el) return;
+            const el = document.getElementById('main-media-el'); if(!el) return;
             const fsContent = document.getElementById('fs-content');
-            if (el.tagName === 'VIDEO') {
-                fsContent.innerHTML = `<video src="${el.src}" class="${el.className}" controls autoplay></video>`;
-            } else {
-                fsContent.innerHTML = `<img src="${el.src}" class="${el.className}">`;
-            }
+            fsContent.innerHTML = el.tagName === 'VIDEO' ? `<video src="${el.src}" class="${el.className}" controls autoplay></video>` : `<img src="${el.src}" class="${el.className}">`;
             document.getElementById('fullscreen-view').style.display = 'flex';
         }
 
@@ -178,85 +130,62 @@
             const filtered = items.filter(it => it.n.toLowerCase().includes(filter.toLowerCase()));
             container.innerHTML = filtered.map((it, idx) => `
                 <div class="item-card ${isAllOpen ? 'open' : ''}">
-                    <div class="item-header">
-                        <span class="item-name">${it.n}</span>
-                        <div class="qty-controls">
-                            <button class="qty-btn" onclick="changeQty(${idx}, -1)">-</button>
-                            <span class="qty-num">${it.q || 1}개</span>
-                            <button class="qty-btn" onclick="changeQty(${idx}, 1)">+</button>
-                        </div>
-                    </div>
-                    <div class="item-content">
-                        <button class="action-btn" onclick="editItem(${idx})">이름 수정</button>
-                        <button class="action-btn" style="color:#ef4444" onclick="deleteItem(${idx})">삭제</button>
-                    </div>
+                    <div class="item-header"><span class="item-name">${it.n}</span><div class="qty-controls"><button class="qty-btn" onclick="changeQty(${idx}, -1)">-</button><span class="qty-num">${it.q || 1}개</span><button class="qty-btn" onclick="changeQty(${idx}, 1)">+</button></div></div>
+                    <div class="item-content"><button class="action-btn" onclick="editItem(${idx})">이름 수정</button><button class="action-btn" style="color:#ef4444" onclick="deleteItem(${idx})">삭제</button></div>
                 </div>
             `).join('');
         }
 
         function toggleAll() {
             isAllOpen = !isAllOpen;
-            const btn = document.getElementById('toggle-all-btn');
             document.getElementById('toggle-text').innerText = isAllOpen ? '전체접기' : '전체펼치기';
-            btn.classList.toggle('is-open', isAllOpen);
+            document.getElementById('toggle-all-btn').classList.toggle('is-open', isAllOpen);
             document.querySelectorAll('.item-card').forEach(card => card.classList.toggle('open', isAllOpen));
         }
 
+        function toggleOverlay(id) { const el = document.getElementById(id); const cur = window.getComputedStyle(el).display; el.style.display = (cur === 'none') ? 'flex' : 'none'; }
         function changeQty(idx, val) { items[idx].q = Math.max(1, (items[idx].q || 1) + val); saveData(); renderItems(); }
-        function deleteItem(idx) { if(confirm('이 물건을 삭제할까요?')) { items.splice(idx, 1); saveData(); renderItems(); } }
+        function deleteItem(idx) { if(confirm('삭제할까요?')) { items.splice(idx, 1); saveData(); renderItems(); } }
         function editItem(idx) { const n = prompt('새 이름:', items[idx].n); if(n) { items[idx].n = n; saveData(); renderItems(); } }
         function addItemDirectly() { const name = prompt('물건 이름:'); if(name) { items.push({ n: name, q: 1 }); saveData(); renderItems(); } }
-        function clearAllItems() { if(confirm('서랍의 모든 목록을 삭제할까요?')) { items = []; saveData(); renderItems(); } }
+        function clearAllItems() { if(confirm('전체 초기화할까요?')) { items = []; saveData(); renderItems(); } }
         function saveData() { localStorage.setItem('gyeol_' + tag, JSON.stringify(items)); }
-        function toggleOverlay(id) { const el = document.getElementById(id); el.style.display = el.style.display === 'flex' ? 'none' : 'flex'; }
-        
+
         async function analyzeMedia() {
-            const input = document.createElement('input');
-            input.type = 'file'; 
-            input.accept = 'video/*,image/*'; // 영상 및 사진 동시 지원 설정
+            const input = document.createElement('input'); input.type = 'file'; input.accept = 'video/*,image/*';
             input.onchange = (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                selectedFile = file;
+                const file = e.target.files[0]; if (!file) return; selectedFile = file;
                 const reader = new FileReader();
                 reader.onload = (re) => {
                     const previewWrap = document.getElementById('preview-wrap');
-                    if (file.type.startsWith('video/')) {
-                        previewWrap.innerHTML = `<video id="edit-preview" src="${re.target.result}" style="max-width:100%; max-height:100%;" muted autoplay loop></video>`;
-                    } else {
-                        previewWrap.innerHTML = `<img id="edit-preview" src="${re.target.result}" style="max-width:100%; max-height:100%;">`;
-                    }
-                    currentRotation = 0;
-                    document.getElementById('rotate-window').style.display = 'flex';
+                    previewWrap.innerHTML = file.type.startsWith('video/') ? `<video id="edit-preview" src="${re.target.result}" style="max-width:100%; max-height:100%;" muted autoplay loop></video>` : `<img id="edit-preview" src="${re.target.result}" style="max-width:100%; max-height:100%;">`;
+                    currentRotation = 0; document.getElementById('rotate-window').style.display = 'flex';
                 };
                 reader.readAsDataURL(file);
             };
             input.click();
         }
 
-        function rotateMedia(deg) { 
-            currentRotation = (currentRotation + deg + 360) % 360; 
-            document.getElementById('edit-preview').className = `rotate${currentRotation}`; 
-        }
-
+        function rotateMedia(deg) { currentRotation = (currentRotation + deg + 360) % 360; document.getElementById('edit-preview').className = `rotate${currentRotation}`; }
         async function confirmUpload() {
-            if(!selectedFile) return;
-            const file = selectedFile;
-            document.getElementById('rotate-window').style.display = 'none';
-            document.getElementById('media-wrap').innerHTML = '<div class="empty-text">사진/영상 등록 중...</div>';
+            if(!selectedFile) return; const file = selectedFile; document.getElementById('rotate-window').style.display = 'none';
             try {
                 const path = `${tag}/${Date.now()}_${file.name}`;
                 await _supa.storage.from('user_uploads').upload(path, file);
-                const { data } = await _supa.storage.from('user_uploads').createSignedUrl(path, 3600);
-                showMedia(data.signedUrl, currentRotation);
-                localStorage.setItem('img_' + tag, data.signedUrl);
-                localStorage.setItem('rot_' + tag, currentRotation);
+                localStorage.setItem('mediaPath_' + tag, path); localStorage.setItem('rot_' + tag, currentRotation);
+                const { data } = await _supa.storage.from('user_uploads').createSignedUrl(path, 3600); showMedia(data.signedUrl, currentRotation);
                 if (file.type.startsWith('image/')) {
                     const res = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filePath: path }) });
-                    const resData = await res.json();
-                    if (resData.items) { resData.items.forEach(n => items.push({ n, q: 1 })); saveData(); renderItems(); }
+                    const resData = await res.json(); if (resData.items) { resData.items.forEach(n => items.push({ n, q: 1 })); saveData(); renderItems(); }
                 }
             } catch (err) { alert('오류 발생'); }
+        }
+
+        async function sendMsg() {
+            const input = document.getElementById('chat-input'); const text = input.value.trim(); if(!text) return;
+            const box = document.getElementById('chat-messages'); box.innerHTML += `<div class="msg user">${text}</div>`; input.value = '';
+            const res = await fetch('/api/chat', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ message: text, tag, inventory: JSON.stringify(items.map(i => i.n)) }) });
+            const data = await res.json(); box.innerHTML += `<div class="msg bot">${data.reply}</div>`; box.scrollTop = box.scrollHeight;
         }
         function cancelUpload() { document.getElementById('rotate-window').style.display = 'none'; selectedFile = null; }
         function renameDrawer() { const n = prompt('서랍 이름:', document.getElementById('drawer-title').innerText); if(n) { document.getElementById('drawer-title').innerText = n; localStorage.setItem('name_' + tag, n); } }
