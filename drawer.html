@@ -21,36 +21,45 @@
         .media-box img, .media-box video { max-width: 100%; max-height: 100%; object-fit: contain; pointer-events: none; }
         .empty-text { color: #64748b; font-size: 14px; text-align: center; line-height: 1.6; }
 
-        /* 전체 토글 버튼 */
-        .list-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 15px 5px 15px; }
-        .add-list-btn { background: none; border: none; color: var(--primary); font-weight: bold; cursor: pointer; font-size: 15px; }
+        /* 리스트 헤더: 전체 토글 */
+        .list-header { display: flex; justify-content: flex-end; align-items: center; padding: 10px 15px 5px 15px; }
         .toggle-btn { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: #94a3b8; font-weight: bold; }
         .round-arrow { width: 26px; height: 26px; background: var(--light-grey); border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: transform 0.3s ease; }
         .chevron { width: 6px; height: 6px; border-right: 2px solid #64748b; border-bottom: 2px solid #64748b; transform: translateY(-1px) rotate(45deg); }
         .is-open .round-arrow { transform: rotate(180deg); }
 
-        /* 리스트 영역 및 카드 */
+        /* 목록 영역 및 카드 */
         .list-container { flex: 1; overflow-y: auto; padding: 0 15px 15px 15px; }
+        
+        /* 목록추가 버튼 디자인 */
+        .add-list-btn { width: 100%; padding: 15px; background: #fff; border: 1px dashed #cbd5e1; border-radius: 16px; margin-bottom: 15px; color: #64748b; font-weight: bold; cursor: pointer; font-size: 15px; }
+        
         .item-card { background: #fff; border-radius: 18px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; overflow: hidden; }
         .item-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; }
         .item-name { font-weight: 700; font-size: 16px; }
         .qty-controls { display: flex; align-items: center; gap: 8px; }
-        .qty-btn { width: 28px; height: 28px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+        .qty-btn { width: 28px; height: 28px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .qty-num { font-weight: 700; color: var(--primary); min-width: 30px; text-align: center; }
 
         .item-content { display: none; padding: 15px; border-top: 1px solid #f8fafc; background: #fff; }
         .item-card.open .item-content { display: block; }
         .action-btn { background: none; border: none; color: #64748b; font-size: 13px; font-weight: 600; cursor: pointer; margin-right: 15px; }
 
-        /* 전체 화면 모드 */
+        /* 채팅창 오버레이 */
+        .chat-window { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 10001; flex-direction: column; }
+        .overlay-header.dark { background: var(--dark); color: #fff; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        .msg { max-width: 80%; padding: 12px 16px; border-radius: 18px; font-size: 14px; }
+        .msg.user { align-self: flex-end; background: var(--primary); color: #fff; }
+        .msg.bot { align-self: flex-start; background: #f1f5f9; }
+
+        /* 하단 비서 버튼 */
+        .bottom-actions { padding: 15px 0; display: flex; flex-direction: column; gap: 10px; }
+        .chat-entry { background: var(--dark); color: #fff; padding: 15px; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; }
+        .reset-btn { align-self: center; background: none; border: none; color: #94a3b8; font-size: 12px; text-decoration: underline; cursor: pointer; padding: 5px; }
+
         #fullscreen-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 20000; align-items: center; justify-content: center; }
         #fullscreen-view img, #fullscreen-view video { max-width: 100%; max-height: 100%; object-fit: contain; }
-
-        /* 하단 UI 및 비서 '봄' 버튼 정렬 */
-        .bottom-actions { padding: 15px; background: var(--bg); display: flex; flex-direction: column; gap: 10px; }
-        .chat-entry { background: var(--dark); color: #fff; padding: 15px; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; }
-        .chat-entry strong { font-size: 15px; }
-        .reset-btn { align-self: center; background: none; border: none; color: #94a3b8; font-size: 12px; text-decoration: underline; cursor: pointer; padding: 5px; }
         
         .rotate90 { transform: rotate(90deg); } .rotate180 { transform: rotate(180deg); } .rotate270 { transform: rotate(270deg); }
         .overlay-window { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 10000; flex-direction: column; }
@@ -66,12 +75,11 @@
 
     <div class="main-card" id="main-card-wrap">
         <div class="media-box" id="media-wrap">
-            <div class="empty-text">이 서랍에 아직 등록된 사진/영상이 없습니다.<br>상단의 ＋ 버튼을 눌러 추가해 보세요.</div>
+            <div class="empty-text">이 서랍에 아직 등록된 사진/영상이 없습니다.</div>
         </div>
     </div>
 
     <div class="list-header">
-        <button class="add-list-btn" onclick="addItemDirectly()">＋ 목록추가</button>
         <div class="toggle-btn" id="toggle-all-btn" onclick="toggleAll()">
             <div class="round-arrow"><div class="chevron"></div></div>
             <span id="toggle-text">전체펼치기</span>
@@ -79,6 +87,7 @@
     </div>
 
     <div class="list-container">
+        <button class="add-list-btn" onclick="addItemDirectly()">＋ 목록추가</button>
         <div id="list-items"></div>
         <div class="bottom-actions">
             <div class="chat-entry" onclick="toggleOverlay('chat-window')">
@@ -89,9 +98,16 @@
         </div>
     </div>
 
-    <div id="fullscreen-view" onclick="closeFullscreen()">
-        <div id="fs-content" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;"></div>
+    <div id="chat-window" class="chat-window">
+        <div class="overlay-header dark"><strong>비서 '봄'</strong><button class="icon-btn" style="color:#fff;" onclick="toggleOverlay('chat-window')">✕</button></div>
+        <div class="chat-messages" id="chat-messages"></div>
+        <div style="padding:15px; display:flex; gap:10px; border-top:1px solid #eee;">
+            <input type="text" id="chat-input" style="flex:1; padding:12px; border:1px solid #ddd; border-radius:12px;" placeholder="봄에게 물어보세요...">
+            <button onclick="sendMsg()" style="background:var(--dark); color:#fff; border:none; padding:0 20px; border-radius:12px;">전송</button>
+        </div>
     </div>
+
+    <div id="fullscreen-view" onclick="closeFullscreen()"><div id="fs-content" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;"></div></div>
 
     <div id="rotate-window" class="overlay-window">
         <div id="preview-wrap"></div>
@@ -116,16 +132,12 @@
 
         window.onload = async () => {
             document.getElementById('drawer-title').innerText = localStorage.getItem('name_' + tag) || '서랍 1';
-            
-            // 핵심 수정: 저장된 경로로 항상 신선한 링크를 가져옴
             const mediaPath = localStorage.getItem('mediaPath_' + tag);
             const lastRot = localStorage.getItem('rot_' + tag) || 0;
-            
             if (mediaPath) {
                 const { data } = await _supa.storage.from('user_uploads').createSignedUrl(mediaPath, 3600);
                 if (data) showMedia(data.signedUrl, lastRot);
             }
-            
             renderItems();
             initMediaEvents();
         };
@@ -141,11 +153,7 @@
         function showMedia(url, rot) {
             const wrap = document.getElementById('media-wrap');
             const isVideo = url.match(/\.(mp4|mov|webm|ogg)/i) || url.includes('video');
-            if (isVideo) {
-                wrap.innerHTML = `<video src="${url}" class="rotate${rot}" id="main-media-el" playsinline muted loop autoplay></video>`;
-            } else {
-                wrap.innerHTML = `<img src="${url}" class="rotate${rot}" id="main-media-el">`;
-            }
+            wrap.innerHTML = isVideo ? `<video src="${url}" class="rotate${rot}" id="main-media-el" playsinline muted loop autoplay></video>` : `<img src="${url}" class="rotate${rot}" id="main-media-el">`;
         }
 
         function deleteMedia() {
@@ -157,14 +165,9 @@
         }
 
         function openFullscreen() {
-            const el = document.getElementById('main-media-el');
-            if(!el) return;
+            const el = document.getElementById('main-media-el'); if(!el) return;
             const fsContent = document.getElementById('fs-content');
-            if (el.tagName === 'VIDEO') {
-                fsContent.innerHTML = `<video src="${el.src}" class="${el.className}" controls autoplay></video>`;
-            } else {
-                fsContent.innerHTML = `<img src="${el.src}" class="${el.className}">`;
-            }
+            fsContent.innerHTML = el.tagName === 'VIDEO' ? `<video src="${el.src}" class="${el.className}" controls autoplay></video>` : `<img src="${el.src}" class="${el.className}">`;
             document.getElementById('fullscreen-view').style.display = 'flex';
         }
 
@@ -193,9 +196,8 @@
 
         function toggleAll() {
             isAllOpen = !isAllOpen;
-            const btn = document.getElementById('toggle-all-btn');
             document.getElementById('toggle-text').innerText = isAllOpen ? '전체접기' : '전체펼치기';
-            btn.classList.toggle('is-open', isAllOpen);
+            document.getElementById('toggle-all-btn').classList.toggle('is-open', isAllOpen);
             document.querySelectorAll('.item-card').forEach(card => card.classList.toggle('open', isAllOpen));
         }
 
@@ -205,62 +207,46 @@
         function addItemDirectly() { const name = prompt('물건 이름:'); if(name) { items.push({ n: name, q: 1 }); saveData(); renderItems(); } }
         function clearAllItems() { if(confirm('서랍의 모든 목록을 삭제할까요?')) { items = []; saveData(); renderItems(); } }
         function saveData() { localStorage.setItem('gyeol_' + tag, JSON.stringify(items)); }
+        function toggleOverlay(id) { const el = document.getElementById(id); el.style.display = (el.style.display === 'flex') ? 'none' : 'flex'; }
 
         async function analyzeMedia() {
-            const input = document.createElement('input');
-            input.type = 'file'; input.accept = 'video/*,image/*';
+            const input = document.createElement('input'); input.type = 'file'; input.accept = 'video/*,image/*';
             input.onchange = (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                selectedFile = file;
+                const file = e.target.files[0]; if (!file) return; selectedFile = file;
                 const reader = new FileReader();
                 reader.onload = (re) => {
                     const previewWrap = document.getElementById('preview-wrap');
-                    if (file.type.startsWith('video/')) {
-                        previewWrap.innerHTML = `<video id="edit-preview" src="${re.target.result}" style="max-width:100%; max-height:100%;" muted autoplay loop></video>`;
-                    } else {
-                        previewWrap.innerHTML = `<img id="edit-preview" src="${re.target.result}" style="max-width:100%; max-height:100%;">`;
-                    }
-                    currentRotation = 0;
-                    document.getElementById('rotate-window').style.display = 'flex';
+                    previewWrap.innerHTML = file.type.startsWith('video/') ? `<video id="edit-preview" src="${re.target.result}" style="max-width:100%; max-height:100%;" muted autoplay loop></video>` : `<img id="edit-preview" src="${re.target.result}" style="max-width:100%; max-height:100%;">`;
+                    currentRotation = 0; document.getElementById('rotate-window').style.display = 'flex';
                 };
                 reader.readAsDataURL(file);
             };
             input.click();
         }
 
-        function rotateMedia(deg) { 
-            currentRotation = (currentRotation + deg + 360) % 360; 
-            document.getElementById('edit-preview').className = `rotate${currentRotation}`; 
-        }
-
+        function rotateMedia(deg) { currentRotation = (currentRotation + deg + 360) % 360; document.getElementById('edit-preview').className = `rotate${currentRotation}`; }
         async function confirmUpload() {
-            if(!selectedFile) return;
-            const file = selectedFile;
-            document.getElementById('rotate-window').style.display = 'none';
-            document.getElementById('media-wrap').innerHTML = '<div class="empty-text">사진/영상 등록 중...</div>';
+            if(!selectedFile) return; const file = selectedFile; document.getElementById('rotate-window').style.display = 'none';
             try {
                 const path = `${tag}/${Date.now()}_${file.name}`;
                 await _supa.storage.from('user_uploads').upload(path, file);
-                
-                // 경로를 저장함 (임시 링크가 아님)
-                localStorage.setItem('mediaPath_' + tag, path);
-                localStorage.setItem('rot_' + tag, currentRotation);
-                
-                const { data } = await _supa.storage.from('user_uploads').createSignedUrl(path, 3600);
-                showMedia(data.signedUrl, currentRotation);
-                
+                localStorage.setItem('mediaPath_' + tag, path); localStorage.setItem('rot_' + tag, currentRotation);
+                const { data } = await _supa.storage.from('user_uploads').createSignedUrl(path, 3600); showMedia(data.signedUrl, currentRotation);
                 if (file.type.startsWith('image/')) {
                     const res = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filePath: path }) });
-                    const resData = await res.json();
-                    if (resData.items) { resData.items.forEach(n => items.push({ n, q: 1 })); saveData(); renderItems(); }
+                    const resData = await res.json(); if (resData.items) { resData.items.forEach(n => items.push({ n, q: 1 })); saveData(); renderItems(); }
                 }
             } catch (err) { alert('오류 발생'); }
         }
 
+        async function sendMsg() {
+            const input = document.getElementById('chat-input'); const text = input.value.trim(); if(!text) return;
+            const box = document.getElementById('chat-messages'); box.innerHTML += `<div class="msg user">${text}</div>`; input.value = '';
+            const res = await fetch('/api/chat', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ message: text, tag, inventory: JSON.stringify(items) }) });
+            const data = await res.json(); box.innerHTML += `<div class="msg bot">${data.reply}</div>`; box.scrollTop = box.scrollHeight;
+        }
         function cancelUpload() { document.getElementById('rotate-window').style.display = 'none'; selectedFile = null; }
         function renameDrawer() { const n = prompt('서랍 이름:', document.getElementById('drawer-title').innerText); if(n) { document.getElementById('drawer-title').innerText = n; localStorage.setItem('name_' + tag, n); } }
-        function toggleOverlay(id) { /* 채팅 오버레이 토글 함수 */ }
     </script>
 </body>
 </html>
